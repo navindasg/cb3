@@ -26,9 +26,9 @@ function state(flags: Record<string, boolean> = {}, numbers: Record<string, numb
   return { ...createDefaultSave(), flags, numbers }
 }
 
-function stubRect(pre: HTMLElement): void {
+function stubRect(pre: HTMLElement, top = 0): void {
   pre.getBoundingClientRect = () =>
-    ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON() {} }) as DOMRect
+    ({ left: 0, top, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON() {} }) as DOMRect
 }
 
 describe('Map renderer', () => {
@@ -95,6 +95,29 @@ describe('Map renderer', () => {
     const pre = root.querySelector('pre') as HTMLElement
     stubRect(pre)
     // House label 'H' is at map cell (0,1): clientX [0,8), clientY [16,32).
+    pre.dispatchEvent(new MouseEvent('click', { clientX: 2, clientY: 18, bubbles: true }))
+    expect(actions).toEqual(['goHouse'])
+    r.unmount()
+  })
+
+  it('routes a zone click correctly when the map is restored scrolled', () => {
+    const root = document.createElement('div')
+    const actions: string[] = []
+    const r = createMapRenderer(root, {
+      strata: [ground, sky],
+      metrics: METRICS,
+      viewportRows: 2,
+      onZone: (a) => actions.push(a),
+    })
+    // Both strata revealed: sky (rows 0-1) stacks above ground (rows 2-3). Restored
+    // scroll of 2 rows means the <pre> is translated up by 32px, which a real browser
+    // reflects in rect.top (= -scroll*cellH). The house zone sits at absolute map row 3.
+    r.render(state({ beanstalkReachedClouds: true }, { scrollY: 2 }))
+    const pre = root.querySelector('pre') as HTMLElement
+    expect(r.scrollY()).toBe(2)
+    stubRect(pre, -2 * METRICS.cellH) // translateY reflected: top = -32
+    // House label 'H' is at absolute map cell (0,3): with top=-32, clientY [16,32)
+    // hit-tests to row 3 directly — no scroll must be re-added.
     pre.dispatchEvent(new MouseEvent('click', { clientX: 2, clientY: 18, bubbles: true }))
     expect(actions).toEqual(['goHouse'])
     r.unmount()

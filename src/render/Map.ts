@@ -74,7 +74,8 @@ export function createMapRenderer(root: HTMLElement, options: MapRendererOptions
   // ONE delegated click listener; reads the latest hotspotMap each event (never re-bound).
   const clickHandler = (e: MouseEvent): void => {
     const rect = pre.getBoundingClientRect()
-    // The grid is translated up by `scroll` rows; add it back to map the pointer to a map row.
+    // The grid is translated up by `scroll` rows, and that translate is reflected in
+    // rect.top, so hitTest already yields the absolute map row — no `+ scroll` here.
     const cell = hitTest({
       clientX: e.clientX,
       clientY: e.clientY,
@@ -84,7 +85,7 @@ export function createMapRenderer(root: HTMLElement, options: MapRendererOptions
       cellH: metrics.cellH,
     })
     if (!cell) return
-    const action = actionAt(hotspotMap, cell.col, cell.row + scroll)
+    const action = actionAt(hotspotMap, cell.col, cell.row)
     if (action) options.onZone?.(action)
   }
   pre.addEventListener('click', clickHandler)
