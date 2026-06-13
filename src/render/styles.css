@@ -1,0 +1,85 @@
+/* Render-layer styling for the ASCII grid (ADR §7.2/§7.4/§7.6). No game rules here.
+ *
+ * Font: we self-host JetBrains Mono via @font-face, but the font stack ALWAYS falls back
+ * to a hardened system-monospace list, so the grid aligns even when the binary is absent
+ * (it is, in this repo — TODO: drop the .woff2 into /public/fonts/ to ship the real glyphs).
+ * The @font-face below references that not-yet-present binary; the browser silently uses the
+ * fallback until the file exists, so this never blocks the build. */
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  /* TODO(font binary): add /public/fonts/JetBrainsMono.woff2 to ship the self-hosted face. */
+  src: url('/fonts/JetBrainsMono.woff2') format('woff2');
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+:root {
+  --cell-line-height: 1.2;
+}
+
+.map-surface,
+pre {
+  font-family:
+    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono',
+    'Roboto Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  line-height: var(--cell-line-height);
+  white-space: pre;
+  margin: 0;
+}
+
+/* Tabular figures so the candy/HP/mana counters never jitter as digits change. */
+.status-value {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Static glow = text-shadow via a CSS class per glowing entity (data-driven from flavor).
+ * The shadow values are NEVER animated; only the opacity of the overlay layer is. */
+.glow-sun {
+  color: #ffe9a8;
+  text-shadow: 0 0 4px #ffcf4d, 0 0 10px #ffb300;
+}
+.glow-moonpop {
+  color: #cfe8ff;
+  text-shadow: 0 0 4px #7fb4ff, 0 0 10px #4d8dff;
+}
+.glow-rockcandy {
+  color: #ffd0f0;
+  text-shadow: 0 0 4px #ff7fd6, 0 0 10px #ff4dc4;
+}
+
+/* The pulsing overlay is a separate, absolutely-positioned layer that animates OPACITY
+ * only (the static glow class above carries the colour/shadow). contain:paint isolates it. */
+.glow-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  contain: paint;
+}
+.glow-overlay > span {
+  position: absolute;
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glow-overlay > span {
+    animation: glow-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The JS reduced-motion gate (a11y.applyReducedMotion) also hard-stops the pulse, so the
+ * preference is honoured even when toggled at runtime after first paint. */
+.reduce-motion .glow-overlay > span,
+.reduce-motion.glow-overlay > span {
+  animation: none;
+}
