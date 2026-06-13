@@ -1,0 +1,80 @@
+import { en, t } from '@/content/i18n/en'
+import type { GameTextKey } from '@/content/i18n/schema'
+import { ALL_ITEMS } from '@/content/items/items'
+import { SHOP_ENTRIES } from '@/content/shops/shop'
+import { FORGE_ENTRIES } from '@/content/shops/forge'
+import { OBSERVATORY_ENTRIES } from '@/content/shops/observatory'
+import { GRANDMA_DIALOGUE } from '@/content/dialogue/grandma'
+import { ASTRONOMER_DIALOGUE } from '@/content/dialogue/astronomer'
+import { CAULDRON_RECIPES } from '@/content/recipes/cauldron'
+import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
+import { ACT0_SECRETS } from '@/content/secrets'
+import { TAVERN_RUMORS } from '@/content/tavern/rumors'
+import {
+  CANDY_BAT_DEATH,
+  SUGAR_GOLEM_DEATH,
+  GUMMY_WORM_DEATH,
+  GENERIC_DEATH,
+} from '@/content/deathMessages'
+import { ACT0_STRATA } from '@/content/strata'
+import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
+
+const KEYS = new Set(Object.keys(en))
+const has = (key: string): boolean => KEYS.has(key)
+
+describe('en.ts locale completeness', () => {
+  it('every string in en is non-empty', () => {
+    for (const [key, value] of Object.entries(en)) {
+      expect(value, key).not.toBe('')
+    }
+  })
+
+  it('t() resolves a known key', () => {
+    expect(t('ui.candyCounter')).toBe(en['ui.candyCounter'])
+  })
+
+  it('every item display/desc key exists', () => {
+    for (const item of ALL_ITEMS) {
+      expect(has(item.displayKey), item.displayKey).toBe(true)
+      expect(has(item.descKey), item.descKey).toBe(true)
+    }
+  })
+
+  it('every shop/forge/observatory speech key exists', () => {
+    for (const entry of [...SHOP_ENTRIES, ...FORGE_ENTRIES, ...OBSERVATORY_ENTRIES]) {
+      expect(has(entry.speechKey), entry.speechKey).toBe(true)
+    }
+  })
+
+  it('every dialogue line + speaker name key exists', () => {
+    for (const def of [GRANDMA_DIALOGUE, ASTRONOMER_DIALOGUE]) {
+      expect(has(def.nameKey), def.nameKey).toBe(true)
+      for (const variant of def.variants) {
+        for (const line of variant.lines) expect(has(line), line).toBe(true)
+      }
+    }
+  })
+
+  it('every recipe / spell / secret / rumor / death key exists', () => {
+    for (const r of CAULDRON_RECIPES) expect(has(r.displayKey), r.displayKey).toBe(true)
+    for (const s of GRIMOIRE_SPELLS) expect(has(s.displayKey), s.displayKey).toBe(true)
+    for (const s of ACT0_SECRETS) expect(has(s.revealKey), s.revealKey).toBe(true)
+    for (const r of TAVERN_RUMORS) expect(has(r.textKey), r.textKey).toBe(true)
+    for (const d of [CANDY_BAT_DEATH, SUGAR_GOLEM_DEATH, GUMMY_WORM_DEATH, GENERIC_DEATH]) {
+      expect(has(d.message), d.message).toBe(true)
+    }
+  })
+
+  it('every zone display key exists', () => {
+    for (const stratum of ACT0_STRATA) {
+      for (const zone of stratum.zones) expect(has(zone.displayKey), zone.displayKey).toBe(true)
+    }
+  })
+
+  it('every reveal action has an i18n label key', () => {
+    for (const threshold of FIELD_REVEAL_THRESHOLDS) {
+      const key = `action.${threshold.action}` as GameTextKey
+      expect(has(key), key).toBe(true)
+    }
+  })
+})

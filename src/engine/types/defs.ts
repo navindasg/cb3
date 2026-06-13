@@ -163,4 +163,145 @@ export interface QuestDef {
   readonly safeZones: readonly SafeZoneDef[]
   /** Death-flavor lines keyed by damage source; must include a 'generic' fallback. */
   readonly deathMessages: readonly DeathMessage[]
+  /** Flags set on victory (e.g. unlocking the next zone / a new resource). */
+  readonly onWinFlags?: readonly string[]
+  /** Resource drops awarded on victory (rock candy, etc.). */
+  readonly onWinDrops?: readonly PriceLine[]
+}
+
+// --- Cauldron / recipes (Block F) ------------------------------------------
+// The cauldron matches a raw action log against recipes (resolved decision 1). Rather than
+// each recipe carrying an opaque closure (which content cannot author without importing
+// engine logic), a recipe's matcher is a DECLARATIVE spec — a small tree of combinators
+// (inOrder / contains / exactlyOne / action) — interpreted by engine/cauldron/recipeMatcher.
+// Content authors pure data; the engine evaluates it.
+
+/** One entry in the cauldron's raw action log: a kind plus an optional payload id. */
+export interface CauldronEntry {
+  /** What the alchemist did, e.g. 'add' | 'stir' | 'heat'. */
+  readonly action: string
+  /** The thing acted on, e.g. an ingredient id; absent for actionless steps like 'stir'. */
+  readonly subject?: string
+}
+
+/** A declarative matcher spec, interpreted by the recipe matcher engine. */
+export type MatcherSpec =
+  | { readonly kind: 'action'; readonly action: string; readonly subject?: string }
+  /** Every child must match, anywhere, preserving relative order. */
+  | { readonly kind: 'inOrder'; readonly steps: readonly MatcherSpec[] }
+  /** Every child must match the WHOLE log (conjunction). */
+  | { readonly kind: 'all'; readonly specs: readonly MatcherSpec[] }
+  /** At least one log entry matches the child spec. */
+  | { readonly kind: 'contains'; readonly step: MatcherSpec }
+  /** Exactly one log entry matches the child (leaf) spec, over the whole log. */
+  | { readonly kind: 'exactlyOne'; readonly step: MatcherSpec }
+
+/** A cauldron recipe: a declarative matcher over the action log, plus what it brews. */
+export interface RecipeDef {
+  readonly id: string
+  /** i18n key for the recipe/output display name. */
+  readonly displayKey: string
+  readonly matcher: MatcherSpec
+  /** Resource produced (or null when the output is a flagged item). */
+  readonly output: ResourceKey | null
+  /** Quantity of `output` produced (default 1). */
+  readonly quantity?: number
+  /** Flag set when this recipe brews (e.g. a one-off item); absent ⇒ none. */
+  readonly outputFlag?: string
+}
+
+// --- Dialogue (Block F) ----------------------------------------------------
+// Dialogue is data: a speaker, an ordered set of lines, and an optional condition gating
+// which line set shows. Selection (engine/content/dialogue) walks the variants in order and
+// returns the first whose condition holds. Content imports only these types.
+
+/** One conditional set of dialogue lines for a speaker. */
+export interface DialogueVariant {
+  readonly id: string
+  /** i18n keys for the spoken lines, in order. */
+  readonly lines: readonly string[]
+  /** Flag that must be true for this variant to show; absent ⇒ always eligible. */
+  readonly requiresFlag?: string
+  /** Flag that must be FALSE for this variant to show (e.g. once-only intros). */
+  readonly hiddenWhenFlag?: string
+  /** Flag set when this variant is shown (e.g. marks an intro as seen). */
+  readonly setsFlag?: string
+}
+
+/** A speaker and the variants that resolve, in order, to what they say now. */
+export interface DialogueDef {
+  readonly speaker: string
+  /** i18n key for the speaker's display name. */
+  readonly nameKey: string
+  readonly variants: readonly DialogueVariant[]
+}
+
+// --- Spells (Block F) ------------------------------------------------------
+// Grimoires register castable spells. A SpellDef is the data; the live cooldown lives on the
+// Scene per-spell map (resolved decision 5 — not persisted). The grimoire's saveFlag gates
+// the loadout: a spell is available only when its owning grimoire is owned.
+
+/** A castable spell registered by a grimoire. */
+export interface SpellDef {
+  readonly id: string
+  /** i18n key for the spell name. */
+  readonly displayKey: string
+  /** Cooldown in ms between casts (mirrored onto the Scene Ability). */
+  readonly cooldownMs: number
+  readonly damage: number
+  /** Mana spent per cast. */
+  readonly manaCost: number
+  /** The grimoire saveFlag that must be owned for this spell to be in the loadout. */
+  readonly grimoireFlag: string
+}
+
+// --- Secrets (Block F) -----------------------------------------------------
+// Secrets are hidden interactions (CB-series tradition). Each is a typed trigger + the flag
+// it sets and the optional reward it grants. The engine's secret runner (engine/content/
+// secrets) evaluates a trigger against a small context and returns the resulting flag/reward.
+
+/** A secret trigger: the precise, undocumented input that fires it. */
+export type SecretTrigger =
+  /** Feed EXACTLY `count` of `resource` in a single interaction (the fossil twitch). */
+  | { readonly kind: 'feedExactly'; readonly resource: ResourceKey; readonly count: number }
+  /** Throw candies at a target (the well-interest stub). */
+  | { readonly kind: 'throwAt'; readonly target: string }
+  /** Possess exactly `count` of `resource` while interacting (single-lollipop). */
+  | { readonly kind: 'holdExactly'; readonly resource: ResourceKey; readonly count: number }
+
+/** A hidden interaction: when its trigger fires, set a flag and optionally grant a reward. */
+export interface SecretDef {
+  readonly id: string
+  readonly trigger: SecretTrigger
+  /** Flag set when the secret fires (e.g. 'fossilTwitched'). */
+  readonly setsFlag: string
+  /** i18n key for the deadpan line shown when it fires. */
+  readonly revealKey: string
+  /** Optional resource reward granted on firing. */
+  readonly reward?: PriceLine
+}
+
+// --- Progressive reveal (Block F) ------------------------------------------
+// CB2's opener reveals actions one at a time as candy accumulates. A reveal threshold maps
+// an action id to the candies.historicalMax at which it appears; the engine returns the set
+// of currently-revealed actions for a state. Pure data; pure resolver.
+
+/** One progressively-revealed action gated by a candy high-water mark. */
+export interface RevealThreshold {
+  /** The action id revealed (e.g. 'eat' | 'throw'). */
+  readonly action: string
+  /** The candies.historicalMax at or above which the action is revealed. */
+  readonly atHistoricalMax: number
+}
+
+// --- Tavern rumors (Block F) -----------------------------------------------
+// One free rumor per accumulated GAME hour (resolved decision 8 — never wall-clock). A rumor
+// is a hint i18n key; the cadence engine reads accumulatedGameTimeMs against the last-told
+// timestamp stored in numbers.
+
+/** A tavern rumor — a single hint line. */
+export interface RumorDef {
+  readonly id: string
+  /** i18n key for the rumor/hint text. */
+  readonly textKey: string
 }

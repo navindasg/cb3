@@ -1,0 +1,98 @@
+import type { GameText, GameTextKey } from '@/content/i18n/schema'
+
+// The English locale (resolved decision 7 — Phase 1 ships en.ts only). Declaring `en: GameText`
+// makes any MISSING key a compile error and any stray key a compile error too: the schema and
+// the strings can never silently drift. The deadpan CB-series voice lives here.
+
+export const en: GameText = {
+  // items
+  'item.woodenSpoon.name': 'wooden spoon',
+  'item.woodenSpoon.desc': "Grandma's. It has stirred more soup than you have eaten candy.",
+  'item.woodenSword.name': 'wooden sword',
+  'item.woodenSword.desc': 'A sword. Of wood. It is, technically, an upgrade.',
+  'item.ironSword.name': 'iron sword',
+  'item.ironSword.desc': 'Now we are talking. Heavy, sharp, faintly sweet-smelling.',
+  'item.leatherHat.name': 'leather hat',
+  'item.leatherHat.desc': 'Keeps the sun off. Keeps very little else off.',
+  'item.beginnerGrimoire.name': "beginner's grimoire",
+  'item.beginnerGrimoire.desc': 'Two spells and a great many warnings about candy.',
+  'item.telescope.name': 'telescope',
+  'item.telescope.desc': 'For looking up. You will look up a great deal now.',
+  'item.mantleSword.name': 'the heirloom sword',
+  'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
+
+  // merchant lines
+  'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
+  'shop.beginnerGrimoire.thanks': 'Back-room stock. Do not set anything on fire.',
+  'forge.woodenSword.thanks': 'It is a sword. Mostly.',
+  'forge.ironSword.thanks': 'The rock candy gives it the edge. Literally.',
+  'obs.beginnerGrimoire.thanks': 'Magic is mostly reading. Here is the reading.',
+  'obs.telescope.thanks': 'There. Now you can see them all. All eight thousand of them.',
+
+  // speakers
+  'speaker.grandma': 'Grandma',
+  'speaker.astronomer': 'The Astronomer',
+
+  // grandma dialogue
+  'dialogue.grandma.intro1': 'There you are, dear. You look hungry.',
+  'dialogue.grandma.intro2': 'Take this. You will want something to stir with.',
+  'dialogue.grandma.spoonGift': 'She presses a wooden spoon into your hands.',
+  'dialogue.grandma.mantle1': 'Do not touch the sword over the mantle.',
+  'dialogue.grandma.mantle2': 'Not yet. You are not ready, and neither is it.',
+
+  // astronomer dialogue
+  'dialogue.astronomer.pitch1': 'Magic? Bah. The stars, child — buy the telescope.',
+  'dialogue.astronomer.pitch2': 'And take the grimoire too, if you must dabble.',
+  'dialogue.astronomer.stars1': 'Eight thousand one hundred and twenty-eight. A perfect number.',
+  'dialogue.astronomer.stars2': 'They will be there forever. Of course they will.',
+
+  // recipes
+  'recipe.syrupOfHealth.name': 'syrup of health',
+
+  // spells
+  'spell.sugarBolt.name': 'sugar bolt',
+  'spell.sweetWard.name': 'sweet ward',
+
+  // secrets
+  'secret.fossilTwitch.reveal': 'The fossil twitches. Just once. You decide not to mention it.',
+  'secret.wellInterest.reveal': 'A candy comes back up. With interest, somehow.',
+  'secret.singleLollipopLeaf.reveal': 'The great leaf unfurls into a hammock. You rest.',
+
+  // rumors
+  'rumor.mines': 'They say the mines below the field go down a very long way.',
+  'rumor.fossil': 'Old-timers feed the fossil exactly one candy. No more. No less.',
+  'rumor.telescope': 'The astronomer counts the stars. He never says the count out loud.',
+  'rumor.well': 'Throw a candy in the well, they say. See what comes back.',
+
+  // death messages
+  'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
+  'death.sugarGolem': 'The sugar golem flattened you. Sweetly. You respawn.',
+  'death.gummyWorm': 'A gummy worm got you. Embarrassing. You respawn.',
+  'death.generic': 'You died. You feel fine about it. You respawn.',
+
+  // zones
+  'zone.house': 'your house',
+  'zone.field': 'your field',
+  'zone.minesEntrance': 'the mine entrance',
+  'zone.fossilChamber': 'the fossil chamber',
+  'zone.shop': 'the shop',
+  'zone.forge': 'the forge',
+  'zone.tavern': 'the tavern',
+  'zone.houses': 'the houses',
+  'zone.well': 'the well',
+  'zone.observatory': 'the observatory',
+  'zone.cauldron': 'the cauldron',
+
+  // progressive-reveal actions
+  'action.eat': 'eat a candy',
+  'action.throw': 'throw a candy',
+
+  // misc UI
+  'ui.starCounter': 'stars in the sky',
+  'ui.candyCounter': 'candies',
+}
+
+/** Resolve a key to its English string (a typed lookup; key must be a GameTextKey). */
+export function t(key: GameTextKey): string {
+  return en[key]
+}
