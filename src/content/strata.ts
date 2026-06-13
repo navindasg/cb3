@@ -1,44 +1,50 @@
 import type { StratumDef } from '@/engine/types/defs'
 
 // The Act 0 world as a bottom-to-top stratum registry (ADR §7.5, D10; resolved decision 2).
-// Zones declare a symbolic anchor + a row offset; render/mapModel resolves anchors to concrete
-// rows at build, stacking unlocked strata so the page grows UPWARD as acts unlock. Content is
-// data only — the engine/renderer consume these defs, never the other way round.
+// The page grows UPWARD as acts unlock. Each stratum is a wide ASCII band; place NAMES are
+// drawn directly into the art and the renderer overlays a transparent click hotspot over each
+// (CB2's model — it never stamps labels on top of the backdrop). A zone's `label` is the exact
+// text to find in the art; only a dynamic zone absent from the static art (the seed crater)
+// gives x/rowOffset to be drawn onto reserved blank space when revealed.
 //
-// Anchors used in Act 0 (low → high): undergroundLevel (the mines), groundLevel (your field
-// & house), villageLevel (the village), spaceLevel (the observatory on the hill). Higher
-// strata (cloud/sky) arrive with the beanstalk in Block G.
+// Anchors (low → high): undergroundLevel (mines), groundLevel (field & house), villageLevel
+// (the village), spaceLevel (the observatory on its hill). Cloud/sky arrive with the beanstalk.
+
+const W = 76 // band width; the renderer pads every row to the widest line
 
 /** Your field and house — the opening screen. Always present. */
 export const FIELD_STRATUM: StratumDef = {
   id: 'field',
   anchor: 'groundLevel',
-  heightRows: 4,
+  heightRows: 8,
   ascii: [
-    '   _____                              ',
-    '  /house\\        . candies .          ',
-    ' /_______\\      your field            ',
-    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+    '        \\  |  /                                        .     .     .         ',
+    '      --- (*) ---        a wide sky over a candy field                       ',
+    '        /  |  \\                                                              ',
+    '        ______                                                               ',
+    '       |      |        your field              a hole goes down              ',
+    '       |      |      .  .  .  .  .  .           to the sugar mines           ',
+    '      your house                                                             ',
+    '~'.repeat(W),
   ],
   zones: [
-    { id: 'house', displayKey: 'zone.house', label: '[house]', x: 3, rowOffset: 1, action: 'enter:house' },
-    { id: 'field', displayKey: 'zone.field', label: '[field]', x: 16, rowOffset: 2, action: 'enter:field' },
+    { id: 'house', displayKey: 'zone.house', label: 'your house', action: 'enter:house' },
+    { id: 'field', displayKey: 'zone.field', label: 'your field', action: 'enter:field' },
     {
       id: 'minesEntrance',
       displayKey: 'zone.minesEntrance',
-      label: '[mine v]',
-      x: 28,
-      rowOffset: 2,
+      label: 'the sugar mines',
       action: 'quest:sugarMines',
     },
     {
-      // The crater + beanstalk garden, revealed by the seed event (G1/G2). Appears once the
-      // falling star has landed and the seed is present; clicking it plants/feeds the stalk.
+      // The crater + beanstalk garden, revealed by the seed event (G1/G2). Absent from the
+      // static art, so it is drawn onto the reserved blank space at (x,rowOffset) once the
+      // falling star has landed (gated by 'seedPresent'). Clicking it plants/feeds the stalk.
       id: 'beanstalkGarden',
       displayKey: 'zone.beanstalkGarden',
-      label: '[garden]',
-      x: 11,
-      rowOffset: 1,
+      label: 'the crater',
+      x: 32,
+      rowOffset: 2,
       action: 'enter:beanstalkGarden',
       unlockFlag: 'seedPresent',
     },
@@ -49,21 +55,20 @@ export const FIELD_STRATUM: StratumDef = {
 export const MINES_STRATUM: StratumDef = {
   id: 'mines',
   anchor: 'undergroundLevel',
-  heightRows: 4,
+  heightRows: 5,
   unlockFlag: 'minesRevealed',
   ascii: [
-    '######## sugar mines ##################',
-    '##  *  veins of rock candy  *        ##',
-    '##     candy bats   sugar golems     ##',
-    '######## the fossil rests below #######',
+    '#'.repeat(W),
+    '##                          the sugar mines                              ##',
+    '##   *  veins of rock candy  *      candy bats        sugar golems        ##',
+    '##                                                                        ##',
+    '###################    the fossil rests below    #########################',
   ],
   zones: [
     {
       id: 'fossilChamber',
       displayKey: 'zone.fossilChamber',
-      label: '[fossil]',
-      x: 28,
-      rowOffset: 3,
+      label: 'the fossil',
       action: 'interact:fossil',
       unlockFlag: 'rockCandyUnlocked',
     },
@@ -74,105 +79,98 @@ export const MINES_STRATUM: StratumDef = {
 export const VILLAGE_STRATUM: StratumDef = {
   id: 'village',
   anchor: 'villageLevel',
-  heightRows: 4,
+  heightRows: 8,
   unlockFlag: 'villageUnlocked',
   ascii: [
-    '======== the village =================',
-    '  [] [] []   the lane    () () ()     ',
-    ' shops & forge   tavern    houses     ',
-    '=================== . well ===========',
+    '                                                                            ',
+    '  ==========================  the village  ==============================  ',
+    '      .----.        .----.         .------.          .------.              ',
+    '      |    |        |    |         |      |          |      |               ',
+    '    the shop      the forge      the tavern        the houses              ',
+    '      |____|        |____|         |______|          |______|              ',
+    '                            the well                                       ',
+    '  ======================================================================  ',
   ],
   zones: [
-    { id: 'shop', displayKey: 'zone.shop', label: '[shop]', x: 2, rowOffset: 1, action: 'enter:shop' },
-    { id: 'forge', displayKey: 'zone.forge', label: '[forge]', x: 9, rowOffset: 1, action: 'enter:forge' },
-    { id: 'tavern', displayKey: 'zone.tavern', label: '[tavern]', x: 17, rowOffset: 1, action: 'enter:tavern' },
-    { id: 'houses', displayKey: 'zone.houses', label: '[houses]', x: 28, rowOffset: 1, action: 'enter:houses' },
-    { id: 'well', displayKey: 'zone.well', label: '[well]', x: 22, rowOffset: 3, action: 'interact:well' },
+    { id: 'shop', displayKey: 'zone.shop', label: 'the shop', action: 'enter:shop' },
+    { id: 'forge', displayKey: 'zone.forge', label: 'the forge', action: 'enter:forge' },
+    { id: 'tavern', displayKey: 'zone.tavern', label: 'the tavern', action: 'enter:tavern' },
+    { id: 'houses', displayKey: 'zone.houses', label: 'the houses', action: 'enter:houses' },
+    { id: 'well', displayKey: 'zone.well', label: 'the well', action: 'interact:well' },
   ],
 }
 
-/** The observatory on the hill. Unlocked once the mines are cleared. */
+/** The observatory on the hill above the village. Unlocked once the mines are cleared. */
 export const OBSERVATORY_STRATUM: StratumDef = {
   id: 'observatory',
   anchor: 'spaceLevel',
-  heightRows: 3,
+  heightRows: 8,
   unlockFlag: 'observatoryUnlocked',
   ascii: [
-    '         ___ the observatory ___      ',
-    '        / o-\\   astronomer            ',
-    '       /_____\\  cauldron below        ',
+    '                              .            *               .                ',
+    '                 *                  the observatory                  .       ',
+    '                            _______________                                 ',
+    '            *              /   the dome      \\           the astronomer     ',
+    '                          /   o          o    \\                             ',
+    '                 ________/                      \\________                   ',
+    '           _____/             a cauldron                 \\_____             ',
+    '      ____/                   bubbles below                   \\____         ',
   ],
   zones: [
-    {
-      id: 'observatoryDome',
-      displayKey: 'zone.observatory',
-      label: '[dome]',
-      x: 9,
-      rowOffset: 1,
-      action: 'enter:observatory',
-    },
-    {
-      id: 'cauldron',
-      displayKey: 'zone.cauldron',
-      label: '[cauldron]',
-      x: 16,
-      rowOffset: 2,
-      action: 'enter:cauldron',
-    },
+    { id: 'observatoryDome', displayKey: 'zone.observatory', label: 'the dome', action: 'enter:observatory' },
+    { id: 'cauldron', displayKey: 'zone.cauldron', label: 'a cauldron', action: 'enter:cauldron' },
   ],
 }
 
 /**
- * The cloud stratum — the genre reveal (Block G). It does not exist until the beanstalk has
- * been fed to the clouds: gated behind 'beanstalkReachedClouds', set by feedBeanstalk. When
- * the flag turns on, render/mapModel appends this stratum above the village and the page grows
- * UPWARD (the cloudLevel anchor sits above villageLevel). The climb quest launches from here.
+ * The cloud stratum — the genre reveal (Block G). Gated behind 'beanstalkReachedClouds';
+ * when set, render/mapModel appends it above the village and the page grows UPWARD. The climb
+ * quest launches from here.
  */
 export const CLOUD_STRATUM: StratumDef = {
   id: 'clouds',
   anchor: 'cloudLevel',
-  heightRows: 4,
+  heightRows: 6,
   unlockFlag: 'beanstalkReachedClouds',
   ascii: [
-    '   .--. the clouds  .--.   .--.       ',
-    '  (    )   ~~~~~~   (    ) (    )      ',
-    '   `--`  a beanstalk pierces them     ',
-    '    ||  [climb v]   ||   gummy aphids ',
+    '         .--.            .--.              .--.            .--.              ',
+    '       (      )  ~~~~   (      )   ~~~~   (      )  ~~~~   (      )           ',
+    '        `----`           `----`            `----`          `----`           ',
+    '                 a giant beanstalk pierces the clouds                       ',
+    '                 ||                         gummy aphids cling here          ',
+    '          climb the beanstalk    ||                                         ',
   ],
   zones: [
     {
       id: 'beanstalkClimb',
       displayKey: 'zone.beanstalkClimb',
-      label: '[climb ^]',
-      x: 4,
-      rowOffset: 3,
+      label: 'climb the beanstalk',
       action: 'quest:beanstalkClimb',
     },
   ],
 }
 
 /**
- * The sky stratum above the clouds — the first hint of the vertical world the beanstalk
- * opened. Revealed alongside the clouds (same flag) once the stalk reaches them. The elevator
- * fast-travel zone appears here once the climb has been completed (beanstalkElevator).
+ * The sky stratum above the clouds — the first hint of the vertical world. Revealed alongside
+ * the clouds (same flag). The elevator fast-travel zone becomes clickable once the climb is done.
  */
 export const SKY_STRATUM: StratumDef = {
   id: 'sky',
   anchor: 'skyLevel',
-  heightRows: 3,
+  heightRows: 5,
   unlockFlag: 'beanstalkReachedClouds',
   ascii: [
-    '          the open sky                ',
-    '     *        the world tilts         ',
-    '   the top of the beanstalk           ',
+    '                   the open sky goes on, and on                             ',
+    '          *                                              *                  ',
+    '                   the top of the beanstalk                                 ',
+    '                                                                            ',
+    '             the beanstalk elevator                                         ',
   ],
   zones: [
     {
       id: 'beanstalkElevator',
       displayKey: 'zone.beanstalkElevator',
-      label: '[elevator]',
-      x: 4,
-      rowOffset: 2,
+      label: 'the beanstalk elevator',
       action: 'travel:beanstalkElevator',
       unlockFlag: 'beanstalkElevator',
     },

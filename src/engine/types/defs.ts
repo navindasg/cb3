@@ -27,17 +27,24 @@ export type StratumAnchor =
   | 'skyLevel'
   | 'spaceLevel'
 
-/** One clickable location within a stratum. */
+/**
+ * One clickable location within a stratum. The map never STAMPS labels over the art
+ * (CB2's model): `label` is the exact text already drawn in the stratum's `ascii`, and the
+ * renderer finds it and overlays a transparent, styled click hotspot on top of it. Only a
+ * zone that appears dynamically (e.g. the seed crater, gated by an unlockFlag) and is NOT
+ * present in the static art supplies `x`/`rowOffset`, where its `label` is drawn onto the
+ * reserved blank space when revealed.
+ */
 export interface ZoneDef {
   readonly id: string
-  /** i18n key for the zone's display name. */
+  /** i18n key for the zone's display name (hover/aria). */
   readonly displayKey: string
-  /** ASCII glyph/label drawn on the map for this zone. */
+  /** The exact text drawn in the stratum art that this zone makes clickable. */
   readonly label: string
-  /** Column at which the zone sits within its stratum. */
-  readonly x: number
-  /** Row offset below the stratum's anchor row (0 = on the anchor). */
-  readonly rowOffset: number
+  /** Column to draw+place the zone, used ONLY when `label` is not found in the art. */
+  readonly x?: number
+  /** Row (within the stratum) to draw+place the zone, used ONLY when `label` is not in the art. */
+  readonly rowOffset?: number
   /** The data-action dispatched when the zone is clicked (navigate). */
   readonly action: string
   /** State flag that must be true for the zone to appear; absent ⇒ always visible. */

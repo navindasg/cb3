@@ -56,7 +56,30 @@ function restoredScrollY(state: GameState): number {
 
 export function createMapRenderer(root: HTMLElement, options: MapRendererOptions): MapRenderer {
   const doc = root.ownerDocument
-  const { metrics, viewportRows } = options
+  const { viewportRows } = options
+  // Metrics are re-measured from the live DOM on each paint so hit-testing matches the actual
+  // (responsive) rendered cell size; options.metrics is the fallback for jsdom/tests (0 rects).
+  let metrics: CellMetrics = options.metrics
+
+  function measureMetrics(): CellMetrics {
+    const view = doc.defaultView
+    if (!view) return options.metrics
+    const probe = doc.createElement('pre')
+    probe.className = 'map-surface'
+    probe.style.position = 'absolute'
+    probe.style.visibility = 'hidden'
+    probe.style.left = '-9999px'
+    probe.style.whiteSpace = 'pre'
+    probe.textContent = 'X'.repeat(40)
+    root.appendChild(probe)
+    const rect = probe.getBoundingClientRect()
+    const fontSizePx = parseFloat(view.getComputedStyle(probe).fontSize || '0')
+    probe.remove()
+    if (rect.width > 0 && fontSizePx > 0) {
+      return { cellW: rect.width / 40, cellH: fontSizePx * LINE_HEIGHT }
+    }
+    return options.metrics
+  }
 
   const pre = doc.createElement('pre')
   pre.className = 'map-surface'
@@ -95,6 +118,7 @@ export function createMapRenderer(root: HTMLElement, options: MapRendererOptions
   }
 
   function paint(state: GameState): void {
+    metrics = measureMetrics()
     resolved = resolveMap(options.strata, state)
     const window = visibleWindow(scroll, viewportRows, resolved.totalRows)
     const visible = strataToRender(resolved, window)

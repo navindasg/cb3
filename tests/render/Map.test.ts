@@ -39,8 +39,11 @@ describe('Map renderer', () => {
     const pre = root.querySelector('pre') as HTMLElement
     // Sky is locked: its '~~~~' backdrop must not appear.
     expect(pre.innerHTML).not.toContain('~')
-    // The house zone is drawn with its label wrapped in a clickable span.
-    expect(pre.innerHTML).toContain('<span data-action="goHouse">H</span>ome')
+    // The 'H' label is not in the 'home' art, so it is stamped and wrapped as a styled,
+    // clickable map-zone hotspot over the backdrop.
+    expect(pre.innerHTML).toContain('data-action="goHouse"')
+    expect(pre.innerHTML).toContain('class="map-zone"')
+    expect(pre.innerHTML).toContain('ome')
     r.unmount()
   })
 
@@ -50,7 +53,7 @@ describe('Map renderer', () => {
     r.render(state({ beanstalkReachedClouds: true }))
     const pre = root.querySelector('pre') as HTMLElement
     expect(pre.innerHTML).toContain('~')
-    expect(pre.innerHTML).toContain('<span data-action="goHouse">H</span>ome')
+    expect(pre.innerHTML).toContain('data-action="goHouse"')
     r.unmount()
   })
 

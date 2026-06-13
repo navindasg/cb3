@@ -117,9 +117,36 @@ export function strataToRender(
   return resolved.placed.filter((p) => stratumInWindow(p, window))
 }
 
+/** Where a zone sits in a stratum, and whether its label must be drawn (CB2: usually not). */
+interface ZonePlacement {
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  /** True only for a dynamic zone whose label is NOT already in the art (stamp onto blank). */
+  readonly stamp: boolean
+}
+
 /**
- * Composite one stratum (backdrop + its revealed zone labels + zone hotspots) into a
- * CellBuffer the height of the stratum. Zones whose unlock flag is unset are skipped.
+ * Locate a zone's clickable region. Preferred: find `label` already drawn in the art and
+ * place the hotspot directly over it (no stamping → never garbles the backdrop). Fallback:
+ * a dynamic zone (e.g. the seed crater) that is not in the static art supplies x/rowOffset,
+ * where its label is drawn onto reserved blank space when it is revealed.
+ */
+function locateZone(def: StratumDef, zone: ZoneDef): ZonePlacement | null {
+  for (let y = 0; y < def.ascii.length; y++) {
+    const idx = def.ascii[y]?.indexOf(zone.label) ?? -1
+    if (idx >= 0) return { x: idx, y, width: zone.label.length, stamp: false }
+  }
+  if (zone.x !== undefined && zone.rowOffset !== undefined) {
+    return { x: zone.x, y: zone.rowOffset, width: zone.label.length, stamp: true }
+  }
+  return null
+}
+
+/**
+ * Composite one stratum (backdrop + a styled click hotspot over each revealed zone) into a
+ * CellBuffer the height of the stratum. Zones whose unlock flag is unset are skipped. Zone
+ * names are part of the art; only dynamic zones (not in the art) are drawn, onto blank space.
  * Pure: returns a fresh buffer.
  */
 export function buildStratumBuffer(
@@ -133,14 +160,11 @@ export function buildStratumBuffer(
   })
   for (const zone of def.zones) {
     if (!zoneRevealed(zone, state)) continue
-    buffer = buffer.drawString(zone.x, zone.rowOffset, zone.label)
-    buffer = buffer.withHotspot({
-      x: zone.x,
-      y: zone.rowOffset,
-      width: zone.label.length,
-      height: 1,
-      action: zone.action,
-    })
+    const at = locateZone(def, zone)
+    if (!at) continue
+    if (at.stamp) buffer = buffer.drawString(at.x, at.y, zone.label)
+    buffer = buffer.withStyle({ x: at.x, y: at.y, length: at.width, className: 'map-zone' })
+    buffer = buffer.withHotspot({ x: at.x, y: at.y, width: at.width, height: 1, action: zone.action })
   }
   return buffer
 }

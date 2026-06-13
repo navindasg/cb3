@@ -39,6 +39,27 @@ pre {
   margin: 0;
 }
 
+/* The world map is the focus: the ~76-col band scales to fill the viewport width, and
+ * render/Map.ts self-measures the resulting cell size so zone clicks stay accurate at any
+ * size. inline-block + left-aligned text keeps the rows aligned while the parent centres it. */
+.map-surface {
+  display: inline-block;
+  text-align: left;
+  font-size: clamp(8px, 2vw, 26px);
+}
+
+/* Map zones: the place name drawn in the art IS the click target (CB2-style — never stamped).
+ * A dotted underline signals it is interactive; hover inverts. */
+.map-zone {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.map-zone:hover {
+  background: #111;
+  color: #fafafa;
+}
+
 /* Tabular figures so the candy/HP/mana counters never jitter as digits change. */
 .status-value {
   font-variant-numeric: tabular-nums lining-nums;
@@ -58,11 +79,12 @@ pre {
   z-index: 10;
 }
 #main-content {
-  /* Centred with a sane max width so the page is not pinned to the far left; top padding
+  /* Full-bleed and centred — the ASCII is the focus and fills the screen (CB2: centred, big).
+   * text-align:center centres the inline-block map/art and the centred buttons; top padding
    * clears the fixed status bar. */
-  max-width: var(--content-max);
   margin: 0 auto;
-  padding: 3.5rem 1.5rem 2rem;
+  padding: 3.25rem 1rem 3rem;
+  text-align: center;
 }
 .status-region {
   display: inline-flex;
@@ -73,11 +95,18 @@ pre {
 .screen {
   margin: 1rem 0;
 }
+.screen h2 {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 .screen button,
 .event-log button {
   display: block;
-  margin: 0.35rem 0;
+  width: fit-content;
+  margin: 0.4rem auto;
+  padding: 0.25rem 0.7rem;
   font: inherit;
+  font-size: 1.05rem;
 }
 .event-log {
   margin-top: 1rem;
