@@ -1,0 +1,27 @@
+# Reference material — CB2 source, cloned locally for reference (one `git clone` away).
+# Excluded only to keep this repo small, NOT for licensing (CB3 is GPL-3; reuse welcome).
+/reference/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.vite/
+
+# Env / local
+.env
+.env.local
+*.local
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Logs / coverage
+*.log
+coverage/
