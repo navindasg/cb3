@@ -78,12 +78,39 @@ export const FOSSIL: EntityTemplate = {
   tags: ['fossil'],
 }
 
+// --- the beanstalk climb (Quest 2, VerticalDriver) ---
+// Gummy aphids cling to the stalk; cloud rats scurry along the cloud ledges near the top.
+
+export const GUMMY_APHID: EntityTemplate = {
+  id: 'gummyAphid',
+  team: 'enemy',
+  width: 1,
+  height: 1,
+  hp: 2,
+  glyph: 'o',
+  color: '#8d8',
+  tags: ['gummyAphid'],
+}
+
+export const CLOUD_RAT: EntityTemplate = {
+  id: 'cloudRat',
+  team: 'enemy',
+  width: 1,
+  height: 1,
+  hp: 3,
+  glyph: 'r',
+  color: '#ddd',
+  tags: ['cloudRat'],
+}
+
 export const ACT0_TEMPLATES: readonly EntityTemplate[] = [
   CANDY_BAT,
   SUGAR_GOLEM,
   GUMMY_WORM,
   ROCK_CANDY_VEIN,
   FOSSIL,
+  GUMMY_APHID,
+  CLOUD_RAT,
 ]
 
 /** Template registry keyed by id, for the engine entity factory. */

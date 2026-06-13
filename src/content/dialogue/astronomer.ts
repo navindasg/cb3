@@ -9,6 +9,14 @@ export const ASTRONOMER_DIALOGUE: DialogueDef = {
   nameKey: 'speaker.astronomer',
   variants: [
     {
+      // After the falling star drops the seed (G1) the astronomer offers his theories — all
+      // wrong, all delivered with total confidence. Highest priority so it pre-empts the
+      // star murmur once the seed event has fired.
+      id: 'seedTheories',
+      lines: ['dialogue.astronomer.seed1', 'dialogue.astronomer.seed2', 'dialogue.astronomer.seed3'],
+      requiresFlag: 'seedEventFired',
+    },
+    {
       id: 'postTelescope',
       lines: ['dialogue.astronomer.stars1', 'dialogue.astronomer.stars2'],
       requiresFlag: 'telescopeOwned',

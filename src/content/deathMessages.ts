@@ -18,6 +18,21 @@ export const GUMMY_WORM_DEATH: DeathMessage = {
   message: 'death.gummyWorm',
 }
 
+export const GUMMY_APHID_DEATH: DeathMessage = {
+  source: 'gummyAphid',
+  message: 'death.gummyAphid',
+}
+
+export const CLOUD_RAT_DEATH: DeathMessage = {
+  source: 'cloudRat',
+  message: 'death.cloudRat',
+}
+
+export const FALL_DEATH: DeathMessage = {
+  source: 'fall',
+  message: 'death.fall',
+}
+
 export const GENERIC_DEATH: DeathMessage = {
   source: 'generic',
   message: 'death.generic',

@@ -45,6 +45,9 @@ export const en: GameText = {
   'dialogue.astronomer.pitch2': 'And take the grimoire too, if you must dabble.',
   'dialogue.astronomer.stars1': 'Eight thousand one hundred and twenty-eight. A perfect number.',
   'dialogue.astronomer.stars2': 'They will be there forever. Of course they will.',
+  'dialogue.astronomer.seed1': 'A meteorite! Iron-nickel, certainly. I shall write a paper.',
+  'dialogue.astronomer.seed2': 'That object in the crater? Volcanic glass. Or an egg. Definitely not a seed.',
+  'dialogue.astronomer.seed3': 'Whatever you do, do not plant it. There is no possible reason to plant it.',
 
   // recipes
   'recipe.syrupOfHealth.name': 'syrup of health',
@@ -68,6 +71,9 @@ export const en: GameText = {
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
   'death.sugarGolem': 'The sugar golem flattened you. Sweetly. You respawn.',
   'death.gummyWorm': 'A gummy worm got you. Embarrassing. You respawn.',
+  'death.gummyAphid': 'A gummy aphid prised you off the stalk. You slide to the last leaf.',
+  'death.cloudRat': 'A cloud rat ran you off the edge. You wake on a lower leaf.',
+  'death.fall': 'You lost your grip. The garden floor is, at least, soft. You climb again.',
   'death.generic': 'You died. You feel fine about it. You respawn.',
 
   // zones
@@ -82,10 +88,20 @@ export const en: GameText = {
   'zone.well': 'the well',
   'zone.observatory': 'the observatory',
   'zone.cauldron': 'the cauldron',
+  'zone.beanstalkGarden': 'the beanstalk garden',
+  'zone.beanstalkClimb': 'the beanstalk',
+  'zone.beanstalkElevator': 'the beanstalk elevator',
 
   // progressive-reveal actions
   'action.eat': 'eat a candy',
   'action.throw': 'throw a candy',
+
+  // the seed pivot + beanstalk
+  'beanstalk.seedLands': 'A star falls. It lands in your field with a sound like a dropped plum.',
+  'beanstalk.seedAppears': 'In the crater, where the star was, there is a seed. Just a seed.',
+  'beanstalk.feedProgress': 'You feed the beanstalk. It drinks the candy and grows a little taller.',
+  'beanstalk.reachedClouds': 'The beanstalk reaches the clouds. The world, it turns out, goes up.',
+  'beanstalk.elevatorReady': 'The beanstalk will carry you now. Up is just a place you go.',
 
   // misc UI
   'ui.starCounter': 'stars in the sky',

@@ -45,6 +45,9 @@ export interface GameText {
   'dialogue.astronomer.pitch2': string
   'dialogue.astronomer.stars1': string
   'dialogue.astronomer.stars2': string
+  'dialogue.astronomer.seed1': string
+  'dialogue.astronomer.seed2': string
+  'dialogue.astronomer.seed3': string
 
   // --- recipes ---
   'recipe.syrupOfHealth.name': string
@@ -68,6 +71,9 @@ export interface GameText {
   'death.candyBat': string
   'death.sugarGolem': string
   'death.gummyWorm': string
+  'death.gummyAphid': string
+  'death.cloudRat': string
+  'death.fall': string
   'death.generic': string
 
   // --- zones (map labels' display names) ---
@@ -82,10 +88,20 @@ export interface GameText {
   'zone.well': string
   'zone.observatory': string
   'zone.cauldron': string
+  'zone.beanstalkGarden': string
+  'zone.beanstalkClimb': string
+  'zone.beanstalkElevator': string
 
   // --- progressive-reveal action buttons (the field opener) ---
   'action.eat': string
   'action.throw': string
+
+  // --- the seed pivot + beanstalk (Block G) ---
+  'beanstalk.seedLands': string
+  'beanstalk.seedAppears': string
+  'beanstalk.feedProgress': string
+  'beanstalk.reachedClouds': string
+  'beanstalk.elevatorReady': string
 
   // --- misc UI flavor ---
   'ui.starCounter': string

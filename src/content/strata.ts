@@ -31,6 +31,17 @@ export const FIELD_STRATUM: StratumDef = {
       rowOffset: 2,
       action: 'quest:sugarMines',
     },
+    {
+      // The crater + beanstalk garden, revealed by the seed event (G1/G2). Appears once the
+      // falling star has landed and the seed is present; clicking it plants/feeds the stalk.
+      id: 'beanstalkGarden',
+      displayKey: 'zone.beanstalkGarden',
+      label: '[garden]',
+      x: 11,
+      rowOffset: 1,
+      action: 'enter:beanstalkGarden',
+      unlockFlag: 'seedPresent',
+    },
   ],
 }
 
@@ -111,10 +122,69 @@ export const OBSERVATORY_STRATUM: StratumDef = {
   ],
 }
 
+/**
+ * The cloud stratum — the genre reveal (Block G). It does not exist until the beanstalk has
+ * been fed to the clouds: gated behind 'beanstalkReachedClouds', set by feedBeanstalk. When
+ * the flag turns on, render/mapModel appends this stratum above the village and the page grows
+ * UPWARD (the cloudLevel anchor sits above villageLevel). The climb quest launches from here.
+ */
+export const CLOUD_STRATUM: StratumDef = {
+  id: 'clouds',
+  anchor: 'cloudLevel',
+  heightRows: 4,
+  unlockFlag: 'beanstalkReachedClouds',
+  ascii: [
+    '   .--. the clouds  .--.   .--.       ',
+    '  (    )   ~~~~~~   (    ) (    )      ',
+    '   `--`  a beanstalk pierces them     ',
+    '    ||  [climb v]   ||   gummy aphids ',
+  ],
+  zones: [
+    {
+      id: 'beanstalkClimb',
+      displayKey: 'zone.beanstalkClimb',
+      label: '[climb ^]',
+      x: 4,
+      rowOffset: 3,
+      action: 'quest:beanstalkClimb',
+    },
+  ],
+}
+
+/**
+ * The sky stratum above the clouds — the first hint of the vertical world the beanstalk
+ * opened. Revealed alongside the clouds (same flag) once the stalk reaches them. The elevator
+ * fast-travel zone appears here once the climb has been completed (beanstalkElevator).
+ */
+export const SKY_STRATUM: StratumDef = {
+  id: 'sky',
+  anchor: 'skyLevel',
+  heightRows: 3,
+  unlockFlag: 'beanstalkReachedClouds',
+  ascii: [
+    '          the open sky                ',
+    '     *        the world tilts         ',
+    '   the top of the beanstalk           ',
+  ],
+  zones: [
+    {
+      id: 'beanstalkElevator',
+      displayKey: 'zone.beanstalkElevator',
+      label: '[elevator]',
+      x: 4,
+      rowOffset: 2,
+      action: 'travel:beanstalkElevator',
+      unlockFlag: 'beanstalkElevator',
+    },
+  ],
+}
+
 /** The Act 0 strata, registered bottom-to-top in anchor order (render resolves the rows). */
 export const ACT0_STRATA: readonly StratumDef[] = [
   MINES_STRATUM,
   FIELD_STRATUM,
   VILLAGE_STRATUM,
   OBSERVATORY_STRATUM,
+  CLOUD_STRATUM,
+  SKY_STRATUM,
 ]
