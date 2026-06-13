@@ -356,6 +356,11 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       initialSpeed: driver.getSpeed(),
       onSpeed: (speed) => driver.setSpeed(speed),
       onReset: () => {
+        // Tear down the lifecycle listeners and stop the loop FIRST. Otherwise the reload
+        // fires visibilitychange→hidden → onHidden → save(), which re-persists the very state
+        // we just cleared (a normal reload SHOULD save — only the dev reset must not).
+        offLifecycle()
+        driver.stop()
         doc.defaultView?.localStorage.clear()
         doc.defaultView?.location.reload()
       },
