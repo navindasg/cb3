@@ -33,6 +33,55 @@ pre {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
+/* The status bar is pinned at the top (ADR §7.5: position fixed). Content scrolls beneath. */
+#status-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 1rem;
+  background: #111;
+  color: #eee;
+  z-index: 10;
+}
+#main-content {
+  padding: 3rem 1rem 1rem;
+}
+.status-region {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+/* The screen + log are plain prose/controls around the ASCII surfaces. */
+.screen {
+  margin: 1rem 0;
+}
+.screen button,
+.event-log button {
+  display: block;
+  margin: 0.35rem 0;
+  font: inherit;
+}
+.event-log {
+  margin-top: 1rem;
+  color: #8a8a8a;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+.event-log p {
+  margin: 0.2rem 0;
+}
+
+/* The typed-secret box: a real, visible, focusable input (ADR §7.6). em-sized, zoomable. */
+.secret-input {
+  font: inherit;
+  font-size: 1rem; /* >=16px so iOS Safari does not auto-zoom the field */
+  margin-top: 1rem;
+  padding: 0.3rem 0.5rem;
+}
+
 /* Static glow = text-shadow via a CSS class per glowing entity (data-driven from flavor).
  * The shadow values are NEVER animated; only the opacity of the overlay layer is. */
 .glow-sun {

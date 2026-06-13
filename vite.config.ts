@@ -12,8 +12,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      // main.ts is the thin DOM bootstrap (wired/verified via Playwright, not unit tests)
-      exclude: ['src/main.ts', 'src/**/*.d.ts'],
+      // main.ts + render/bootstrap.ts are the thin DOM wiring (composition of already-tested
+      // engine/render modules); they own no game logic and are verified end-to-end by the
+      // Playwright suite, not unit tests. All logic-bearing code stays covered by real tests.
+      exclude: ['src/main.ts', 'src/render/bootstrap.ts', 'src/**/*.d.ts'],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },

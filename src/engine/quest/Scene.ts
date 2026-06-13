@@ -207,6 +207,26 @@ export class Scene {
     )
   }
 
+  /**
+   * A NEW Scene with each entity replaced by `fn(entity)` — the host-side hook for effects the
+   * base loop does not own (e.g. the VerticalDriver gust, which the host applies and feeds the
+   * shoved entities back through here). Immutable; a terminal scene is returned unchanged.
+   */
+  mapEntities(fn: (entity: Entity) => Entity): Scene {
+    if (this.phase !== 'active') return this
+    return new Scene(
+      { def: this.def, driver: this.driver, entityFactory: this.factory },
+      this.entities.map(fn),
+      this.scroll,
+      this.elapsedMs,
+      this.phase,
+      this.scheduler,
+      this.respawnPos,
+      this.cooldowns,
+      this.lastDeath,
+    )
+  }
+
   private updatePlayer(player: Entity, input: EntityInput, damage: number, dtMs: number): Entity {
     const gravved = this.driver.applyGravity(player, dtMs, this.bounds)
     const moved = this.driver.applyMovement(gravved, input, dtMs, this.bounds)

@@ -272,4 +272,21 @@ describe('Scene base loop', () => {
     scene = scene.step({ ...idle, events: ['bossDead'] }, 100)
     expect(scene.phase).toBe('won')
   })
+
+  it('mapEntities replaces every entity immutably (the host gust hook)', () => {
+    const def = horizontalDef({ staticSpawns: [{ entityId: 'golem', x: 10, y: 4 }] })
+    const scene = Scene.start({ def, driver: driver(), entityFactory })
+    const mapped = scene.mapEntities((e) => e.withPos(e.pos.add(new Vec2(0, 1))))
+    expect(mapped).not.toBe(scene)
+    expect(scene.entities[0]!.pos.y).toBe(4) // original untouched
+    expect(mapped.entities[0]!.pos.y).toBe(5)
+  })
+
+  it('mapEntities is a no-op on a terminal scene', () => {
+    const def = horizontalDef({ winCondition: { kind: 'event', event: 'win' } })
+    let scene = Scene.start({ def, driver: driver(), entityFactory })
+    scene = scene.step({ ...idle, events: ['win'] }, 100)
+    expect(scene.phase).toBe('won')
+    expect(scene.mapEntities((e) => e)).toBe(scene)
+  })
 })
