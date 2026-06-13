@@ -14,13 +14,26 @@
 
 :root {
   --cell-line-height: 1.2;
+  /* The whole app reads as one monospace world (CB2: light page, black text, sparse). */
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono',
+    Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --content-max: 56rem;
+}
+
+/* On-brand base: light background, black monospace text, comfortable reading rhythm. */
+body {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  color: #111;
+  background: #fafafa;
 }
 
 .map-surface,
 pre {
-  font-family:
-    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono',
-    'Roboto Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  font-family: var(--font-mono);
   line-height: var(--cell-line-height);
   white-space: pre;
   margin: 0;
@@ -45,7 +58,11 @@ pre {
   z-index: 10;
 }
 #main-content {
-  padding: 3rem 1rem 1rem;
+  /* Centred with a sane max width so the page is not pinned to the far left; top padding
+   * clears the fixed status bar. */
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 2rem;
 }
 .status-region {
   display: inline-flex;
@@ -129,4 +146,58 @@ pre {
 .reduce-motion .glow-overlay > span,
 .reduce-motion.glow-overlay > span {
   animation: none;
+}
+
+/* The star counter is pure tell: a quiet, cool-glowing line (glow-moonpop carries the shadow).
+ * tabular-nums keeps the descent from jittering as digits drop. */
+.star-counter {
+  margin: 0.4rem 0 0.8rem;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* DEV-ONLY playtest panel: small, cornered, unobtrusive, and obviously not game UI. The whole
+ * block is dead in production (the panel is never mounted there — see render/devPanel.ts). */
+.dev-panel {
+  position: fixed;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #cfe8ff;
+  background: rgba(17, 17, 17, 0.85);
+  border-radius: 4px;
+  opacity: 0.6;
+}
+.dev-panel:hover {
+  opacity: 1;
+}
+.dev-panel-title {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+.dev-panel-speed {
+  min-width: 3.5ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dev-panel button {
+  font: inherit;
+  padding: 0.1rem 0.35rem;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentcolor;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.dev-panel button:hover {
+  background: rgba(207, 232, 255, 0.15);
+}
+.dev-panel-reset {
+  color: #ffd0f0;
 }

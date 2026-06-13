@@ -106,4 +106,46 @@ describe('createLoopDriver', () => {
   it('browserClock exposes a numeric clock', () => {
     expect(typeof browserClock.now()).toBe('number')
   })
+
+  it('defaults to 1× and feeds stepMs unscaled', () => {
+    const h = fakeClock()
+    const steps: number[] = []
+    const driver = createLoopDriver((dt) => steps.push(dt), { clock: h.clock, stepMs: 100 })
+    expect(driver.getSpeed()).toBe(1)
+    driver.start()
+    h.advance(100)
+    h.runFrame()
+    expect(steps).toEqual([100])
+  })
+
+  it('scales the dt fed to onStep by a dev-only speed multiplier', () => {
+    const h = fakeClock()
+    const steps: number[] = []
+    const driver = createLoopDriver((dt) => steps.push(dt), {
+      clock: h.clock,
+      stepMs: 100,
+      initialSpeed: 10,
+    })
+    expect(driver.getSpeed()).toBe(10)
+    driver.start()
+    h.advance(100)
+    h.runFrame() // one real step, but 100 * 10 = 1000ms of sim time
+    expect(steps).toEqual([1000])
+  })
+
+  it('changes speed live via setSpeed (clamped to the sane range)', () => {
+    const h = fakeClock()
+    const steps: number[] = []
+    const driver = createLoopDriver((dt) => steps.push(dt), { clock: h.clock, stepMs: 100 })
+    driver.start()
+    driver.setSpeed(100)
+    expect(driver.getSpeed()).toBe(100)
+    h.advance(100)
+    h.runFrame()
+    driver.setSpeed(0) // floored back to 1×
+    expect(driver.getSpeed()).toBe(1)
+    h.advance(100)
+    h.runFrame()
+    expect(steps).toEqual([10_000, 100])
+  })
 })

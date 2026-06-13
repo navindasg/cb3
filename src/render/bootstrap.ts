@@ -2,6 +2,10 @@ import { signal } from '@/engine/signals/signal'
 import { createGameSession, OBSERVATORY_UNLOCKED_FLAG } from '@/engine/session/gameSession'
 import type { GameSession } from '@/engine/session/gameSession'
 import { createLoopDriver, browserClock } from '@/engine/loop/driver'
+import { parseSpeedParam, MIN_SPEED } from '@/engine/loop/timeScale'
+import { createDevPanel, type DevPanel } from '@/render/devPanel'
+import { projectedStars, starCounterVisible } from '@/engine/content/starCounter'
+import { formatCount } from '@/engine/number/format'
 import { eatCandies, throwCandies } from '@/engine/state/reducers'
 import { plantSeed, feedBeanstalk } from '@/engine/content/beanstalk'
 import { fireAny, type SecretInteraction } from '@/engine/content/secrets'
@@ -130,6 +134,9 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     clearScreen()
     const art = doc.createElement('pre')
     art.textContent = ' . \n( )\n `—`'
+    // A gentle sun-like glow on the candy art (the existing static glow class — never animated
+    // shadow values; the @media reduced-motion gate stills the pulse overlay separately).
+    art.classList.add('glow-sun')
     markDecorative(art)
     screen.appendChild(art)
     const line = doc.createElement('p')
@@ -155,6 +162,17 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     const title = doc.createElement('h2')
     title.textContent = 'your field'
     screen.appendChild(title)
+
+    // The star counter is pure tell — visible only once the telescope is owned. It carries a
+    // subtle star-cool glow (existing glow-moonpop class); the game never remarks on the descent.
+    if (starCounterVisible(session.getState())) {
+      const stars = doc.createElement('p')
+      stars.className = 'star-counter glow-moonpop'
+      stars.setAttribute('data-testid', 'star-counter')
+      stars.textContent = `${tk('ui.starCounter')}: ${formatCount(projectedStars(session.getState()))}`
+      screen.appendChild(stars)
+    }
+
     screen.appendChild(
       button('eat a candy', 'eat-candy', () => session.dispatch((s) => eatCandies(s, 1))),
     )
@@ -318,7 +336,32 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
 
   // --- driver + lifecycle wiring ------------------------------------------
 
-  const driver = createLoopDriver((dt) => session.advance(dt), { clock: browserClock, stepMs: STEP_MS })
+  // Dev-only time acceleration (ADR §5; engine/loop/timeScale). In a production build the dev
+  // panel below is tree-shaken out and no initial ?speed is read, so the sim always runs at 1×.
+  const initialSpeed = import.meta.env.DEV
+    ? parseSpeedParam(doc.defaultView?.location.search ?? '')
+    : MIN_SPEED
+  const driver = createLoopDriver((dt) => session.advance(dt), {
+    clock: browserClock,
+    stepMs: STEP_MS,
+    initialSpeed,
+  })
+
+  // The dev panel is mounted ONLY in dev; the whole block is dead code in prod (DEV is a static
+  // `false` there, so the import and call are stripped). It changes driver.speed live and offers
+  // a one-click save reset for repeated playtests.
+  let devPanel: DevPanel | null = null
+  if (import.meta.env.DEV) {
+    devPanel = createDevPanel(mainRoot, {
+      initialSpeed: driver.getSpeed(),
+      onSpeed: (speed) => driver.setSpeed(speed),
+      onReset: () => {
+        doc.defaultView?.localStorage.clear()
+        doc.defaultView?.location.reload()
+      },
+    })
+  }
+
   const offLifecycle = wireLifecycleEvents({
     doc,
     onHidden: () => session.onHidden(),
@@ -355,6 +398,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       offState()
       bar.dispose()
       secret?.dispose()
+      devPanel?.dispose()
       clearScreen()
       logEl.remove()
       screen.remove()

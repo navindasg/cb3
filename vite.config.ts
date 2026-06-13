@@ -15,7 +15,13 @@ export default defineConfig({
       // main.ts + render/bootstrap.ts are the thin DOM wiring (composition of already-tested
       // engine/render modules); they own no game logic and are verified end-to-end by the
       // Playwright suite, not unit tests. All logic-bearing code stays covered by real tests.
-      exclude: ['src/main.ts', 'src/render/bootstrap.ts', 'src/**/*.d.ts'],
+      // render/devPanel.ts is DEV-only DOM glue (tree-shaken from prod), same exclusion rationale.
+      exclude: [
+        'src/main.ts',
+        'src/render/bootstrap.ts',
+        'src/render/devPanel.ts',
+        'src/**/*.d.ts',
+      ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },
