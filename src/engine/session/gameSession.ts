@@ -4,7 +4,7 @@ import { createDefaultSave } from '@/engine/state/defaultSave'
 import { recomputeCaches } from '@/engine/state/recomputeCaches'
 import { runLifecyclePass } from '@/engine/loop/lifecycle'
 import { applyOfflineCatchup } from '@/engine/loop/catchup'
-import { decodeSave, makeEnvelope, encodeSave } from '@/engine/save/envelope'
+import { makeEnvelope, encodeSave } from '@/engine/save/envelope'
 import { importSave, type ImportResult } from '@/engine/save/validate'
 import { createSaveStore, type SaveStore, type StorageLike, type WriteResult } from '@/engine/save/localStorage'
 import { setFlag } from '@/engine/state/reducers'
@@ -17,7 +17,11 @@ import { setFlag } from '@/engine/state/reducers'
 // pure engine modules; this is the orchestrator that holds the current reference and the clock.
 
 const DEFAULT_OFFLINE_CAP_MS = 72 * 60 * 60 * 1000 // 72h, the §5 tuning knob
-const AUTOSAVE_LOAD_SLOT = 'autosave1'
+// `store.autosave()` rotates writes across autosave1..N, so no single slot is reliably
+// the newest — after the pointer wraps, autosave1 is the OLDEST. The load path must pick
+// the genuinely most-recent slot, never a hardcoded one.
+const AUTOSAVE_SLOTS = 3
+const AUTOSAVE_SLOT_NAMES = Array.from({ length: AUTOSAVE_SLOTS }, (_, i) => `autosave${i + 1}`)
 
 /** Flag set when the opening line has been acknowledged (gates the village reveal). */
 export const OPENER_SEEN_FLAG = 'openerSeen'
@@ -69,25 +73,30 @@ export interface GameSession {
   subscribe(listener: (state: GameState) => void): () => void
 }
 
-/** The autosaved state, or null when there is none / it is unreadable. */
+/**
+ * The name of the most-recently-written autosave slot, or null when none carry a
+ * readable meta. Picks by `readMeta(slot).savedAt` (the persisted wall clock) so it
+ * tracks the rotation pointer without depending on its exact off-by-one semantics.
+ */
+function newestAutosaveSlot(store: SaveStore): string | null {
+  let best: { slot: string; savedAt: number } | null = null
+  for (const slot of AUTOSAVE_SLOT_NAMES) {
+    const meta = store.readMeta(slot)
+    if (meta === null) continue
+    if (best === null || meta.savedAt > best.savedAt) best = { slot, savedAt: meta.savedAt }
+  }
+  return best?.slot ?? null
+}
+
+/** The newest autosaved state, or null when there is none / none are loadable. */
 function loadAutosave(store: SaveStore): { state: GameState; lastTick: number } | null {
-  const raw = store.loadRaw(AUTOSAVE_LOAD_SLOT)
+  const slot = newestAutosaveSlot(store)
+  if (slot === null) return null
+  const raw = store.loadRaw(slot)
   if (raw === null) return null
   const result = importSave(raw)
   if (!result.ok) return null
   return { state: result.envelope.state, lastTick: result.envelope.lastTick }
-}
-
-/** Read the lastTick from a raw autosave envelope without full validation (best-effort). */
-function readLastTick(raw: string, fallback: number): number {
-  try {
-    const decoded = decodeSave(raw) as { lastTick?: unknown }
-    return typeof decoded.lastTick === 'number' && Number.isFinite(decoded.lastTick)
-      ? decoded.lastTick
-      : fallback
-  } catch {
-    return fallback
-  }
 }
 
 export function createGameSession(options: GameSessionOptions): GameSession {
@@ -153,9 +162,10 @@ export function createGameSession(options: GameSessionOptions): GameSession {
       save()
     },
     onVisible() {
-      // Re-anchor lastTick from the last persisted save so the gap is measured against it.
-      const raw = store.loadRaw(AUTOSAVE_LOAD_SLOT)
-      if (raw !== null) lastTick = readLastTick(raw, lastTick)
+      // The preceding onHidden()->save() already set the in-memory lastTick to the moment
+      // we hid, so it is the correct catch-up anchor. We deliberately do NOT re-anchor from
+      // disk: under autosave rotation a fixed slot can hold an older lastTick, which would
+      // inflate `now - lastTick` and over-credit offline candies (ADR §5).
       runCatchup()
     },
     importSaveString(encoded: string): ImportResult {

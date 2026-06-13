@@ -163,6 +163,43 @@ describe('createGameSession', () => {
     expect(reopened.getState().candies.current).toBe(99)
   })
 
+  it('reload loads the NEWEST autosave after rotation advances past slot 1', () => {
+    // autosave() rotates writes across autosave1/2/3. After >=2 autosaves the rotation
+    // pointer has moved past slot 1, so autosave1 is now the OLDEST slot. Reload must
+    // surface the most-recent state, not the stale first slot.
+    const storage = memStorage()
+    const store = createSaveStore({ storage })
+    const at = (n: number) => ({
+      ...createDefaultSave(),
+      candies: { current: n, lifetimeAccumulated: n, historicalMax: n },
+    })
+    store.autosave(makeEnvelope(at(1), 1_000)) // -> autosave1 (oldest)
+    store.autosave(makeEnvelope(at(500), 2_000)) // -> autosave2 (newest)
+
+    const reopened = createGameSession({ storage, producers: oneCandyPerSec, clock: fakeClock(2_000) })
+    expect(reopened.getState().candies.current).toBe(500)
+  })
+
+  it('onVisible after multiple autosaves does not over-credit from a stale rotated slot', () => {
+    // Drive enough autosaves that the rotation pointer has wrapped well past slot 1, so a
+    // fixed autosave1 anchor would hold a much older lastTick and inflate the offline gap.
+    const storage = memStorage()
+    const clock = fakeClock(0)
+    const session = createGameSession({ storage, producers: oneCandyPerSec, clock, offlineCapMs: 24 * 3_600_000 })
+
+    // Saves rotate: autosave1@0, then autosave2@1_000. The fixed autosave1 slot keeps its
+    // stale lastTick=0. onHidden then writes autosave3@3_000 and sets in-memory lastTick=3_000.
+    session.save() // t=0 -> autosave1 (stays @0, now stale)
+    clock.set(1_000)
+    session.save() // t=1_000 -> autosave2
+    clock.set(3_000)
+    session.onHidden() // t=3_000 -> autosave3; in-memory lastTick=3_000
+
+    clock.set(8_000) // 5 real seconds pass while hidden
+    session.onVisible() // must credit exactly 5 (8_000 - 3_000); a stale autosave1 anchor (0) would credit 8
+    expect(session.getState().candies.current).toBe(6) // 1 start + 5, NOT 9
+  })
+
   it('onHidden saves and onVisible runs catch-up for the gap since hidden', () => {
     const storage = memStorage()
     const clock = fakeClock(0)
