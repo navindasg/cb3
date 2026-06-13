@@ -135,6 +135,12 @@ export function createGameSession(options: GameSessionOptions): GameSession {
   function advance(dtMs: number): void {
     const { state: next, events } = runLifecyclePass(state, options.producers, dtMs)
     commit(next)
+    // The live loop just credited dtMs of foreground production, so advance the catch-up
+    // anchor in lockstep. This keeps the live loop and offline catch-up partitioning
+    // wall-clock time with no gap and no overlap: the driver's per-frame clamp leaves any
+    // long-frame remainder uncredited, and catch-up (now - lastTick) picks up exactly that
+    // remainder plus any frozen-background gap — never double-counting.
+    lastTick += dtMs
     if (events.length > 0) options.onEvents?.(events)
   }
 
@@ -143,7 +149,11 @@ export function createGameSession(options: GameSessionOptions): GameSession {
   }
 
   function save(): WriteResult {
-    lastTick = clock.now()
+    // Persist the CURRENT anchor. Saving is persistence, not a production event, so it must
+    // NOT re-anchor lastTick: a throttled background autosave fires while the live loop is
+    // frozen, and moving lastTick forward there would silently eat the offline gap (it would
+    // skip past elapsed seconds without ever crediting the production they represent). Only
+    // the live loop (advance) and catch-up move lastTick.
     return store.autosave(makeEnvelope(state, lastTick))
   }
 
@@ -162,10 +172,11 @@ export function createGameSession(options: GameSessionOptions): GameSession {
       save()
     },
     onVisible() {
-      // The preceding onHidden()->save() already set the in-memory lastTick to the moment
-      // we hid, so it is the correct catch-up anchor. We deliberately do NOT re-anchor from
-      // disk: under autosave rotation a fixed slot can hold an older lastTick, which would
-      // inflate `now - lastTick` and over-credit offline candies (ADR §5).
+      // Credit the wall-clock gap since production was last credited. The live loop advances
+      // lastTick in the foreground; while the tab was hidden the loop was frozen, so lastTick
+      // is the moment we left and `now - lastTick` is exactly the un-credited away time. We
+      // never re-anchor from disk (rotating autosaves can hold an older lastTick, and saving
+      // no longer touches the anchor anyway).
       runCatchup()
     },
     importSaveString(encoded: string): ImportResult {

@@ -180,24 +180,38 @@ describe('createGameSession', () => {
     expect(reopened.getState().candies.current).toBe(500)
   })
 
-  it('onVisible after multiple autosaves does not over-credit from a stale rotated slot', () => {
-    // Drive enough autosaves that the rotation pointer has wrapped well past slot 1, so a
-    // fixed autosave1 anchor would hold a much older lastTick and inflate the offline gap.
+  it('autosaves do not re-anchor the catch-up clock (the offline gap is credited in full)', () => {
+    // A backgrounded tab keeps firing the throttled autosave while the live loop is frozen.
+    // Persistence must NOT move the catch-up anchor — otherwise each background autosave would
+    // silently eat the offline gap (the bug the e2e suite caught). With no live loop running,
+    // every second since load is still owed and must be credited on return.
     const storage = memStorage()
     const clock = fakeClock(0)
     const session = createGameSession({ storage, producers: oneCandyPerSec, clock, offlineCapMs: 24 * 3_600_000 })
 
-    // Saves rotate: autosave1@0, then autosave2@1_000. The fixed autosave1 slot keeps its
-    // stale lastTick=0. onHidden then writes autosave3@3_000 and sets in-memory lastTick=3_000.
-    session.save() // t=0 -> autosave1 (stays @0, now stale)
+    session.save() // t=0 — persistence only
     clock.set(1_000)
-    session.save() // t=1_000 -> autosave2
+    session.save() // t=1_000 — must NOT advance the anchor
     clock.set(3_000)
-    session.onHidden() // t=3_000 -> autosave3; in-memory lastTick=3_000
+    session.onHidden() // t=3_000 — also just persistence
+    clock.set(8_000) // 8 real seconds have elapsed since load; the loop never ran
+    session.onVisible()
+    // The whole 8s is credited (1 start + 8), NOT eaten down to 6 by the intervening saves.
+    expect(session.getState().candies.current).toBe(9)
+  })
 
-    clock.set(8_000) // 5 real seconds pass while hidden
-    session.onVisible() // must credit exactly 5 (8_000 - 3_000); a stale autosave1 anchor (0) would credit 8
-    expect(session.getState().candies.current).toBe(6) // 1 start + 5, NOT 9
+  it('the live loop advances the catch-up anchor (no double-credit with offline)', () => {
+    // The foreground loop credits production AND advances lastTick, so catch-up only ever
+    // credits time the loop did not — the two never overlap.
+    const storage = memStorage()
+    const clock = fakeClock(0)
+    const session = createGameSession({ storage, producers: oneCandyPerSec, clock, offlineCapMs: 24 * 3_600_000 })
+    for (let i = 0; i < 30; i++) session.advance(100) // 3s of foreground stepping -> +3 candies
+    clock.set(3_000) // wall clock matches the simulated foreground time
+    session.onVisible() // no un-credited gap -> catch-up adds nothing
+    // 1 start + 3 foreground ≈ 4 (NOT ~7, which a double-credit would give). toBeCloseTo
+    // because 30 additions of 0.1 drift in floating point.
+    expect(session.getState().candies.current).toBeCloseTo(4, 6)
   })
 
   it('onHidden saves and onVisible runs catch-up for the gap since hidden', () => {
