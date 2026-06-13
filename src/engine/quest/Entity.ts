@@ -1,13 +1,15 @@
 import { Vec2 } from '@/engine/quest/Vec2'
 import { CollisionBox } from '@/engine/quest/collision'
+import type { Team } from '@/engine/types/quest'
 
 // An immutable quest entity (ADR §6.2 L1). Keeps CB2's composition model — an entity owns
 // its position, collision box, hp, weapons, abilities and team — but every "change" returns
 // a NEW Entity rather than mutating in place. `update()` returns the entity advanced by one
 // scene step; the Scene replaces the old reference with the returned one.
 
-/** Which side an entity fights for. 'neutral' entities never collide-damage. */
-export type Team = 'player' | 'enemy' | 'neutral'
+// Team is a pure type that lives in engine/types so content can import it (types only) without
+// reaching into engine runtime; re-exported here for the many call sites that use Entity.
+export type { Team }
 
 /** A weapon the entity can attack with (data only; combat resolution lives in the Scene). */
 export interface Weapon {

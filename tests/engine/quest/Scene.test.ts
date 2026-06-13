@@ -258,10 +258,21 @@ describe('Scene base loop', () => {
       waves: [{ id: 'only', trigger: { kind: 'timer', atMs: 100 }, spawns: [] }],
     })
     let scene = Scene.start({ def, driver: driver(), entityFactory })
+    expect(scene.phase).toBe('active') // not won at step 0 (the wave has not fired yet)
     scene = scene.step(idle, 50) // elapsed 50 < 100, not yet
     expect(scene.phase).toBe('active')
     scene = scene.step(idle, 100) // elapsed 150 >= 100 -> wave fires -> all cleared -> won
     expect(scene.phase).toBe('won')
+  })
+
+  it('a clearWaves quest with no waves never auto-wins (the empty-waves footgun)', () => {
+    const def = horizontalDef({ winCondition: { kind: 'clearWaves' }, waves: [] })
+    let scene = Scene.start({ def, driver: driver(), entityFactory })
+    expect(scene.phase).toBe('active') // would have been 'won' under the old allFired check
+    scene = scene.step(idle, 100)
+    expect(scene.phase).toBe('active') // still active: with zero waves there is nothing to clear
+    scene = scene.step(idle, 1000)
+    expect(scene.phase).toBe('active')
   })
 
   it('ends on an event win condition', () => {

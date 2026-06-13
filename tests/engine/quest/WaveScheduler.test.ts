@@ -82,4 +82,16 @@ describe('WaveScheduler', () => {
   it('an empty wave list is trivially allFired', () => {
     expect(WaveScheduler.create([]).allFired).toBe(true)
   })
+
+  it('cleared requires at least one wave AND all fired (unlike allFired)', () => {
+    // An empty list is allFired but NOT cleared — guards the clearWaves auto-win footgun.
+    expect(WaveScheduler.create([]).cleared).toBe(false)
+
+    let s = WaveScheduler.create(waves)
+    expect(s.cleared).toBe(false) // has waves, none fired yet
+    s = s.evaluate(ctx({ scroll: 10, elapsedMs: 2000 })).scheduler
+    expect(s.cleared).toBe(false) // event wave still pending
+    s = s.evaluate(ctx({ events: ['bossEnraged'] })).scheduler
+    expect(s.cleared).toBe(true) // had waves and all fired
+  })
 })

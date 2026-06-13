@@ -1,14 +1,12 @@
 /* Render-layer styling for the ASCII grid (ADR §7.2/§7.4/§7.6). No game rules here.
  *
- * Font: we self-host JetBrains Mono via @font-face, but the font stack ALWAYS falls back
- * to a hardened system-monospace list, so the grid aligns even when the binary is absent
- * (it is, in this repo — TODO: drop the .woff2 into /public/fonts/ to ship the real glyphs).
- * The @font-face below references that not-yet-present binary; the browser silently uses the
- * fallback until the file exists, so this never blocks the build. */
+ * Font: we self-host JetBrains Mono (OFL) via @font-face — the real binary ships at
+ * /public/fonts/JetBrainsMono.woff2 (Vite serves public/ at the site root). The font stack
+ * ALWAYS falls back to a hardened system-monospace list, so the grid stays aligned even if
+ * the face fails to load. font-display:swap renders the fallback immediately, then swaps. */
 
 @font-face {
   font-family: 'JetBrains Mono';
-  /* TODO(font binary): add /public/fonts/JetBrainsMono.woff2 to ship the self-hosted face. */
   src: url('/fonts/JetBrainsMono.woff2') format('woff2');
   font-weight: 100 800;
   font-display: swap;

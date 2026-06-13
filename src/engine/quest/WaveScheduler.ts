@@ -39,9 +39,18 @@ export class WaveScheduler {
     return new WaveScheduler(waves, new Set())
   }
 
-  /** True when every wave has fired (lets the Scene end a 'clearWaves' quest). */
+  /** True when every wave has fired. NOTE: vacuously true for an empty wave list. */
   get allFired(): boolean {
     return this.firedIds.size >= this.waves.length
+  }
+
+  /**
+   * True when the quest actually HAD waves and every one has now fired — the condition a
+   * 'clearWaves' win should use. Unlike `allFired`, an empty wave list is never `cleared`,
+   * so a `waves: []` + `clearWaves` quest can't auto-win on step 0 (footgun guard).
+   */
+  get cleared(): boolean {
+    return this.waves.length > 0 && this.allFired
   }
 
   /** A copy with the given wave ids marked fired (for restoring a snapshot). */

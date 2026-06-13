@@ -26,7 +26,10 @@ export function triggerFires(secret: SecretDef, interaction: SecretInteraction, 
       return (
         interaction.kind === 'feed' &&
         interaction.resource === t.resource &&
-        interaction.count === t.count
+        interaction.count === t.count &&
+        // The player must actually hold what they feed (mirrors holdExactly): you cannot feed
+        // candy you do not have. >= here, not ===, since feeding 1 is valid while holding more.
+        state[t.resource].current >= t.count
       )
     case 'throwAt':
       return interaction.kind === 'throw' && interaction.target === t.target

@@ -4,7 +4,7 @@
 // plain template records. A template maps a spawn-order entityId to the stats/glyph used to
 // build the Entity and to render it in the arena.
 
-import type { Team } from '@/engine/quest/Entity'
+import type { Team } from '@/engine/types/quest'
 
 export interface EntityTemplate {
   /** The spawn-order entityId this template builds (e.g. 'candyBat'). */

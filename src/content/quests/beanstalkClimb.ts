@@ -1,6 +1,6 @@
 import type { QuestDef } from '@/engine/types/defs'
 import { GUMMY_APHID_DEATH, CLOUD_RAT_DEATH, FALL_DEATH, GENERIC_DEATH } from '@/content/deathMessages'
-import { BEANSTALK_ELEVATOR_FLAG } from '@/engine/content/beanstalkElevator'
+import { BEANSTALK_ELEVATOR_FLAG } from '@/content/flags'
 
 // The beanstalk climb — Quest 2 (DESIGN §22), the FIRST VerticalDriver Scene quest and the
 // raison d'être of Phase 1: it proves the rotated quest engine. The player climbs UPWARD from

@@ -31,6 +31,13 @@ describe('fossil twitch — feed EXACTLY 1 candy', () => {
     ).toBe(false)
   })
 
+  it('does not fire when the player does not hold the candy to feed', () => {
+    const broke: GameState = { ...createDefaultSave(), candies: createResource(0) }
+    expect(
+      fireSecret(broke, FOSSIL_TWITCH, { kind: 'feed', resource: 'candies', count: 1 }).fired,
+    ).toBe(false)
+  })
+
   it('is inert once already fired (no double-trigger, same ref)', () => {
     const fired: GameState = { ...createDefaultSave(), flags: { fossilTwitched: true } }
     const result = fireSecret(fired, FOSSIL_TWITCH, { kind: 'feed', resource: 'candies', count: 1 })

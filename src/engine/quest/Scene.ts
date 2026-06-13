@@ -328,7 +328,9 @@ function matchesWin(
     case 'reachScroll':
       return scroll >= win.atScroll
     case 'clearWaves':
-      return scheduler.allFired
+      // Guard the footgun: a quest with no waves must NEVER auto-win on step 0. Only an
+      // actual clear (had >=1 wave AND all fired) satisfies a clearWaves win.
+      return scheduler.cleared
     case 'event':
       return events.includes(win.event)
   }

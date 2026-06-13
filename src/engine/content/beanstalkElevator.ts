@@ -6,7 +6,12 @@ import type { GameState } from '@/engine/types/GameState'
 // BEANSTALK_ELEVATOR_FLAG. This module is the tiny, pure reader the world consults to decide
 // whether the elevator fast-travel affordance is offered. No logic beyond the flag check.
 
-/** Flag set on beanstalk-climb victory; enables the elevator fast-travel forever after. */
+/**
+ * Flag set on beanstalk-climb victory; enables the elevator fast-travel forever after.
+ * The flag string is owned by content (src/content/flags.ts) — the canonical source of truth.
+ * Engine cannot import content (layering), so this literal is kept in lock-step by hand; the
+ * BEANSTALK_CLIMB quest test asserts onWinFlags contains this value, catching any drift.
+ */
 export const BEANSTALK_ELEVATOR_FLAG = 'beanstalkElevator'
 
 /** Whether the beanstalk elevator fast-travel is available (climb completed at least once). */

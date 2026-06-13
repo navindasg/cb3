@@ -47,7 +47,11 @@ export class Vec2 {
     return Math.hypot(this.x, this.y)
   }
 
-  /** True when both components are exactly equal (Object.is-style, handles ±0/NaN sanely). */
+  /**
+   * True when both components are === equal. Coordinates are always finite (positions are
+   * integers/finite floats), so === is exact: +0 and -0 compare equal (desirable here) and any
+   * NaN coordinate — which should never occur — compares unequal (NaN !== NaN). Not Object.is.
+   */
   equals(other: Vec2): boolean {
     return this.x === other.x && this.y === other.y
   }
