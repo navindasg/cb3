@@ -6,3 +6,6 @@
 
 /** Set on beanstalk-climb victory; enables the elevator fast-travel forever after. */
 export const BEANSTALK_ELEVATOR_FLAG = 'beanstalkElevator'
+
+/** Set on forest victory; reveals the village on the overworld (its region's revealFlag). */
+export const FOREST_CLEARED_FLAG = 'forestCleared'

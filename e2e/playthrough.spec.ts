@@ -105,15 +105,18 @@ test('full Phase 1 playthrough: opener → house → GUI unlock → map → seed
   const hpBefore = (await state(page)).playerHpCurrent
   await page.getByTestId('eat-candy').click()
   await expect.poll(async () => (await state(page)).playerHpCurrent).toBeGreaterThan(hpBefore)
-  await expect(page.locator('[data-region="hp"] .status-value')).toContainText('/')
+  await expect(page.getByTestId('health-bar')).toContainText('/')
   await capture(page, 'ate-to-heal')
 
-  // --- 5. the map renders and a not-yet-built location responds visibly ----------------------
+  // --- 5. the map renders; "the forest" is now a real fight (start it, then retreat) ---------
   await page.getByTestId('open-map').click()
   await expect(page.locator('.map-surface')).toBeVisible()
   await page.locator('.map-zone', { hasText: 'the forest' }).click()
-  await expect(page.getByTestId('toast')).toContainText('not open yet')
-  await capture(page, 'map-location-notice')
+  await expect(page.getByTestId('forest-status')).toBeVisible()
+  await expect(page.locator('.arena-surface')).toContainText('@')
+  await capture(page, 'forest-fight')
+  await page.getByTestId('forest-leave').click()
+  await expect(page.locator('.map-surface')).toBeVisible()
 
   // --- 6. arm the seed pivot, then plant + feed the beanstalk to the clouds -------------------
   await page.locator('.map-zone', { hasText: 'your field' }).click()

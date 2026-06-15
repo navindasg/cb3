@@ -6,7 +6,7 @@ import { parseSpeedParam, MIN_SPEED } from '@/engine/loop/timeScale'
 import { createDevPanel, type DevPanel } from '@/render/devPanel'
 import { projectedStars, starCounterVisible } from '@/engine/content/starCounter'
 import { formatCount, candyCountSentence } from '@/engine/number/format'
-import { eatAllCandies, throwCandies } from '@/engine/state/reducers'
+import { eatAllCandies, throwCandies, equip } from '@/engine/state/reducers'
 import { derivedMaxHp, MAX_HP_KEY } from '@/engine/state/recomputeCaches'
 import { isRevealed } from '@/engine/content/reveal'
 import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
@@ -24,6 +24,8 @@ import {
 import { plantSeed, feedBeanstalk } from '@/engine/content/beanstalk'
 import { createQuestHost } from '@/engine/quest/questHost'
 import { VerticalDriver } from '@/engine/quest/physics/VerticalDriver'
+import { HorizontalDriver } from '@/engine/quest/physics/HorizontalDriver'
+import { nearestHostileDistance } from '@/engine/quest/combat'
 import { createEntityFactory } from '@/engine/content/entityFactory'
 import { spellAbilities } from '@/engine/content/spells'
 import { applyQuestWin } from '@/engine/quest/questRewards'
@@ -32,13 +34,17 @@ import { ACT0_OVERWORLD } from '@/content/overworld'
 import { TEMPLATE_MAP } from '@/content/quests/entityTemplates'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
 import { BEANSTALK_CLIMB } from '@/content/quests/beanstalkClimb'
-import { WOODEN_SPOON } from '@/content/items/items'
+import { FOREST_QUEST, FOREST_GOAL } from '@/content/quests/forest'
+import { playerQuestWeapons } from '@/content/items/playerLoadout'
+import { inventoryView } from '@/content/items/inventoryView'
+import { WOODEN_SPOON, ITEM_MAP } from '@/content/items/items'
 import { GRANDMA_DIALOGUE, GRANDMA_INTRO_VARIANT_ID } from '@/content/dialogue/grandma'
 import { selectVariant, markVariantShown } from '@/engine/content/dialogue'
 import { grantItem } from '@/engine/shop/purchase'
 import { t } from '@/content/i18n/en'
 import type { GameTextKey } from '@/content/i18n/schema'
 import { createStatusBar, type StatusBar } from '@/render/StatusBar'
+import { createHealthBar, type HealthBar } from '@/render/healthBar'
 import { createOverworldRenderer, type OverworldRenderer } from '@/render/Overworld'
 import { createArenaRenderer, type ArenaRenderer } from '@/render/ArenaRenderer'
 import { BEANSTALK_BACKDROP } from '@/render/arenaBackdrop'
@@ -67,6 +73,19 @@ function maxHpOf(s: ReturnType<GameSession['getState']>): number {
   return s.numbers[MAX_HP_KEY] ?? derivedMaxHp(s.lifetimeCandiesEaten)
 }
 
+// The forest arena backdrop (drawn UNDER the entities): a sparse treeline up top and a ground
+// line along the bottom row, so the @ and the gummy critters walk a path rather than a void.
+const FOREST_BACKDROP: readonly string[] = [
+  '     ^          ^             ^             ^           ^',
+  '    /=\\        /=\\           /=\\           /=\\         /=\\',
+  '     |          |             |             |           |',
+  '',
+  '',
+  '',
+  '',
+  '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+]
+
 export interface BootstrapHandles {
   readonly session: GameSession
   destroy(): void
@@ -93,15 +112,13 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
 
   const bar: StatusBar = createStatusBar(statusRoot, [
     { id: 'candy', label: 'candies: ', source: candy, visible: statusBarUnlocked },
-    {
-      id: 'hp',
-      label: 'hp: ',
-      source: hp,
-      max: maxHp,
-      visible: healthBarUnlocked,
-      format: (c, m) => `${Math.floor(c)} / ${m ?? Math.floor(c)}`,
-    },
   ])
+  // The HP readout is a graphical health bar (green→orange→red), gated on the health-bar unlock.
+  const healthBar: HealthBar = createHealthBar(statusRoot, {
+    hp,
+    maxHp,
+    visible: healthBarUnlocked,
+  })
   // The whole bar is hidden until the status bar feature is requested (CB2: no HUD at all first).
   const topDisposers: Array<() => void> = []
   topDisposers.push(
@@ -174,6 +191,11 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       arena = null
     }
     screen.replaceChildren()
+    // Leaving a quest: the status-bar health bar reflects the persisted (town) HP again. During
+    // a quest the quest screens drive these signals from the live scene player instead.
+    const s = session.getState()
+    hp.set(s.playerHpCurrent)
+    maxHp.set(maxHpOf(s))
   }
 
   /**
@@ -275,6 +297,12 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       const houseLabel = tk('action.enterHouse')
       controls.appendChild(button(houseLabel, 'enter-house', () => showHouse(), houseLabel.indexOf('h')))
 
+      // "inventory" appears once you own any gear (grandma's spoon, a forge weapon, …).
+      if (Object.values(s.ownedItems).some(Boolean)) {
+        const invLabel = tk('action.inventory')
+        controls.appendChild(button(invLabel, 'open-inventory', () => showInventory(), invLabel.indexOf('i')))
+      }
+
       if (s.flags[MAP_UNLOCKED_FLAG] === true) {
         const mapLabel = tk('action.openMap')
         controls.appendChild(button(mapLabel, 'open-map', () => showMap(), mapLabel.indexOf('m')))
@@ -315,6 +343,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
         isRevealed(FIELD_REVEAL_THRESHOLDS, 'eat', s),
         isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', s),
         s.flags[MAP_UNLOCKED_FLAG] === true,
+        Object.values(s.ownedItems).some(Boolean),
         view.next?.flag ?? '',
         view.justUnlocked?.flag ?? '',
         starCounterVisible(s),
@@ -369,6 +398,67 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     screen.appendChild(button(back, 'house-to-field', () => showField(), back.indexOf('b')))
   }
 
+  // --- the inventory: equipment slots + combat stats + owned items (CB2's Inventory) --------
+
+  function showInventory(): void {
+    clearScreen()
+    const state = session.getState()
+    const view = inventoryView(state, maxHpOf(state))
+
+    const title = doc.createElement('h2')
+    title.textContent = 'inventory'
+    title.setAttribute('data-testid', 'inventory-screen')
+    screen.appendChild(title)
+
+    const weaponName =
+      view.stats.weaponId === 'bareHands'
+        ? 'bare hands'
+        : tk(ITEM_MAP.get(view.stats.weaponId)!.displayKey as GameTextKey)
+    const speed = (1000 / view.stats.weaponCooldownMs).toFixed(1)
+    const stats = doc.createElement('p')
+    stats.className = 'inv-stats'
+    stats.setAttribute('data-testid', 'inv-stats')
+    stats.textContent = `max hp: ${view.stats.maxHp}    weapon: ${weaponName} (dmg ${view.stats.weaponDamage}, ${speed}/s)`
+    screen.appendChild(stats)
+
+    for (const slot of view.slots) {
+      if (slot.owned.length === 0) continue
+      const row = doc.createElement('div')
+      row.className = 'inv-slot'
+      const label = doc.createElement('span')
+      label.className = 'inv-slot-label'
+      label.textContent = `${slot.slot}:`
+      row.appendChild(label)
+      for (const item of slot.owned) {
+        const equipped = item.id === slot.equippedId
+        const name = tk(item.displayKey as GameTextKey)
+        const b = button(
+          `${item.ascii} ${name}${equipped ? ' ✓' : ''}`,
+          `inv-equip-${item.id}`,
+          () => {
+            session.dispatch((s) => equip(s, slot.slot, item.id))
+            showInventory()
+          },
+        )
+        if (equipped) b.classList.add('equipped')
+        row.appendChild(b)
+      }
+      screen.appendChild(row)
+    }
+
+    if (view.otherItems.length > 0) {
+      const others = doc.createElement('p')
+      others.className = 'inv-others'
+      others.textContent = `items: ${view.otherItems
+        .map((i) => tk(i.displayKey as GameTextKey))
+        .join(', ')}`
+      screen.appendChild(others)
+    }
+
+    const back = tk('action.backToField')
+    screen.appendChild(button(back, 'inventory-back', () => showField(), back.indexOf('b')))
+  }
+
   function showMap(): void {
     clearScreen()
     map = createOverworldRenderer(screen, {
@@ -395,6 +485,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     const { kind, target } = parseAction(action)
     if (kind === 'enter' && target === 'field') return showField()
     if (kind === 'enter' && target === 'beanstalkGarden') return showGarden()
+    if (kind === 'quest' && target === 'forest') return startForest()
     if (kind === 'quest' && target === 'beanstalkClimb') return startClimb()
     // Everything else is wired in the next build steps (forest/village/mines/mountain quests +
     // screens). Until then a click responds VISIBLY so a location never feels dead.
@@ -528,6 +619,103 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     paint()
   }
 
+  // --- the forest (the first HorizontalDriver combat quest) ---------------
+
+  function startForest(): void {
+    clearScreen()
+    const startState = session.getState()
+    // The quest's player HP floor is overridden by the player's eaten-candy-derived max HP, so
+    // eating candies before the fight genuinely matters.
+    const def = { ...FOREST_QUEST, playerMaxHp: maxHpOf(startState) }
+    const driver = new HorizontalDriver({ gravityY: 30, moveSpeed: 7, jumpVelocity: 14 })
+    const host = createQuestHost({
+      def,
+      driver,
+      entityFactory: createEntityFactory(TEMPLATE_MAP),
+      playerAbilities: spellAbilities(GRIMOIRE_SPELLS, startState),
+      playerWeapons: playerQuestWeapons(startState),
+    })
+
+    const hud = doc.createElement('p')
+    hud.setAttribute('data-testid', 'forest-status')
+    hud.className = 'climb-hud'
+    hud.textContent = 'into the forest…'
+    screen.appendChild(hud)
+
+    arena = createArenaRenderer(screen, { metrics: FALLBACK_METRICS })
+
+    const controls = doc.createElement('div')
+    controls.className = 'climb-controls'
+    screen.appendChild(controls)
+
+    // The march east is hands-free (you auto-advance and auto-swing); holding — or mashing —
+    // ▶ hurry doubles the pace, the same agency the climb gives.
+    let boost = false
+    let boostTicks = 0
+    const hurry = button('▶ hurry', 'forest-hurry', () => {
+      boostTicks = 5
+    })
+    hurry.addEventListener('pointerdown', () => {
+      boost = true
+    })
+    const release = (): void => {
+      boost = false
+    }
+    hurry.addEventListener('pointerup', release)
+    hurry.addEventListener('pointerleave', release)
+    controls.appendChild(hurry)
+    controls.appendChild(button('retreat', 'forest-leave', () => showMap()))
+
+    let finished = false
+
+    const paint = (): void => {
+      const scene = host.scene()
+      arena?.render({ ...toArenaModel(scene, TEMPLATE_MAP), background: FOREST_BACKDROP })
+      if (scene.phase === 'won') {
+        if (!finished) {
+          finished = true
+          hud.textContent = 'the forest is clear'
+          session.dispatch((s) => applyQuestWin(s, def))
+          notify('The forest is clear. The village lies to the east.')
+          controls.replaceChildren(button('back to the map', 'forest-done', () => showMap()))
+          stop()
+        }
+        return
+      }
+      const player = scene.player
+      // Drive the status-bar health bar from the LIVE quest HP while fighting.
+      if (player) {
+        hp.set(player.hp)
+        maxHp.set(player.maxHp)
+      }
+      const curHp = player ? Math.max(0, Math.round(player.hp)) : 0
+      const maxV = player ? player.maxHp : 0
+      hud.textContent = `into the forest — ${Math.min(FOREST_GOAL, Math.round(scene.scroll))} / ${FOREST_GOAL}   hp ${curHp}/${maxV}`
+      // A respawn (death) raises lastDeath for exactly one frame — surface its line once.
+      if (scene.lastDeath) log(scene.lastDeath.message as GameTextKey)
+    }
+
+    const interval = setInterval(() => {
+      const scene = host.scene()
+      const player = scene.player
+      const reach = player ? player.weapons.reduce((m, w) => Math.max(m, w.range), 0) : 0
+      const dist = player ? nearestHostileDistance(player, scene.entities) : Infinity
+      // Advance east, but HOLD to fight when a critter is within weapon reach (then resume).
+      const moveX = dist <= reach ? 0 : 1
+      const fast = boost || boostTicks > 0
+      if (boostTicks > 0) boostTicks--
+      for (let i = 0; i < (fast ? 2 : 1); i++) {
+        host.step({ playerInput: { moveX, moveY: 0, jump: false } }, STEP_MS)
+      }
+      paint()
+    }, STEP_MS)
+    function stop(): void {
+      clearInterval(interval)
+    }
+    questCleanup = stop
+    paint()
+  }
+
   // --- driver + lifecycle wiring ------------------------------------------
 
   const initialSpeed = import.meta.env.DEV
@@ -577,7 +765,9 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showMap,
     showField,
     showGarden,
+    showInventory,
     startClimb,
+    startForest,
     armSeed,
     log: logText,
   }
@@ -589,6 +779,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       offLifecycle()
       offState()
       for (const d of topDisposers) d()
+      healthBar.dispose()
       bar.dispose()
       hotkeys.dispose()
       devPanel?.dispose()

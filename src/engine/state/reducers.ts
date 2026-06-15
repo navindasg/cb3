@@ -1,4 +1,4 @@
-import type { GameState } from '@/engine/types/GameState'
+import type { GameState, EquipmentSlot } from '@/engine/types/GameState'
 import { spendResource } from '@/engine/types/Resource'
 import { derivedMaxHp, MAX_HP_KEY } from '@/engine/state/recomputeCaches'
 
@@ -49,6 +49,19 @@ export function throwCandies(state: GameState, count: number = THROW_BATCH): Gam
   const candies = spendResource(state.candies, count)
   if (!candies) return state
   return { ...state, candies, lifetimeCandiesThrown: state.lifetimeCandiesThrown + count }
+}
+
+/** Equip an OWNED item into `slot`. No-op (same ref) if it is not owned or already equipped. */
+export function equip(state: GameState, slot: EquipmentSlot, itemId: string): GameState {
+  if (state.ownedItems[itemId] !== true) return state
+  if (state.equipped[slot] === itemId) return state
+  return { ...state, equipped: { ...state.equipped, [slot]: itemId } }
+}
+
+/** Clear `slot`'s equipped item. No-op (same ref) when the slot is already empty. */
+export function unequip(state: GameState, slot: EquipmentSlot): GameState {
+  if (state.equipped[slot] === null) return state
+  return { ...state, equipped: { ...state.equipped, [slot]: null } }
 }
 
 export function setFlag(state: GameState, key: string, value = true): GameState {

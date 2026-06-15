@@ -71,6 +71,8 @@ export interface GameText {
   'death.candyBat': string
   'death.sugarGolem': string
   'death.gummyWorm': string
+  'death.gummySlime': string
+  'death.gummyBear': string
   'death.gummyAphid': string
   'death.cloudRat': string
   'death.fall': string
@@ -97,6 +99,7 @@ export interface GameText {
   'action.throw': string
   'action.enterHouse': string
   'action.openMap': string
+  'action.inventory': string
   'action.backToField': string
   'action.backToHouse': string
   'action.scanSky': string

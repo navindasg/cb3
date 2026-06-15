@@ -18,6 +18,16 @@ export function createEntityFactory(
     if (!template) {
       throw new Error(`createEntityFactory: no template for entityId '${order.entityId}'`)
     }
+    const weapons = template.attack
+      ? [
+          {
+            id: `${template.id}Attack`,
+            damage: template.attack.damage,
+            range: template.attack.range,
+            cooldownMs: template.attack.cooldownMs,
+          },
+        ]
+      : []
     return new Entity({
       id: `${order.entityId}@${order.x},${order.y}`,
       team: template.team,
@@ -27,6 +37,7 @@ export function createEntityFactory(
       hp: template.hp,
       maxHp: template.hp,
       tags: template.tags,
+      weapons,
     })
   }
 }

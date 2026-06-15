@@ -70,6 +70,16 @@ export interface StratumDef {
 // and is reused verbatim by the shop, the forge and the observatory: each is just a
 // different ShopEntry[] registry. Adding a buyable thing is appending a data object.
 
+/** Combat stats an item carries when equipped as a weapon (read into the quest player). */
+export interface WeaponStats {
+  /** Flat damage per hit. */
+  readonly damage: number
+  /** Reach in cells (centre-to-centre). */
+  readonly range: number
+  /** Minimum ms between attacks (lower = faster). */
+  readonly cooldownMs: number
+}
+
 /** A buyable, owned thing — a weapon, a hat, a telescope, a grimoire. */
 export interface ItemDef {
   readonly id: string
@@ -83,6 +93,8 @@ export interface ItemDef {
   readonly saveFlag: string
   /** Equipment slot the item occupies when equipped; absent ⇒ not equippable. */
   readonly slot?: EquipmentSlot
+  /** Combat stats when this item is the equipped weapon; absent ⇒ deals no quest damage. */
+  readonly weapon?: WeaponStats
 }
 
 /** A single resource cost line; a price is one or more of these (all must be paid). */

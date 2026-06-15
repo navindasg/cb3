@@ -1,5 +1,13 @@
 import { createDefaultSave } from '@/engine/state/defaultSave'
-import { eatCandies, eatAllCandies, throwCandies, setFlag, setNumber } from '@/engine/state/reducers'
+import {
+  eatCandies,
+  eatAllCandies,
+  throwCandies,
+  equip,
+  unequip,
+  setFlag,
+  setNumber,
+} from '@/engine/state/reducers'
 import { MAX_HP_KEY } from '@/engine/state/recomputeCaches'
 import { addResource } from '@/engine/types/Resource'
 import type { GameState } from '@/engine/types/GameState'
@@ -89,6 +97,36 @@ describe('throwCandies', () => {
     expect(after.lifetimeCandiesThrown).toBe(10)
     const poor = withCandies(9)
     expect(throwCandies(poor)).toBe(poor)
+  })
+})
+
+describe('equip / unequip', () => {
+  function withOwned(...ids: string[]): GameState {
+    const s = createDefaultSave()
+    const ownedItems = Object.fromEntries(ids.map((id) => [id, true]))
+    return { ...s, ownedItems }
+  }
+
+  it('equips an owned item into its slot', () => {
+    const after = equip(withOwned('woodenSpoon'), 'weapon', 'woodenSpoon')
+    expect(after.equipped.weapon).toBe('woodenSpoon')
+  })
+
+  it('refuses to equip an item the player does not own (same reference)', () => {
+    const s = withOwned()
+    expect(equip(s, 'weapon', 'ironSword')).toBe(s)
+  })
+
+  it('is a no-op when the item is already equipped (same reference)', () => {
+    const s = equip(withOwned('woodenSpoon'), 'weapon', 'woodenSpoon')
+    expect(equip(s, 'weapon', 'woodenSpoon')).toBe(s)
+  })
+
+  it('unequips a slot and is a no-op on an empty slot', () => {
+    const equipped = equip(withOwned('woodenSpoon'), 'weapon', 'woodenSpoon')
+    const bare = unequip(equipped, 'weapon')
+    expect(bare.equipped.weapon).toBeNull()
+    expect(unequip(bare, 'weapon')).toBe(bare)
   })
 })
 

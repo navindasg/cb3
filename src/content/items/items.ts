@@ -12,6 +12,8 @@ export const WOODEN_SPOON: ItemDef = {
   ascii: '\\_',
   saveFlag: 'spoonOwned',
   slot: 'weapon',
+  // Long reach (it out-pokes a gummy bite) but a gentle, slow swat — grandma's, after all.
+  weapon: { damage: 2, range: 2, cooldownMs: 500 },
 }
 
 export const WOODEN_SWORD: ItemDef = {
@@ -21,6 +23,7 @@ export const WOODEN_SWORD: ItemDef = {
   ascii: '+-',
   saveFlag: 'woodenSwordOwned',
   slot: 'weapon',
+  weapon: { damage: 3, range: 2, cooldownMs: 450 },
 }
 
 export const IRON_SWORD: ItemDef = {
@@ -30,6 +33,7 @@ export const IRON_SWORD: ItemDef = {
   ascii: '+=',
   saveFlag: 'ironSwordOwned',
   slot: 'weapon',
+  weapon: { damage: 5, range: 2, cooldownMs: 400 },
 }
 
 export const LEATHER_HAT: ItemDef = {

@@ -110,6 +110,37 @@ pre {
   gap: 0.25rem;
 }
 
+/* The graphical health bar (CB2-style green→orange→red fill with the current/max inside). A
+ * thin framed track; the fill width + colour are set inline by render/healthBar from the signals. */
+.health-bar {
+  position: relative;
+  display: inline-block;
+  width: 8rem;
+  height: 1.2rem;
+  border: 1px solid var(--btn-border);
+  background: #efe9e0;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.health-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  transition:
+    width 0.18s ease,
+    background-color 0.18s ease;
+}
+.health-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #111;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
 /* The screen + log are plain prose/controls around the ASCII surfaces. */
 .screen {
   margin: 1rem 0;
@@ -188,6 +219,38 @@ pre {
   max-width: 28rem;
   color: #6a6a6a;
   font-size: 0.95rem;
+}
+
+/* The inventory: a stats line and one row of equip choices per non-empty slot. */
+.inv-stats {
+  margin: 0.2rem 0 0.8rem;
+  color: #444;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.inv-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.3rem 0;
+}
+.inv-slot-label {
+  min-width: 5rem;
+  text-align: right;
+  color: #666;
+}
+.inv-slot button {
+  margin: 0; /* the flex row spaces them; override the block-button auto margins */
+}
+.inv-slot button.equipped {
+  background: var(--btn-bg-hover);
+  border-color: var(--ink);
+  font-weight: 600;
+}
+.inv-others {
+  margin-top: 0.8rem;
+  color: #666;
 }
 
 /* Grandma's house: a speaker name and a small block of dialogue lines. */

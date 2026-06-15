@@ -11,12 +11,14 @@ import type { Team } from '@/engine/types/quest'
 // reaching into engine runtime; re-exported here for the many call sites that use Entity.
 export type { Team }
 
-/** A weapon the entity can attack with (data only; combat resolution lives in the Scene). */
+/** A weapon the entity can attack with (combat resolution lives in engine/quest/combat). */
 export interface Weapon {
   readonly id: string
   readonly damage: number
-  /** Reach in cells. */
+  /** Reach in cells (centre-to-centre): how close a hostile must be to be hit. */
   readonly range: number
+  /** Minimum ms between attacks with this weapon. */
+  readonly cooldownMs: number
 }
 
 /** A castable ability with its own LIVE (not persisted) cooldown — see Scene per-spell map. */
@@ -50,6 +52,8 @@ export interface EntityConfig {
   readonly weapons?: readonly Weapon[]
   readonly abilities?: readonly Ability[]
   readonly tags?: readonly string[]
+  /** Scene-ms at/after which this entity may attack again (live cooldown; default 0 = ready). */
+  readonly attackReadyAt?: number
 }
 
 export class Entity {
@@ -64,6 +68,7 @@ export class Entity {
   readonly weapons: readonly Weapon[]
   readonly abilities: readonly Ability[]
   readonly tags: readonly string[]
+  readonly attackReadyAt: number
 
   constructor(config: EntityConfig) {
     this.id = config.id
@@ -77,6 +82,7 @@ export class Entity {
     this.weapons = config.weapons ?? []
     this.abilities = config.abilities ?? []
     this.tags = config.tags ?? []
+    this.attackReadyAt = config.attackReadyAt ?? 0
   }
 
   /** The entity's collision box at its current position. */
@@ -113,6 +119,11 @@ export class Entity {
     return this.withHp(this.hp - amount)
   }
 
+  /** A copy with the attack-cooldown clock set to `ms` (scene-elapsed). Returns a new Entity. */
+  withAttackReadyAt(ms: number): Entity {
+    return this.copyWith({ attackReadyAt: ms })
+  }
+
   /**
    * Advance one scene step. The base entity integrates its velocity into position
    * (drivers having already set the velocity from gravity/input). Specialised behaviour
@@ -138,6 +149,7 @@ export class Entity {
       weapons: patch.weapons ?? this.weapons,
       abilities: patch.abilities ?? this.abilities,
       tags: patch.tags ?? this.tags,
+      attackReadyAt: patch.attackReadyAt ?? this.attackReadyAt,
     })
   }
 }

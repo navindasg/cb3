@@ -1,6 +1,7 @@
 import { Vec2 } from '@/engine/quest/Vec2'
 import { CollisionBox } from '@/engine/quest/collision'
-import { Entity, type Ability, type EntityInput } from '@/engine/quest/Entity'
+import { Entity, type Ability, type EntityInput, type Weapon } from '@/engine/quest/Entity'
+import { resolveCombat } from '@/engine/quest/combat'
 import { WaveScheduler } from '@/engine/quest/WaveScheduler'
 import type { PhysicsBounds, PhysicsDriver } from '@/engine/quest/physics/PhysicsDriver'
 import type {
@@ -50,6 +51,8 @@ export interface SceneConfig {
   readonly entityFactory: EntityFactory
   /** The player's spell loadout for this run (abilities carry their own cooldownMs). */
   readonly playerAbilities?: readonly Ability[]
+  /** The player's equipped weapon(s) for this run (from GameState.equipped); empty = bare hands. */
+  readonly playerWeapons?: readonly Weapon[]
 }
 
 const PLAYER_ID = '__player__'
@@ -108,6 +111,7 @@ export class Scene {
       hp: def.playerMaxHp,
       maxHp: def.playerMaxHp,
       abilities: config.playerAbilities ?? [],
+      weapons: config.playerWeapons ?? [],
     })
     const statics = def.staticSpawns.map(entityFactory)
     return new Scene(
@@ -164,8 +168,14 @@ export class Scene {
         : e.update(this, undefined, dtMs),
     )
 
+    // 2b) resolve combat at the post-movement positions: armed entities strike hostiles in reach
+    //     (both ways — the player's weapon hits foes, foes hit the player). A lethal blow to the
+    //     player reports its source for the death-message pick. Host-supplied playerDamage (above)
+    //     still applies, so the legacy/test damage path is untouched.
+    const fought = resolveCombat(updated, elapsedMs)
+
     // 3) cull the dead (excluding the player; player death is handled in checkDeath).
-    const culled = updated.filter((e) => e.id === PLAYER_ID || !e.isDead)
+    const culled = fought.entities.filter((e) => e.id === PLAYER_ID || !e.isDead)
 
     // refresh cooldowns from this step's cast requests.
     const cooldowns = this.applyCasts(culled, input.castRequests ?? [], elapsedMs)
@@ -188,7 +198,7 @@ export class Scene {
         'active',
         evalResult.scheduler,
         cooldowns,
-        this.pickDeath(input.deathSource),
+        this.pickDeath(fought.deathSource ?? input.deathSource),
       )
     }
 

@@ -6,6 +6,16 @@
 
 import type { Team } from '@/engine/types/quest'
 
+/** Combat stats an entity attacks with (the engine builds a Weapon from these). */
+export interface AttackStats {
+  /** Flat damage per hit. */
+  readonly damage: number
+  /** Reach in cells (centre-to-centre). */
+  readonly range: number
+  /** Minimum ms between attacks. */
+  readonly cooldownMs: number
+}
+
 export interface EntityTemplate {
   /** The spawn-order entityId this template builds (e.g. 'candyBat'). */
   readonly id: string
@@ -19,6 +29,8 @@ export interface EntityTemplate {
   readonly color?: string
   /** Tags carried onto the Entity (used by combat/secret logic + arena colouring). */
   readonly tags: readonly string[]
+  /** Optional attack stats; when present the factory arms the entity with a matching weapon. */
+  readonly attack?: AttackStats
 }
 
 // NOTE: Team is a type-only import; no engine logic is pulled into content.
@@ -103,6 +115,35 @@ export const CLOUD_RAT: EntityTemplate = {
   tags: ['cloudRat'],
 }
 
+// --- the forest (Quest 1, HorizontalDriver) ---
+// Gummy critters block the path east. A gummy slime is the common foe; a gummy bear is the
+// tougher, slower one that hits harder. Both carry attack stats so they fight back; the grandma's
+// wooden spoon (range 2) out-reaches their bite (range ~1.4), so a careful player can chip them.
+
+export const GUMMY_SLIME: EntityTemplate = {
+  id: 'gummySlime',
+  team: 'enemy',
+  width: 1,
+  height: 1,
+  hp: 3,
+  glyph: 'g',
+  color: '#6c6',
+  tags: ['gummySlime'],
+  attack: { damage: 1, range: 1.4, cooldownMs: 800 },
+}
+
+export const GUMMY_BEAR: EntityTemplate = {
+  id: 'gummyBear',
+  team: 'enemy',
+  width: 2,
+  height: 2,
+  hp: 7,
+  glyph: 'B',
+  color: '#c84',
+  tags: ['gummyBear'],
+  attack: { damage: 2, range: 1.6, cooldownMs: 1100 },
+}
+
 export const ACT0_TEMPLATES: readonly EntityTemplate[] = [
   CANDY_BAT,
   SUGAR_GOLEM,
@@ -111,6 +152,8 @@ export const ACT0_TEMPLATES: readonly EntityTemplate[] = [
   FOSSIL,
   GUMMY_APHID,
   CLOUD_RAT,
+  GUMMY_SLIME,
+  GUMMY_BEAR,
 ]
 
 /** Template registry keyed by id, for the engine entity factory. */

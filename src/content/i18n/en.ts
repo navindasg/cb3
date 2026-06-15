@@ -71,6 +71,8 @@ export const en: GameText = {
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
   'death.sugarGolem': 'The sugar golem flattened you. Sweetly. You respawn.',
   'death.gummyWorm': 'A gummy worm got you. Embarrassing. You respawn.',
+  'death.gummySlime': 'A gummy slime wore you down. You pick yourself up at the treeline.',
+  'death.gummyBear': 'The gummy bear sat on you. It was not personal. You respawn.',
   'death.gummyAphid': 'A gummy aphid prised you off the stalk. You slide to the last leaf.',
   'death.cloudRat': 'A cloud rat ran you off the edge. You wake on a lower leaf.',
   'death.fall': 'You lost your grip. The garden floor is, at least, soft. You climb again.',
@@ -93,10 +95,11 @@ export const en: GameText = {
   'zone.beanstalkElevator': 'the beanstalk elevator',
 
   // progressive-reveal actions
-  'action.eat': 'eat candies',
-  'action.throw': 'throw 10 candies',
+  'action.eat': 'eat all the candies',
+  'action.throw': 'throw 10 candies on the ground',
   'action.enterHouse': 'enter your house',
   'action.openMap': 'the map',
+  'action.inventory': 'inventory',
   'action.backToField': 'back to the field',
   'action.backToHouse': 'back outside',
   'action.scanSky': 'scan the sky',
