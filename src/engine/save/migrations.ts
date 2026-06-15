@@ -1,9 +1,9 @@
 import { CURRENT_SCHEMA_VERSION } from '@/engine/types/GameState'
+import { createResource } from '@/engine/types/Resource'
 
 // Ordered migration ladder. MIGRATIONS[from] upgrades a state from version `from`
 // to `from + 1`. They run in sequence on load so an ancient save climbs to the
-// current schema one rung at a time. v1 is the base, so the ladder is empty until
-// the first schema change (e.g. when Act 2 adds the peppermint resource).
+// current schema one rung at a time. v1 is the base; each schema change adds one rung.
 
 export class FutureVersionError extends Error {
   constructor(
@@ -31,7 +31,10 @@ export interface RawEnvelope {
 }
 
 export const MIGRATIONS: Readonly<Record<number, StateMigration>> = {
-  // 1: (s) => ({ ...s, peppermint: { current: 0, lifetimeAccumulated: 0, historicalMax: 0 } }),
+  // v1 → v2: Act 1 adds cottonCandy (sheared from cloud sheep). Seed it at zero (a fresh object
+  // per migration, the createResource idiom) so a pre-Act-1 save climbs cleanly; an existing field
+  // is preserved (the spread of `s` wins over the default when a save already carries it).
+  1: (s) => ({ cottonCandy: createResource(0), ...s }),
 }
 
 export interface MigrateOptions {

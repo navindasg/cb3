@@ -18,3 +18,9 @@ export const MINE_GATE_CLEARED_FLAG = 'mineGateCleared'
 
 /** Set on sugar-mines victory; the mountain climb's win sets `mountainClimbed` to reveal the observatory. */
 export const MOUNTAIN_CLIMBED_FLAG = 'mountainClimbed'
+
+/**
+ * Set when you first reach the cumulus commons (Act 1, via the beanstalk elevator). Reveals the
+ * cotton-candy readout in the status bar — the new sky resource only surfaces once it's relevant.
+ */
+export const CLOUD_COMMONS_REACHED_FLAG = 'cloudCommonsReached'

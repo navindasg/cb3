@@ -42,6 +42,24 @@ export const ACT0_OVERWORLD: OverworldDef = {
       art: ['      ||', '   climb the beanstalk', '     \\||/'],
     },
 
+    // --- the cumulus commons: the cloud village atop the beanstalk (Act 1) ------------------
+    // Appears once the climb has turned the beanstalk into an elevator (beanstalkElevator).
+    {
+      id: 'cloudCommons',
+      x: 40,
+      y: 8,
+      revealFlag: 'beanstalkElevator',
+      label: 'the cloud village',
+      action: 'enter:cloudCommons',
+      art: [
+        '    .-~~~~~~~~-.',
+        '   ( ~ m  m  m ~ )',
+        '    the cloud village',
+        '   ( ~ (O) ~~~~ ~ )',
+        "    `-~~~~~~~~-'",
+      ],
+    },
+
     // --- the observatory, atop the mountain (revealed after the climb) ----------------------
     {
       id: 'observatory',

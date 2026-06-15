@@ -4,6 +4,7 @@ import {
   MigrationError,
   type RawEnvelope,
 } from '@/engine/save/migrations'
+import { CURRENT_SCHEMA_VERSION } from '@/engine/types/GameState'
 
 const base = (v: number, state: Record<string, unknown> = {}): RawEnvelope => ({
   v,
@@ -45,5 +46,23 @@ describe('migrateEnvelope', () => {
     expect(() =>
       migrateEnvelope({ v: 1.5, t: 0, lastTick: 0, state: {} }, { currentVersion: 2 }),
     ).toThrow(MigrationError)
+  })
+})
+
+describe('the real migration ladder (MIGRATIONS)', () => {
+  it('climbs a v1 save all the way to the current schema version', () => {
+    const out = migrateEnvelope(base(1, { candies: { current: 5 } }))
+    expect(out.v).toBe(CURRENT_SCHEMA_VERSION)
+  })
+
+  it('v1 → v2 seeds a zeroed cottonCandy resource (Act 1)', () => {
+    const out = migrateEnvelope(base(1, { candies: { current: 5 } }))
+    expect(out.state.cottonCandy).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
+  })
+
+  it('preserves a cottonCandy field a save already carries', () => {
+    const carried = { current: 42, lifetimeAccumulated: 99, historicalMax: 99 }
+    const out = migrateEnvelope(base(1, { cottonCandy: carried }))
+    expect(out.state.cottonCandy).toEqual(carried)
   })
 })

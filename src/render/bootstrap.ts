@@ -24,7 +24,9 @@ import {
 import { plantSeed, feedBeanstalk } from '@/engine/content/beanstalk'
 import { fireAny } from '@/engine/content/secrets'
 import { CANDY_PRODUCERS } from '@/content/producers/candy'
+import { COTTON_CANDY_PRODUCERS } from '@/content/producers/cottonCandy'
 import { ACT0_OVERWORLD } from '@/content/overworld'
+import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
 import { ACT0_SECRETS } from '@/content/secrets'
 import { inventoryView } from '@/content/items/inventoryView'
 import { WOODEN_SPOON, ITEM_MAP } from '@/content/items/items'
@@ -37,6 +39,7 @@ import { createStatusBar, type StatusBar } from '@/render/StatusBar'
 import { createHealthBar, type HealthBar } from '@/render/healthBar'
 import { createOverworldRenderer, type OverworldRenderer } from '@/render/Overworld'
 import { createTownScreens, type TownScreens } from '@/render/townScreens'
+import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -71,7 +74,9 @@ export interface BootstrapHandles {
 export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): BootstrapHandles {
   const doc = statusRoot.ownerDocument
   const session = createGameSession({
-    producers: CANDY_PRODUCERS,
+    // The tick sums producers by resource, so the candy + cotton-candy registries simply concat:
+    // cotton candy is inert until you own cloud sheep (the cumulus commons paddock).
+    producers: [...CANDY_PRODUCERS, ...COTTON_CANDY_PRODUCERS],
     onEvents: (events) => events.forEach((e) => log(e as GameTextKey)),
   })
 
@@ -81,13 +86,18 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   // --- reactive status bar: candy + HP, each gated by its progressive-unlock flag ----------
   const initial = session.getState()
   const candy = signal(initial.candies.current)
+  const cottonCandy = signal(initial.cottonCandy.current)
   const hp = signal(initial.playerHpCurrent)
   const maxHp = signal(maxHpOf(initial))
   const statusBarUnlocked = signal(initial.flags[STATUS_BAR_UNLOCKED_FLAG] === true)
   const healthBarUnlocked = signal(initial.flags[HEALTH_BAR_UNLOCKED_FLAG] === true)
+  // Cotton candy (Act 1) only joins the bar once you've reached the cumulus commons — a new
+  // resource should not haunt the HUD with a 0 for all of Act 0.
+  const cloudCommonsReached = signal(initial.flags[CLOUD_COMMONS_REACHED_FLAG] === true)
 
   const bar: StatusBar = createStatusBar(statusRoot, [
     { id: 'candy', label: 'candies: ', source: candy, visible: statusBarUnlocked },
+    { id: 'cottonCandy', label: 'cotton candy: ', source: cottonCandy, visible: cloudCommonsReached },
   ])
   // The HP readout is a graphical health bar (green→orange→red), gated on the health-bar unlock.
   const healthBar: HealthBar = createHealthBar(statusRoot, {
@@ -105,10 +115,12 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
 
   const offState = session.subscribe((s) => {
     candy.set(s.candies.current)
+    cottonCandy.set(s.cottonCandy.current)
     hp.set(s.playerHpCurrent)
     maxHp.set(maxHpOf(s))
     statusBarUnlocked.set(s.flags[STATUS_BAR_UNLOCKED_FLAG] === true)
     healthBarUnlocked.set(s.flags[HEALTH_BAR_UNLOCKED_FLAG] === true)
+    cloudCommonsReached.set(s.flags[CLOUD_COMMONS_REACHED_FLAG] === true)
   })
 
   // --- the event log (capped + fading; never the old uncapped clutter) ---------------------
@@ -446,6 +458,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     mountain: 'the mountain',
     observatory: 'the observatory',
     sky: 'the sky',
+    cloudCommons: 'the cumulus commons',
   }
 
   function routeZone(action: string): void {
@@ -458,8 +471,13 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     if (kind === 'quest' && target === 'sugarMines') return quests.startMines()
     if (kind === 'quest' && target === 'mountain') return quests.startMountain()
     if (kind === 'enter' && target === 'observatory') return town.showObservatory()
-    // The sky (beanstalk fast-travel) is wired in a later step. Until then a click responds
-    // VISIBLY so a location never feels dead.
+    if (kind === 'enter' && target === 'cloudCommons') return sky.showCloudCommons()
+    // "the sky" is the cloud band itself; once the beanstalk is an elevator it carries you up to
+    // the cumulus commons. Before that it's just sky — answer visibly, never with a dead click.
+    if (kind === 'travel' && target === 'sky') {
+      if (session.getState().flags[BEANSTALK_ELEVATOR_FLAG] === true) return sky.showCloudCommons()
+      return notify('The sky is up there. You will need to climb the beanstalk to reach it.')
+    }
     const name = ZONE_NAMES[target] ?? (target || kind)
     notify(`${name} — not open yet (building this out next).`)
   }
@@ -560,6 +578,19 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     startCellar: quests.startCellar,
   })
 
+  // The sky screens (Act 1 — the cumulus commons at the top of the beanstalk) live in a sub-module
+  // like the town screens; same thin-wiring contract, routed back through showMap.
+  const sky: SkyScreens = createSkyScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+  })
+
   // --- driver + lifecycle wiring ------------------------------------------
 
   const initialSpeed = import.meta.env.DEV
@@ -616,6 +647,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showObservatory: town.showObservatory,
     showCauldron: town.showCauldron,
     showTavern: town.showTavern,
+    showCloudCommons: sky.showCloudCommons,
     startClimb: quests.startClimb,
     startForest: quests.startForest,
     startMineGate: quests.startMineGate,

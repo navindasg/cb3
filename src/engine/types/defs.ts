@@ -12,6 +12,23 @@ export interface ProducerDef {
   readonly getRate: (state: GameState) => number
 }
 
+// --- Cloud sheep paddock (Act 1, §6) ---------------------------------------
+// The cumulus commons' passive cotton-candy income. Sheep are bought with candies (the price
+// climbs per head, the incremental idiom) and each grazes a steady trickle of cotton candy. The
+// rule (price, purchase, rate) lives in tested engine modules; this is the pure config they read.
+
+/** The cloud-sheep paddock's tuning: where the head-count lives, what a sheep costs and yields. */
+export interface PaddockConfig {
+  /** numbers-namespace key holding the owned sheep count. */
+  readonly countKey: string
+  /** Candy cost of the FIRST sheep. */
+  readonly basePrice: number
+  /** Per-head price multiplier (price of the nth sheep = basePrice * growth^n). */
+  readonly priceGrowth: number
+  /** Cotton candy each sheep yields per second (passive). */
+  readonly cottonPerSheepPerSec: number
+}
+
 // --- Map / world ----------------------------------------------------------
 // The realized map is a 2D flag-revealed landscape (OverworldDef, see engine/types/overworld.ts):
 // regions placed at world-cell (x,y), each revealed by a flag, panned in 2D — the ground spreads
