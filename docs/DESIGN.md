@@ -27,14 +27,16 @@ An honorary sequel to aniwey's Candy Box (2013) and Candy Box 2 (2013). Browser-
 
 ### 2a. Art & Audio Direction (locked)
 
-- **Pure ASCII. No pixel art, ever.** The constraint is the aesthetic; pixel art would break the illusion that this lives in a text terminal. All visual flair comes from CSS — `text-shadow` glows (moonpops, rock candy, the sun), color, and clever typographic/whitespace layout. The vertical map is plain text that the page scrolls through.
+- **Pure ASCII. No pixel art, ever.** The constraint is the aesthetic; pixel art would break the illusion that this lives in a text terminal. All visual flair comes from CSS — `text-shadow` glows (moonpops, rock candy, the sun), color, and clever typographic/whitespace layout. The map is a 2D ASCII landscape the page pans across, extending upward as acts unlock.
 - **99% silent**, like both predecessors — silence makes the text feel louder. **Exactly one** chiptune/8-bit track exists in the entire game, and it triggers only at the moment of the Act 4 descent into the sun. After ~18 hours of silence, sound itself becomes the event. Nothing else in the game makes noise.
 
 ---
 
-## 3. World Structure — Vertical Cross-Section
+## 3. World Structure — A Cross-Section That Grows Upward
 
-The map is a cross-section, not a top-down view. It extends upward as you progress. UI: the map scrolls vertically; new strata literally extend the page.
+The map is a cross-section, not a top-down view, and it extends upward as you progress. The macro structure below is the north star: field at the bottom, the sun at the top, the kingdom climbing the page across the acts.
+
+> **Implementation note (Act 0 rework, 2026-06):** the realized map is a **2D flag-revealed `OverworldDef`** (`src/content/overworld.ts` — regions placed at world-cell `(x,y)`, each gated by a reveal flag, panned in 2D), **not** a pure bottom-to-top vertical scroll. Act 0's ground spreads **horizontally** (your field → the forest → the village → the sugar mines) while the world still extends **upward** via the beanstalk (garden → climb → the sky → space), so the genre-reveal still lands. The earlier `Stratum` registry (ADR-001 D10) was retired in favour of `OverworldDef`; **horizontal is canonical**.
 
 ```
                   ☀  the sun                          [Act 4 — finale]
@@ -141,6 +143,16 @@ The first five-to-eight minutes mirror CB1 beat-for-beat as a deliberate fakeout
 - **The sugar mines** (quest 1): below the village. Candy bats, sugar golems. Rock candy veins. At the bottom: **the fossil** — a dragon skeleton embedded in candy stone. It cannot be interacted with meaningfully yet. If fed exactly 1 candy, it twitches. (Foreshadowing: §15, §17.)
 - **The observatory**: the astronomer (wizard-physicist; sells the beginner's grimoire, the telescope, and disapproval). The telescope, once bought, reveals the ambient counter in the corner of the screen: **"stars in the sky: 8,128."** It is already, very slowly, ticking down. The game never mentions this. Players will.
 - **The cauldron** is in the observatory basement — "my sister's old lab." A portrait of the CB2 sorceress hangs on the wall.
+
+> **Act 0 rework — implementation divergences (2026-06).** The shipped Act 0 differs from the prose above in a few deliberate, recorded ways:
+> - **The overworld is a 2D, panned landscape, horizontal-first** (your field → the forest → the village → the sugar mines), still extending upward via the beanstalk — see §3.
+> - **A gated access fight guards the sugar mines.** A rock-candy *sentinel* out-reaches grandma's spoon (range 2.8 vs 2), so the mines require a forge upgrade — the candy-cane *bow* (range 5) clears it from outside its swing. The mines themselves are a loot-run; the gate is the fight. (One-life: a death sends you back to gear up.)
+> - **The forge is a varied arsenal, not a sword ladder** — wooden sword, candy-cane bow (ranged; foreshadows space tech), licorice whip, iron sword, jawbreaker mace; the last two need rock candy from the mines.
+> - **Baseline field income is 0.5/s** (the field always trickles) and **grandma's spoon is now a WEAPON** (with a small passive trickle too), not the sole income source — this fixes the dead start.
+> - **Eating heals:** each candy eaten restores 1 HP (clamped to the lifetime-derived max). CB2's eating did not heal.
+> - **Mana is deferred:** it is NOT in the Act-0 progressive-GUI ladder (status bar → health bar → map); it arrives with the grimoire.
+> - **The map is gated behind the "request a feature" ladder** (it is the capstone unlock), not always-on.
+> - **Secrets are interaction-based, not typed.** The typed secret-input box was removed (reverses ADR-001 §7.6): the fossil (feed exactly 1 candy), the well (throw a candy in), and the great leaf (hold exactly 1 lollipop) are discovered through interaction.
 
 **Act gate / THE PIVOT:** after ~20–25 min of play (trigger: telescope owned + ~50k total candies earned), a falling star lands in your field. The counter ticks: 8,127. In the crater: **a seed.** The astronomer has theories, all wrong. Planting it opens the beanstalk garden — feed it candies and it grows. At 1,000 candies fed it reaches the clouds, and the map *extends upward*. This is the genre reveal. It must feel like CB1's map appearing.
 
