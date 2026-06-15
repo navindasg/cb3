@@ -19,16 +19,22 @@
     'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono',
     Menlo, Consolas, 'DejaVu Sans Mono', monospace;
   --content-max: 56rem;
+  /* CB2 palette (sampled from the original design.css): the signature stone button + slate ink. */
+  --ink: #111;
+  --paper: #fff;
+  --btn-bg: #dcdad5; /* .asciiRealButton background */
+  --btn-bg-hover: #eeebe7; /* .asciiRealButton:hover */
+  --btn-border: #464c54; /* .asciiRealButton 1px frame */
 }
 
-/* On-brand base: light background, black monospace text, comfortable reading rhythm. */
+/* On-brand base: pure-white page, black monospace text (CB2 is white, not off-white). */
 body {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 16px;
   line-height: 1.5;
-  color: #111;
-  background: #fafafa;
+  color: var(--ink);
+  background: var(--paper);
 }
 
 .map-surface,
@@ -45,19 +51,29 @@ pre {
 .map-surface {
   display: inline-block;
   text-align: left;
-  font-size: clamp(8px, 2vw, 26px);
+  /* The overworld renderer SETS font-size inline (computed to fit the discovered world to the
+   * viewport — width and height); this is only the fallback before the first fit. */
+  font-size: clamp(10px, 1.4vw, 20px);
 }
 
-/* Map zones: the place name drawn in the art IS the click target (CB2-style — never stamped).
- * A dotted underline signals it is interactive; hover inverts. */
+/* The overworld viewport: centres the fitted grid; the page scrolls if it ever overflows. */
+.overworld {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Map locations: the place name drawn in the art IS the click target (CB2-style — never stamped).
+ * A faint dotted underline marks it interactive (so a location never reads as dead); hover inverts. */
 .map-zone {
   cursor: pointer;
-  text-decoration: underline dotted;
+  user-select: none;
+  text-decoration: underline dotted #8a8a8a;
   text-underline-offset: 2px;
 }
 .map-zone:hover {
-  background: #111;
-  color: #fafafa;
+  background: var(--ink);
+  color: var(--paper);
 }
 
 /* Tabular figures so the candy/HP/mana counters never jitter as digits change. */
@@ -65,25 +81,28 @@ pre {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-/* The status bar is pinned at the top (ADR §7.5: position fixed). Content scrolls beneath. */
+/* The status bar is pinned at the top (ADR §7.5: position fixed). Content scrolls beneath.
+ * CB2 keeps the HUD light — black monospace on white — so we drop the old dark chrome strip
+ * for a clean white header rule that reads as part of the same paper-and-ink world. */
 #status-bar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   display: flex;
+  justify-content: center;
   gap: 1.5rem;
-  padding: 0.5rem 1rem;
-  background: #111;
-  color: #eee;
+  padding: 0.4rem 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  border-bottom: 1px solid var(--btn-border);
   z-index: 10;
 }
 #main-content {
-  /* Full-bleed and centred — the ASCII is the focus and fills the screen (CB2: centred, big).
-   * text-align:center centres the inline-block map/art and the centred buttons; top padding
-   * clears the fixed status bar. */
+  /* Full-bleed and centred — the ASCII is the focus. text-align:center centres the inline-block
+   * map/art and the centred buttons; the top padding just clears the fixed status header. */
   margin: 0 auto;
-  padding: 3.25rem 1rem 3rem;
+  padding: 2.5rem 1rem 3rem;
   text-align: center;
 }
 .status-region {
@@ -99,38 +118,105 @@ pre {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+/* CB2's signature control: a flat warm-grey box with a 1px slate frame (the .asciiRealButton).
+ * It reads as part of the ASCII world, not an OS form widget. Square corners, monospace, no
+ * gradients — exactly the original's stone button. */
 .screen button,
-.event-log button {
+.event-log button,
+.climb-controls button {
   display: block;
   width: fit-content;
   margin: 0.4rem auto;
-  padding: 0.25rem 0.7rem;
+  padding: 0.2rem 0.7rem;
   font: inherit;
-  font-size: 1.05rem;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
 }
+.screen button:hover,
+.event-log button:hover,
+.climb-controls button:hover {
+  background: var(--btn-bg-hover);
+}
+.screen button:active,
+.climb-controls button:active {
+  background: #cfccc4;
+}
+/* The event log: capped to the last few beats, older lines faded (createEventLog grades the
+ * opacity inline). The newest line eases in; dimming animates as lines age out, so the column
+ * de-clutters instead of growing without bound. */
 .event-log {
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   color: #8a8a8a;
-  max-height: 12rem;
-  overflow-y: auto;
+  min-height: 1.2rem;
 }
-.event-log p {
+.event-log-line {
+  margin: 0.15rem 0;
+  transition: opacity 0.5s ease;
+  animation: event-log-appear 0.35s ease both;
+}
+@keyframes event-log-appear {
+  from {
+    transform: translateY(-0.2rem);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.reduce-motion .event-log-line {
+  animation: none;
+}
+
+/* The field's adaptive candy line ("You have N candies") + its controls column. */
+.candy-counter {
+  margin: 0.2rem 0 0.8rem;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.field-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The deadpan comment beside the "request a feature" button (narrates the previous unlock). */
+.gui-comment {
+  margin: 0.6rem auto 0.1rem;
+  max-width: 28rem;
+  color: #6a6a6a;
+  font-size: 0.95rem;
+}
+
+/* Grandma's house: a speaker name and a small block of dialogue lines. */
+.speaker {
+  margin: 0.4rem 0 0.2rem;
+  font-weight: 600;
+}
+.dialogue {
+  margin: 0 auto 0.6rem;
+  max-width: 32rem;
+}
+.dialogue-line {
   margin: 0.2rem 0;
 }
 
-/* The typed-secret box: a real, visible, focusable input (ADR §7.6). em-sized, zoomable. */
-.secret-input {
-  font: inherit;
-  font-size: 1rem; /* >=16px so iOS Safari does not auto-zoom the field */
-  margin-top: 1rem;
-  padding: 0.3rem 0.5rem;
+/* CB2 accelerator tell: the keyboard letter is underlined inside the button label. */
+.screen button u,
+.climb-controls button u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Static glow = text-shadow via a CSS class per glowing entity (data-driven from flavor).
  * The shadow values are NEVER animated; only the opacity of the overlay layer is. */
 .glow-sun {
-  color: #ffe9a8;
-  text-shadow: 0 0 4px #ffcf4d, 0 0 10px #ffb300;
+  /* A deeper amber than the fill so the candy art stays legible on the white page; the shadow
+   * is gentler now that the background is bright (it bloomed on white at the old radius). */
+  color: #e8a13a;
+  text-shadow: 0 0 3px #ffcf4d, 0 0 7px rgba(255, 179, 0, 0.6);
 }
 .glow-moonpop {
   color: #cfe8ff;
@@ -177,11 +263,84 @@ pre {
   animation: none;
 }
 
-/* The star counter is pure tell: a quiet, cool-glowing line (glow-moonpop carries the shadow).
+/* The star counter is pure tell. It must READ on the white page — the old pale-blue glow washed
+ * out to near-invisible — so it is a dark ink-blue with only a whisper of cool shadow.
  * tabular-nums keeps the descent from jittering as digits drop. */
 .star-counter {
   margin: 0.4rem 0 0.8rem;
+  color: #2b3a67;
+  text-shadow: 0 0 1px rgba(77, 141, 255, 0.35);
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* --- the beanstalk climb arena --------------------------------------------------------------
+ * The climb is a tall, narrow shaft (the quest grid is 16 wide × 48 tall). We frame it as a deep
+ * dusk-sky panel: the light entity glyphs (player @, aphids o, cloud rats r) — tuned for a dark
+ * arena — pop against it, and the whole 48-row world fits the viewport at once (font sized to
+ * height) so there is no off-screen blank stretch. The generous side padding turns the skinny
+ * shaft into a deliberate "sky" rather than a cramped column. */
+.arena-surface {
+  display: inline-block;
+  text-align: left;
+  margin: 0.5rem auto;
+  padding: 0.6rem 3rem;
+  /* size to viewport height: 48 rows × 1.2 line-height must fit comfortably above the fold. */
+  font-size: clamp(8px, 1.45vh, 17px);
+  color: #8f9bc4; /* muted backdrop (stalk/clouds/soil); entities override with brighter colours */
+  background: #0e1430;
+  border: 1px solid #2a3566;
+}
+.climb-hud {
+  margin: 0.25rem 0;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.03em;
+}
+.climb-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+.climb-controls button {
+  margin: 0; /* the flex row spaces them; override the block-button auto margins */
+}
+
+/* --- the transient notice ("location not open yet", elevator flavour, …) --------------------
+ * Pinned just under the status header so it is visible no matter how far the tall map is scrolled.
+ * Fades in on notify(); never an OS alert. */
+.toast {
+  position: fixed;
+  top: 2.6rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(-0.4rem);
+  z-index: 30;
+  max-width: min(90vw, 40rem);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: #fffef7;
+  border: 1px solid var(--btn-border);
+  box-shadow: 0 2px 6px rgba(17, 17, 17, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+.toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* CB2 identity tell: a tiny fixed bottom-left version/credits line. */
+#version-number {
+  position: fixed;
+  bottom: 0;
+  left: 10px;
+  margin: 0;
+  font-size: 10px;
+  color: #8a8a8a;
+  z-index: 5;
 }
 
 /* DEV-ONLY playtest panel: small, cornered, unobtrusive, and obviously not game UI. The whole

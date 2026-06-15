@@ -12,6 +12,11 @@ test('reset save wipes progress and returns to the cold open', async ({ page }) 
   // Make progress and leave the opener, so a warm state exists in memory (openerSeen=true).
   await page.getByTestId('ack-opener').click()
   await expect(page.getByTestId('eat-candy')).toBeVisible()
+  // Unlock the map feature, then navigate to it (the map is a requested feature now).
+  await page.evaluate(() => {
+    const s = (window as unknown as { __cb3: { session: { dispatch(fn: (s: unknown) => unknown): void } } }).__cb3.session
+    s.dispatch((st) => ({ ...(st as object), flags: { ...(st as { flags: object }).flags, mapUnlocked: true } }))
+  })
   await page.getByTestId('open-map').click()
 
   // Reset must land back on the COLD open (not the warm map) with a single candy.

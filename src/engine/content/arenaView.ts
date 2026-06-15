@@ -18,7 +18,18 @@ function entityView(
   templates: ReadonlyMap<string, EntityTemplate>,
 ): ArenaEntityView {
   if (e.id === PLAYER_ID) {
-    return { glyph: PLAYER_GLYPH, x: e.pos.x, y: e.pos.y, hp: e.hp, maxHp: e.maxHp, color: PLAYER_COLOR }
+    // Round to integer cells like every other entity: the VerticalDriver integrates the
+    // player's position fractionally (e.g. y=43.06), and CellBuffer.drawString silently drops
+    // a non-integer row index — which made the '@' vanish for the whole climb (only frame 0,
+    // at the exact start y, ever rendered). Rounding keeps the climber visible every frame.
+    return {
+      glyph: PLAYER_GLYPH,
+      x: Math.round(e.pos.x),
+      y: Math.round(e.pos.y),
+      hp: e.hp,
+      maxHp: e.maxHp,
+      color: PLAYER_COLOR,
+    }
   }
   // The first tag that matches a template id picks the visual (templates are tag-named).
   const template = e.tags.map((tag) => templates.get(tag)).find((t) => t !== undefined)

@@ -301,6 +301,20 @@ export interface RevealThreshold {
   readonly atHistoricalMax: number
 }
 
+// --- Progressive GUI unlock ("request a feature") --------------------------
+// CB2's CandyBox surfaces a single rotating "request a feature" button once your candy
+// high-water mark is high enough; clicking it spends candies to permanently unlock the next
+// piece of chrome (status bar, health bar, the map, …). The engine resolver (engine/content/
+// progressiveUnlock) is generic over this minimal shape; the content list adds i18n keys.
+
+/** One requestable GUI feature: the flag it sets when bought and its candy price. */
+export interface UnlockFeature {
+  /** The permanent save flag set when this feature is unlocked. */
+  readonly flag: string
+  /** Candy cost to unlock it. */
+  readonly price: number
+}
+
 // --- Tavern rumors (Block F) -----------------------------------------------
 // One free rumor per accumulated GAME hour (resolved decision 8 — never wall-clock). A rumor
 // is a hint i18n key; the cadence engine reads accumulatedGameTimeMs against the last-told

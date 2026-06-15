@@ -78,6 +78,19 @@ describe('composeArena', () => {
     expect(buffer.styles).toContainEqual({ x: 1, y: 1, length: 1, color: '#ff0000' })
   })
 
+  it('draws the background world UNDER the entities (entities win the shared cell)', () => {
+    const model: ArenaModel = {
+      width: 6,
+      height: 3,
+      background: ['######', '  ||  ', '######'],
+      entities: [{ glyph: '@', x: 2, y: 1, hp: 5, maxHp: 5 }],
+    }
+    const buffer = composeArena(model)
+    expect(buffer.rowAt(0)).toBe('######') // backdrop row drawn
+    expect(buffer.charAt(2, 1)).toBe('@') // entity overwrites the backdrop cell it shares
+    expect(buffer.charAt(3, 1)).toBe('|') // the rest of the backdrop row survives
+  })
+
   it('composites an exit affordance with a clickable hotspot', () => {
     const model: ArenaModel = {
       width: 12,

@@ -13,8 +13,9 @@ describe('progressive reveal by candy high-water mark', () => {
     expect(revealedActions(FIELD_REVEAL_THRESHOLDS, withMax(1))).toEqual(['eat'])
   })
 
-  it('reveals "throw" once the high-water mark reaches 5', () => {
-    expect(revealedActions(FIELD_REVEAL_THRESHOLDS, withMax(5))).toEqual(['eat', 'throw'])
+  it('reveals "throw" once the high-water mark reaches ten (CB2 threshold)', () => {
+    expect(revealedActions(FIELD_REVEAL_THRESHOLDS, withMax(9))).toEqual(['eat'])
+    expect(revealedActions(FIELD_REVEAL_THRESHOLDS, withMax(10))).toEqual(['eat', 'throw'])
   })
 
   it('reveals nothing below the lowest threshold', () => {
@@ -22,13 +23,13 @@ describe('progressive reveal by candy high-water mark', () => {
   })
 
   it('a control stays revealed even after the balance is spent (uses historicalMax)', () => {
-    // current 0 but historicalMax 5 → throw stays revealed (CB2 invariant).
+    // current 0 but historicalMax 10 → throw stays revealed (CB2 invariant).
     const spent: GameState = { ...createDefaultSave(), candies: createResource(0) }
-    const everHadFive: GameState = {
+    const everHadTen: GameState = {
       ...spent,
-      candies: { current: 0, lifetimeAccumulated: 5, historicalMax: 5 },
+      candies: { current: 0, lifetimeAccumulated: 10, historicalMax: 10 },
     }
-    expect(isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', everHadFive)).toBe(true)
+    expect(isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', everHadTen)).toBe(true)
   })
 
   it('isRevealed is false for an unknown action', () => {

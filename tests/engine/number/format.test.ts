@@ -1,4 +1,10 @@
-import { formatCount, formatCompact, formatAdaptive } from '@/engine/number/format'
+import {
+  formatCount,
+  formatCompact,
+  formatAdaptive,
+  groupWithSpaces,
+  candyCountSentence,
+} from '@/engine/number/format'
 
 describe('formatCount', () => {
   it('groups with commas (pinned en-US)', () => {
@@ -36,5 +42,38 @@ describe('formatAdaptive', () => {
 
   it('falls back to compact when too wide', () => {
     expect(formatAdaptive(3_400_000_000, 6)).toBe('3.4B')
+  })
+})
+
+describe('groupWithSpaces', () => {
+  it('groups thousands with spaces (CB2 style)', () => {
+    expect(groupWithSpaces(1_000_000)).toBe('1 000 000')
+    expect(groupWithSpaces(1234)).toBe('1 234')
+    expect(groupWithSpaces(42)).toBe('42')
+    expect(groupWithSpaces(-1500)).toBe('-1 500')
+  })
+})
+
+describe('candyCountSentence', () => {
+  it('uses the singular for exactly one candy and no trailing period', () => {
+    expect(candyCountSentence(1)).toBe('You have 1 candy')
+  })
+
+  it('space-groups the plural', () => {
+    expect(candyCountSentence(0)).toBe('You have 0 candies')
+    expect(candyCountSentence(1500)).toBe('You have 1 500 candies')
+  })
+
+  it('floors fractional accrual', () => {
+    expect(candyCountSentence(7.9)).toBe('You have 7 candies')
+  })
+
+  it('keeps the CB2 easter eggs (1337 -> leet, 42 -> a little flourish)', () => {
+    expect(candyCountSentence(1337)).toBe('You have leet candies')
+    expect(candyCountSentence(42)).toBe('You have 42 candies \\o/')
+  })
+
+  it('handles the impossible negative case', () => {
+    expect(candyCountSentence(-1)).toBe('What, negative candies?!')
   })
 })

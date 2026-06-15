@@ -1,0 +1,28 @@
+Candy Box 3
+Copyright (C) 2026 navindasg
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See the LICENSE file for the full text.
+
+-------------------------------------------------------------------------------
+Attribution
+-------------------------------------------------------------------------------
+
+Candy Box 3 is an honorary, fan-made sequel to the Candy Box series. It adapts
+game mechanics, UI conventions, and design ideas from:
+
+  Candy Box 2
+  Copyright (C) 2012 David "aniwey" L.
+  Released under the GNU General Public License, version 3 or later.
+  Source: http://candybox2.github.io/
+
+Candy Box 2's source is used here only as a reference (kept out of this
+repository, under reference/candybox2/, which is gitignored). Where Candy Box 3
+reimplements or ports a Candy Box 2 mechanic — the progressive "request a
+feature" GUI unlock, the eat/throw candy mechanics, the status bar and health
+bar, the inventory, the quest/combat model — it does so as a derivative work
+under the same GPL-3.0-or-later license. The original work is the creation of
+its author; this project claims no ownership of it and is not affiliated with or
+endorsed by the original author.

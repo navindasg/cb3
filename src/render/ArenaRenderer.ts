@@ -36,6 +36,8 @@ export interface ArenaModel {
   readonly width: number
   readonly height: number
   readonly entities: readonly ArenaEntityView[]
+  /** Optional static backdrop rows (the world: stalk, clouds, ground), drawn UNDER entities. */
+  readonly background?: readonly string[]
   readonly exit?: ArenaExit
 }
 
@@ -60,6 +62,13 @@ export interface ArenaRenderer {
 /** Compose an arena view model into one CellBuffer: entities, HP bars, then the exit. Pure. */
 export function composeArena(model: ArenaModel, hpBarWidth = 5): CellBuffer {
   let buffer = CellBuffer.create(Math.max(0, model.width), Math.max(0, model.height))
+
+  // The static world first (clipped to the grid), so entities and HP bars draw on top of it.
+  if (model.background) {
+    model.background.forEach((row, y) => {
+      buffer = buffer.drawString(0, y, row)
+    })
+  }
 
   for (const e of model.entities) {
     buffer = buffer.drawString(e.x, e.y, e.glyph)

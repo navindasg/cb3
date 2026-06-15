@@ -5,18 +5,18 @@ import { CANDY_PRODUCERS } from '@/content/producers/candy'
 import type { GameState } from '@/engine/types/GameState'
 
 describe('candy producers', () => {
-  it('produce nothing at the start (no spoon, no field expansions)', () => {
-    expect(productionRate(createDefaultSave(), CANDY_PRODUCERS, 'candies')).toBe(0)
+  it('your field grows a baseline trickle from the very start (no spoon needed)', () => {
+    expect(productionRate(createDefaultSave(), CANDY_PRODUCERS, 'candies')).toBe(0.5)
   })
 
-  it('grandma bakes candy once the spoon is owned', () => {
+  it('grandma bakes a little extra once the spoon is owned (on top of the field)', () => {
     const withSpoon: GameState = { ...createDefaultSave(), flags: { spoonOwned: true } }
-    expect(productionRate(withSpoon, CANDY_PRODUCERS, 'candies')).toBe(0.5)
+    expect(productionRate(withSpoon, CANDY_PRODUCERS, 'candies')).toBe(1) // 0.5 field + 0.5 grandma
   })
 
-  it('field expansions add a per-expansion yield', () => {
+  it('field expansions add a per-expansion yield on top of the baseline', () => {
     const expanded: GameState = { ...createDefaultSave(), numbers: { fieldExpansions: 4 } }
-    expect(productionRate(expanded, CANDY_PRODUCERS, 'candies')).toBe(1) // 4 * 0.25
+    expect(productionRate(expanded, CANDY_PRODUCERS, 'candies')).toBe(1.5) // 0.5 + 4 * 0.25
   })
 
   it('the tick sums producer rates over real game time', () => {
@@ -25,8 +25,8 @@ describe('candy producers', () => {
       flags: { spoonOwned: true },
       numbers: { fieldExpansions: 2 },
     }
-    // rate = 0.5 + 2*0.25 = 1 candy/s; one second of game time → +1 candy.
+    // rate = 0.5 field + 0.5 grandma + 2*0.25 = 1.5 candy/s; one second → +1.5 candy.
     const after = tick(state, 1000, CANDY_PRODUCERS)
-    expect(after.candies.current).toBeCloseTo(state.candies.current + 1)
+    expect(after.candies.current).toBeCloseTo(state.candies.current + 1.5)
   })
 })

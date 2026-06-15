@@ -95,6 +95,19 @@ export interface GameText {
   // --- progressive-reveal action buttons (the field opener) ---
   'action.eat': string
   'action.throw': string
+  'action.enterHouse': string
+  'action.openMap': string
+  'action.backToField': string
+  'action.backToHouse': string
+  'action.scanSky': string
+
+  // --- progressive GUI unlock ("request a feature") ---
+  'gui.request.statusBar': string
+  'gui.request.healthBar': string
+  'gui.request.map': string
+  'gui.comment.statusBar': string
+  'gui.comment.healthBar': string
+  'gui.comment.map': string
 
   // --- the seed pivot + beanstalk (Block G) ---
   'beanstalk.seedLands': string

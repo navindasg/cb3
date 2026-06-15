@@ -9,7 +9,7 @@ test('background → advance the clock hours → return credits offline candies'
   await page.clock.install({ time: new Date('2026-06-13T08:00:00') })
   await page.addInitScript(() => localStorage.clear())
   await page.goto('/')
-  await page.getByTestId('ack-opener').click() // grants the wooden spoon → 0.5 candy/s
+  await page.getByTestId('ack-opener').click() // your field already trickles 0.5 candy/s
 
   const start = await page.evaluate(() => (window as any).__cb3.session.getState().candies.current)
 

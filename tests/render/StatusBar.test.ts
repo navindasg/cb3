@@ -54,6 +54,32 @@ describe('StatusBar', () => {
     expect(root.querySelector('.status-value')?.textContent).toBe('5/10')
   })
 
+  it('renders "current / max" when a max signal is supplied, reacting to either', () => {
+    const root = document.createElement('div')
+    const hp = signal(7)
+    const maxHp = signal(10)
+    const bar = createStatusBar(root, [
+      { id: 'hp', label: 'hp: ', source: hp, max: maxHp, format: (c, m) => `${c} / ${m}` },
+    ])
+    const value = root.querySelector('[data-region="hp"] .status-value')
+    expect(value?.textContent).toBe('7 / 10')
+    maxHp.set(11) // the max signal is a dependency too
+    expect(value?.textContent).toBe('7 / 11')
+    bar.dispose()
+  })
+
+  it('hides a region until its visible signal turns true (progressive unlock gate)', () => {
+    const root = document.createElement('div')
+    const candy = signal(1)
+    const visible = signal(false)
+    const bar = createStatusBar(root, [{ id: 'candy', label: '', source: candy, visible }])
+    const region = root.querySelector('[data-region="candy"]') as HTMLElement
+    expect(region.style.display).toBe('none')
+    visible.set(true)
+    expect(region.style.display).toBe('')
+    bar.dispose()
+  })
+
   it('dispose stops further region updates (no leak)', () => {
     const root = document.createElement('div')
     const candy = signal(1)

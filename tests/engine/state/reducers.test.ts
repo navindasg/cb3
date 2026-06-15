@@ -1,5 +1,6 @@
 import { createDefaultSave } from '@/engine/state/defaultSave'
-import { eatCandies, throwCandies, setFlag, setNumber } from '@/engine/state/reducers'
+import { eatCandies, eatAllCandies, throwCandies, setFlag, setNumber } from '@/engine/state/reducers'
+import { MAX_HP_KEY } from '@/engine/state/recomputeCaches'
 import { addResource } from '@/engine/types/Resource'
 import type { GameState } from '@/engine/types/GameState'
 
@@ -38,6 +39,35 @@ describe('eatCandies', () => {
     expect(s.candies.current).toBe(10)
     expect(s.lifetimeCandiesEaten).toBe(0)
   })
+
+  it('heals current HP by the number of candies eaten, clamped to the max', () => {
+    const hurt: GameState = { ...withCandies(10), playerHpCurrent: 4 }
+    const after = eatCandies(hurt, 3) // +3 HP -> 7, still below the 10 cap
+    expect(after.playerHpCurrent).toBe(7)
+    // Eating more than the deficit tops out exactly at the (freshly recomputed) max.
+    const fed = eatCandies(hurt, 10)
+    expect(fed.playerHpCurrent).toBe(10)
+  })
+
+  it('raises the max-HP ceiling as the lifetime eaten crosses the threshold, in one transition', () => {
+    const hurt: GameState = { ...withCandies(50), playerHpCurrent: 1 }
+    const after = eatCandies(hurt, 50) // lifetime 50 -> maxHp 11; heal 1+50 -> clamps to 11
+    expect(after.numbers[MAX_HP_KEY]).toBe(11)
+    expect(after.playerHpCurrent).toBe(11)
+  })
+})
+
+describe('eatAllCandies', () => {
+  it('eats the whole current stack at once (CB2 "eat all")', () => {
+    const after = eatAllCandies(withCandies(7))
+    expect(after.candies.current).toBe(0)
+    expect(after.lifetimeCandiesEaten).toBe(7)
+  })
+
+  it('is a no-op (same reference) with no candies', () => {
+    const s = withCandies(0)
+    expect(eatAllCandies(s)).toBe(s)
+  })
 })
 
 describe('throwCandies', () => {
@@ -51,6 +81,14 @@ describe('throwCandies', () => {
     const s = withCandies(1)
     expect(throwCandies(s, 5)).toBe(s)
     expect(throwCandies(s, 0)).toBe(s)
+  })
+
+  it('throws a batch of ten by default (CB2), and only when affordable', () => {
+    const after = throwCandies(withCandies(10))
+    expect(after.candies.current).toBe(0)
+    expect(after.lifetimeCandiesThrown).toBe(10)
+    const poor = withCandies(9)
+    expect(throwCandies(poor)).toBe(poor)
   })
 })
 

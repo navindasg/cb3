@@ -93,8 +93,21 @@ export const en: GameText = {
   'zone.beanstalkElevator': 'the beanstalk elevator',
 
   // progressive-reveal actions
-  'action.eat': 'eat a candy',
-  'action.throw': 'throw a candy',
+  'action.eat': 'eat candies',
+  'action.throw': 'throw 10 candies',
+  'action.enterHouse': 'enter your house',
+  'action.openMap': 'the map',
+  'action.backToField': 'back to the field',
+  'action.backToHouse': 'back outside',
+  'action.scanSky': 'scan the sky',
+
+  // progressive GUI unlock ("request a feature")
+  'gui.request.statusBar': 'request a status bar',
+  'gui.request.healthBar': 'request a health bar',
+  'gui.request.map': 'request a map',
+  'gui.comment.statusBar': 'They gave you a status bar. It sits at the top and keeps count.',
+  'gui.comment.healthBar': 'They added a health bar. Useful, if anything ever hits you.',
+  'gui.comment.map': 'They drew you a map. The world, it turns out, is bigger than the field.',
 
   // the seed pivot + beanstalk
   'beanstalk.seedLands': 'A star falls. It lands in your field with a sound like a dropped plum.',

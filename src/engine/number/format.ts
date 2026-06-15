@@ -38,3 +38,25 @@ export function formatAdaptive(n: number, maxChars: number): string {
   const full = formatCount(n)
   return full.length <= maxChars ? full : formatCompact(n)
 }
+
+/** Group whole thousands with thin spaces, CB2-style: 1000000 -> "1 000 000". */
+export function groupWithSpaces(n: number): string {
+  const s = Math.trunc(Math.abs(n)).toString()
+  const grouped = s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return n < 0 ? `-${grouped}` : grouped
+}
+
+/**
+ * CB2's adaptive candy line (Candies.getCurrentAsString homage): "You have 1 candy" in the
+ * singular, "You have N candies" with space-grouped thousands otherwise, plus two of the
+ * original's deadpan easter eggs (1337 -> "leet", 42 -> a little "\o/"). No trailing period —
+ * the field counter is a steady readout, not a sentence. Values are floored to whole candies.
+ */
+export function candyCountSentence(n: number): string {
+  const whole = Math.floor(n)
+  if (whole < 0) return 'What, negative candies?!'
+  if (whole === 1) return 'You have 1 candy'
+  const base = whole === 1337 ? 'leet' : groupWithSpaces(whole)
+  const comment = whole === 42 ? ' \\o/' : ''
+  return `You have ${base} candies${comment}`
+}

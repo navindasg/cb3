@@ -21,10 +21,10 @@ describe('F1: your field & house — the opener', () => {
     expect(after.lifetimeCandiesEaten).toBe(1)
   })
 
-  it('only "eat" is revealed at the first candy; "throw" appears at the threshold', () => {
+  it('only "eat" is revealed at the first candy; "throw" appears at ten (CB2 threshold)', () => {
     expect(revealedActions(FIELD_REVEAL_THRESHOLDS, withCandies(1))).toEqual(['eat'])
-    expect(isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', withCandies(1))).toBe(false)
-    expect(isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', withCandies(5))).toBe(true)
+    expect(isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', withCandies(9))).toBe(false)
+    expect(isRevealed(FIELD_REVEAL_THRESHOLDS, 'throw', withCandies(10))).toBe(true)
   })
 
   it('throw accrues lifetimeCandiesThrown', () => {

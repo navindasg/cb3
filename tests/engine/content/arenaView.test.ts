@@ -1,9 +1,11 @@
 import { Scene } from '@/engine/quest/Scene'
 import { HorizontalDriver } from '@/engine/quest/physics/HorizontalDriver'
+import { VerticalDriver } from '@/engine/quest/physics/VerticalDriver'
 import { createEntityFactory } from '@/engine/content/entityFactory'
 import { toArenaModel } from '@/engine/content/arenaView'
 import { TEMPLATE_MAP } from '@/content/quests/entityTemplates'
 import { GUMMY_WORM_CELLAR } from '@/content/quests/gummyWormCellar'
+import { BEANSTALK_CLIMB } from '@/content/quests/beanstalkClimb'
 
 const factory = createEntityFactory(TEMPLATE_MAP)
 
@@ -45,5 +47,24 @@ describe('toArenaModel', () => {
       exit: { x: 0, y: 0, label: '[exit]', action: 'leave' },
     })
     expect(model.exit?.action).toBe('leave')
+  })
+
+  it('rounds the player position so a fractional climb y still renders (regression)', () => {
+    // The VerticalDriver integrates the player position fractionally; a non-integer row index
+    // is silently dropped by CellBuffer.drawString, which made the climber '@' invisible for the
+    // whole climb. The model must hand the renderer integer cells.
+    let s = Scene.start({
+      def: BEANSTALK_CLIMB,
+      driver: new VerticalDriver({ gravityY: 0.6, climbSpeed: 9 }),
+      entityFactory: factory,
+    })
+    s = s.step({ playerInput: { moveX: 0, moveY: 1, jump: false } }, 100)
+    const fractional = s.player?.pos.y
+    expect(fractional !== undefined && !Number.isInteger(fractional)).toBe(true) // precondition
+    const model = toArenaModel(s, TEMPLATE_MAP)
+    const player = model.entities.find((e) => e.glyph === '@')
+    expect(player).toBeDefined()
+    expect(Number.isInteger(player?.x)).toBe(true)
+    expect(Number.isInteger(player?.y)).toBe(true)
   })
 })

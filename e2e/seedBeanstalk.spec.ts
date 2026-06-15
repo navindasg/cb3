@@ -15,8 +15,9 @@ test('Act 0 → seed event → beanstalk climb completes and unlocks the elevato
   await page.goto('/')
   await page.getByTestId('ack-opener').click()
 
-  // Arm the seed gate; the next lifecycle pass fires the event (seed lands + appears).
-  await page.getByTestId('arm-seed').click()
+  // Arm the seed gate (telescope + lifetime candies) via the test hook; the next lifecycle pass
+  // fires the event (seed lands + appears). "scan the sky" is no longer a cold-start button.
+  await page.evaluate(() => (window as any).__cb3.armSeed())
   await page.waitForFunction(() => (window as any).__cb3.session.getState().flags['seedPresent'] === true)
 
   // Hand the player enough candy to feed the beanstalk past the cloud threshold.
