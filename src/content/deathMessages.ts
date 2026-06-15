@@ -38,6 +38,16 @@ export const CLOUD_RAT_DEATH: DeathMessage = {
   message: 'death.cloudRat',
 }
 
+export const MINE_SENTINEL_DEATH: DeathMessage = {
+  source: 'mineSentinel',
+  message: 'death.mineSentinel',
+}
+
+export const ROCK_IMP_DEATH: DeathMessage = {
+  source: 'rockImp',
+  message: 'death.rockImp',
+}
+
 export const FALL_DEATH: DeathMessage = {
   source: 'fall',
   message: 'death.fall',
@@ -47,3 +57,18 @@ export const GENERIC_DEATH: DeathMessage = {
   source: 'generic',
   message: 'death.generic',
 }
+
+/** Every death message, so the i18n completeness check stays data-driven as new foes are added. */
+export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
+  CANDY_BAT_DEATH,
+  SUGAR_GOLEM_DEATH,
+  GUMMY_WORM_DEATH,
+  GUMMY_SLIME_DEATH,
+  GUMMY_BEAR_DEATH,
+  GUMMY_APHID_DEATH,
+  CLOUD_RAT_DEATH,
+  MINE_SENTINEL_DEATH,
+  ROCK_IMP_DEATH,
+  FALL_DEATH,
+  GENERIC_DEATH,
+]

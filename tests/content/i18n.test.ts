@@ -10,13 +10,7 @@ import { CAULDRON_RECIPES } from '@/content/recipes/cauldron'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
 import { ACT0_SECRETS } from '@/content/secrets'
 import { TAVERN_RUMORS } from '@/content/tavern/rumors'
-import {
-  CANDY_BAT_DEATH,
-  SUGAR_GOLEM_DEATH,
-  GUMMY_WORM_DEATH,
-  GENERIC_DEATH,
-} from '@/content/deathMessages'
-import { ACT0_STRATA } from '@/content/strata'
+import { ALL_DEATH_MESSAGES } from '@/content/deathMessages'
 import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
 
 const KEYS = new Set(Object.keys(en))
@@ -60,14 +54,8 @@ describe('en.ts locale completeness', () => {
     for (const s of GRIMOIRE_SPELLS) expect(has(s.displayKey), s.displayKey).toBe(true)
     for (const s of ACT0_SECRETS) expect(has(s.revealKey), s.revealKey).toBe(true)
     for (const r of TAVERN_RUMORS) expect(has(r.textKey), r.textKey).toBe(true)
-    for (const d of [CANDY_BAT_DEATH, SUGAR_GOLEM_DEATH, GUMMY_WORM_DEATH, GENERIC_DEATH]) {
+    for (const d of ALL_DEATH_MESSAGES) {
       expect(has(d.message), d.message).toBe(true)
-    }
-  })
-
-  it('every zone display key exists', () => {
-    for (const stratum of ACT0_STRATA) {
-      for (const zone of stratum.zones) expect(has(zone.displayKey), zone.displayKey).toBe(true)
     }
   })
 

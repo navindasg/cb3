@@ -144,6 +144,42 @@ export const GUMMY_BEAR: EntityTemplate = {
   attack: { damage: 2, range: 1.6, cooldownMs: 1100 },
 }
 
+// --- the mine gate (the access fight, HorizontalDriver) ---
+// A crystallised rock-candy sentinel walls off the sugar mines. It is the deliberate "go buy a
+// real weapon" gate: lots of HP, and — crucially — a reach (2.8) LONGER than grandma's spoon
+// (range 2), so a spoon/bare-hands player must stand inside its swing and loses the trade, while
+// a candy-cane BOW (range 5) or a licorice WHIP (range 3) out-ranges it and kills it untouched.
+// The host ejects you to the village on death, so this is a genuine gate, not a respawn grind.
+
+export const MINE_SENTINEL: EntityTemplate = {
+  id: 'mineSentinel',
+  team: 'enemy',
+  width: 2,
+  height: 2,
+  hp: 40,
+  glyph: 'M',
+  color: '#9cf',
+  tags: ['mineSentinel', 'rockCandy'],
+  attack: { damage: 3, range: 2.8, cooldownMs: 600 },
+}
+
+// --- the mountain (the climb to the observatory, HorizontalDriver) ---
+// Rock imps skitter down the scree and nip at you; a gummy bear (reused from the forest) lurks
+// near the summit. Both are armed, so — unlike the mines loot-run — the mountain is a real fight,
+// which your forge weapon makes comfortable.
+
+export const ROCK_IMP: EntityTemplate = {
+  id: 'rockImp',
+  team: 'enemy',
+  width: 1,
+  height: 1,
+  hp: 5,
+  glyph: 'i',
+  color: '#caa',
+  tags: ['rockImp'],
+  attack: { damage: 2, range: 1.6, cooldownMs: 800 },
+}
+
 export const ACT0_TEMPLATES: readonly EntityTemplate[] = [
   CANDY_BAT,
   SUGAR_GOLEM,
@@ -154,6 +190,8 @@ export const ACT0_TEMPLATES: readonly EntityTemplate[] = [
   CLOUD_RAT,
   GUMMY_SLIME,
   GUMMY_BEAR,
+  MINE_SENTINEL,
+  ROCK_IMP,
 ]
 
 /** Template registry keyed by id, for the engine entity factory. */

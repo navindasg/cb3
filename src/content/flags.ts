@@ -9,3 +9,12 @@ export const BEANSTALK_ELEVATOR_FLAG = 'beanstalkElevator'
 
 /** Set on forest victory; reveals the village on the overworld (its region's revealFlag). */
 export const FOREST_CLEARED_FLAG = 'forestCleared'
+
+/** Set when you first enter the village; reveals the sugar mines + the mountain on the overworld. */
+export const VILLAGE_REACHED_FLAG = 'villageReached'
+
+/** Set when the mine-gate sentinel is defeated; opens the sugar-mines descent proper. */
+export const MINE_GATE_CLEARED_FLAG = 'mineGateCleared'
+
+/** Set on sugar-mines victory; the mountain climb's win sets `mountainClimbed` to reveal the observatory. */
+export const MOUNTAIN_CLIMBED_FLAG = 'mountainClimbed'

@@ -19,6 +19,8 @@ export default defineConfig({
       exclude: [
         'src/main.ts',
         'src/render/bootstrap.ts',
+        'src/render/townScreens.ts',
+        'src/render/questScreens.ts',
         'src/render/devPanel.ts',
         // Overworld.ts is the responsive DOM shell: it lives off getBoundingClientRect/innerHeight
         // measurements that jsdom reports as 0, so its fit math is verified live (Playwright),

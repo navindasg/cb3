@@ -13,7 +13,8 @@ import { BEANSTALK_ELEVATOR_FLAG } from '@/content/flags'
 // reaching scroll >= the climb height wins. Data only; the generic Scene runtime executes it
 // with the VerticalDriver (gusts + gravity configured by the host place).
 
-const CLIMB_HEIGHT = 40
+/** The vertical scroll the player must reach to top out (= the win scroll, also the host's HUD). */
+export const CLIMB_HEIGHT = 40
 
 export const BEANSTALK_CLIMB: QuestDef = {
   id: 'beanstalkClimb',

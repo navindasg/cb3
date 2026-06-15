@@ -12,58 +12,12 @@ export interface ProducerDef {
   readonly getRate: (state: GameState) => number
 }
 
-// --- Map / world (Block D) -------------------------------------------------
-// The world is a bottom-to-top registry of strata; zones declare their position by a
-// NAMED symbolic anchor (resolved decision 2) rather than absolute rows, so art height
-// can change without re-numbering every zone. Anchors are resolved to concrete rows once
-// at registry build (see render/mapModel.ts). Content imports only these types.
-
-/** A symbolic vertical position on the map (resolved to a row at registry build). */
-export type StratumAnchor =
-  | 'groundLevel'
-  | 'undergroundLevel'
-  | 'villageLevel'
-  | 'cloudLevel'
-  | 'skyLevel'
-  | 'spaceLevel'
-
-/**
- * One clickable location within a stratum. The map never STAMPS labels over the art
- * (CB2's model): `label` is the exact text already drawn in the stratum's `ascii`, and the
- * renderer finds it and overlays a transparent, styled click hotspot on top of it. Only a
- * zone that appears dynamically (e.g. the seed crater, gated by an unlockFlag) and is NOT
- * present in the static art supplies `x`/`rowOffset`, where its `label` is drawn onto the
- * reserved blank space when revealed.
- */
-export interface ZoneDef {
-  readonly id: string
-  /** i18n key for the zone's display name (hover/aria). */
-  readonly displayKey: string
-  /** The exact text drawn in the stratum art that this zone makes clickable. */
-  readonly label: string
-  /** Column to draw+place the zone, used ONLY when `label` is not found in the art. */
-  readonly x?: number
-  /** Row (within the stratum) to draw+place the zone, used ONLY when `label` is not in the art. */
-  readonly rowOffset?: number
-  /** The data-action dispatched when the zone is clicked (navigate). */
-  readonly action: string
-  /** State flag that must be true for the zone to appear; absent ⇒ always visible. */
-  readonly unlockFlag?: string
-}
-
-/** One horizontal band of the world, stacked bottom-to-top by anchor. */
-export interface StratumDef {
-  readonly id: string
-  /** Symbolic vertical anchor; lower anchors render lower on the (taller-upward) page. */
-  readonly anchor: StratumAnchor
-  /** Height of the stratum in rows. */
-  readonly heightRows: number
-  /** ASCII backdrop, one string per row (clipped/padded to the stratum's width). */
-  readonly ascii: readonly string[]
-  /** State flag gating the whole stratum's reveal; absent ⇒ always present. */
-  readonly unlockFlag?: string
-  readonly zones: readonly ZoneDef[]
-}
+// --- Map / world ----------------------------------------------------------
+// The realized map is a 2D flag-revealed landscape (OverworldDef, see engine/types/overworld.ts):
+// regions placed at world-cell (x,y), each revealed by a flag, panned in 2D — the ground spreads
+// left→right while the world still extends UPWARD via the beanstalk (garden → climb → sky → space),
+// preserving the genre-reveal. The earlier bottom-to-top Stratum registry (StratumDef/ZoneDef) was
+// retired in favour of OverworldDef; see ADR-001 D10 (superseded) and DESIGN §3.
 
 // --- Shop / purchasing (Block E) -------------------------------------------
 // One generic purchase handler (engine/shop/purchase.ts) consumes ShopEntry records

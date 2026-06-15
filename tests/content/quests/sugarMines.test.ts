@@ -56,13 +56,14 @@ describe('the sugar mines (Quest 1) as a horizontal Scene quest', () => {
     expect(driveToWin().phase).toBe('won')
   })
 
-  it('awards rock candy + unlocks the next zone on win (applyQuestWin)', () => {
+  it('awards rock candy + unlocks rock candy as a resource on win (applyQuestWin)', () => {
     const won = driveToWin()
     expect(won.phase).toBe('won')
     const after = applyQuestWin(createDefaultSave(), SUGAR_MINES)
     expect(after.rockCandy.current).toBe(10)
     expect(after.flags['rockCandyUnlocked']).toBe(true)
-    expect(after.flags['observatoryUnlocked']).toBe(true)
+    // The mines no longer reveal the observatory — that is the mountain climb's job.
+    expect(after.flags['observatoryUnlocked']).toBeUndefined()
   })
 
   it('respawns the player at a safe ledge on a lethal hit (loses nothing)', () => {

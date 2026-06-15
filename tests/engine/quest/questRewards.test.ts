@@ -5,10 +5,9 @@ import { GUMMY_WORM_CELLAR } from '@/content/quests/gummyWormCellar'
 import type { QuestDef } from '@/engine/types/defs'
 
 describe('applyQuestWin', () => {
-  it('unlocks the sugar mines onWin flags and awards rock candy', () => {
+  it('unlocks rock candy and awards the haul on a sugar-mines win', () => {
     const after = applyQuestWin(createDefaultSave(), SUGAR_MINES)
     expect(after.flags['rockCandyUnlocked']).toBe(true)
-    expect(after.flags['observatoryUnlocked']).toBe(true)
     expect(after.rockCandy.current).toBe(10)
     expect(after.rockCandy.lifetimeAccumulated).toBe(10)
   })

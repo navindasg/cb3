@@ -36,6 +36,44 @@ export const IRON_SWORD: ItemDef = {
   weapon: { damage: 5, range: 2, cooldownMs: 400 },
 }
 
+// The forge mix is deliberately NOT a sword ladder (design directive: "mix it up, surprise me;
+// a bow to get used to ranged before space"). Each weapon is a distinct archetype the combat
+// engine actually rewards — combat.ts honours per-weapon `range`, so the bow plinks from afar
+// while the mace trades reach for a brutal, slow swing.
+
+/** Ranged: long reach, low per-hit, slow draw. Foreshadows the space-tech ranged weapons. */
+export const CANDY_CANE_BOW: ItemDef = {
+  id: 'candyCaneBow',
+  displayKey: 'item.candyCaneBow.name',
+  descKey: 'item.candyCaneBow.desc',
+  ascii: '})',
+  saveFlag: 'candyCaneBowOwned',
+  slot: 'weapon',
+  weapon: { damage: 2, range: 5, cooldownMs: 900 },
+}
+
+/** Fast + reachy: a flurry of low hits at medium range. Tensile licorice (see §4 flavor rules). */
+export const LICORICE_WHIP: ItemDef = {
+  id: 'licoriceWhip',
+  displayKey: 'item.licoriceWhip.name',
+  descKey: 'item.licoriceWhip.desc',
+  ascii: '~/',
+  saveFlag: 'licoriceWhipOwned',
+  slot: 'weapon',
+  weapon: { damage: 3, range: 3, cooldownMs: 350 },
+}
+
+/** Heavy: a giant jawbreaker on a haft. Short reach, slow, but it hits like a falling moon. */
+export const JAWBREAKER_MACE: ItemDef = {
+  id: 'jawbreakerMace',
+  displayKey: 'item.jawbreakerMace.name',
+  descKey: 'item.jawbreakerMace.desc',
+  ascii: 'O>',
+  saveFlag: 'jawbreakerMaceOwned',
+  slot: 'weapon',
+  weapon: { damage: 8, range: 1.5, cooldownMs: 850 },
+}
+
 export const LEATHER_HAT: ItemDef = {
   id: 'leatherHat',
   displayKey: 'item.leatherHat.name',
@@ -69,6 +107,9 @@ export const MANTLE_SWORD: ItemDef = {
   ascii: '|>',
   saveFlag: 'mantleSwordTaken', // gated forever in Phase 1; the foreshadow flag below blocks it
   slot: 'weapon',
+  // Hero-tier stats so it is internally consistent the day it becomes takeable. Never reachable
+  // in Act 0 (no flow sets mantleSwordTaken), so these numbers affect no Act-0 balance.
+  weapon: { damage: 12, range: 2.5, cooldownMs: 300 },
 }
 
 /** Flag the world checks before letting the mantle sword be taken (never set in Act 0). */
@@ -78,6 +119,9 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   WOODEN_SPOON,
   WOODEN_SWORD,
   IRON_SWORD,
+  CANDY_CANE_BOW,
+  LICORICE_WHIP,
+  JAWBREAKER_MACE,
   LEATHER_HAT,
   BEGINNER_GRIMOIRE,
   TELESCOPE,

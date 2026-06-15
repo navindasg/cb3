@@ -6,6 +6,9 @@ import { GUMMY_WORM_DEATH, GENERIC_DEATH } from '@/content/deathMessages'
 // the entrance, win by reaching the far end. On win it flags the cellar cleared. Data only;
 // the generic Scene runtime executes it with the HorizontalDriver.
 
+/** How far you must travel to clear the cellar (= the win scroll, also the host's HUD). */
+export const GUMMY_WORM_CELLAR_GOAL = 20
+
 export const GUMMY_WORM_CELLAR: QuestDef = {
   id: 'gummyWormCellar',
   mode: 'horizontal',
@@ -19,7 +22,7 @@ export const GUMMY_WORM_CELLAR: QuestDef = {
     { entityId: 'gummyWorm', x: 19, y: 5 },
   ],
   waves: [],
-  winCondition: { kind: 'reachScroll', atScroll: 20 },
+  winCondition: { kind: 'reachScroll', atScroll: GUMMY_WORM_CELLAR_GOAL },
   safeZones: [{ x: 0, y: 0, width: 4, height: 6 }],
   deathMessages: [GUMMY_WORM_DEATH, GENERIC_DEATH],
   onWinFlags: ['gummyWormCellarCleared'],

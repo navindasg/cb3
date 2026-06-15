@@ -253,6 +253,43 @@ pre {
   color: #666;
 }
 
+/* The village blurb + a shop/forge row: the item line, then its buy button. */
+.blurb {
+  margin: 0.2rem auto 0.9rem;
+  max-width: 30rem;
+  color: #6a6a6a;
+}
+.shop-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
+.shop-item {
+  color: #444;
+}
+.shop-owned {
+  color: #888;
+  font-style: italic;
+}
+.shop-row button {
+  margin: 0; /* the flex row spaces them; override the block-button auto margins */
+}
+.shop-row button.shop-unaffordable {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The cauldron's running action log ("candy → stir → heat → lollipop"). */
+.cauldron-log {
+  margin: 0.4rem auto 0.8rem;
+  color: #555;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 /* Grandma's house: a speaker name and a small block of dialogue lines. */
 .speaker {
   margin: 0.4rem 0 0.2rem;

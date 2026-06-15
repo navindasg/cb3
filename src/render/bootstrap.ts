@@ -22,20 +22,10 @@ import {
   MAP_UNLOCKED_FLAG,
 } from '@/content/gui/featureRequests'
 import { plantSeed, feedBeanstalk } from '@/engine/content/beanstalk'
-import { createQuestHost } from '@/engine/quest/questHost'
-import { VerticalDriver } from '@/engine/quest/physics/VerticalDriver'
-import { HorizontalDriver } from '@/engine/quest/physics/HorizontalDriver'
-import { nearestHostileDistance } from '@/engine/quest/combat'
-import { createEntityFactory } from '@/engine/content/entityFactory'
-import { spellAbilities } from '@/engine/content/spells'
-import { applyQuestWin } from '@/engine/quest/questRewards'
+import { fireAny } from '@/engine/content/secrets'
 import { CANDY_PRODUCERS } from '@/content/producers/candy'
 import { ACT0_OVERWORLD } from '@/content/overworld'
-import { TEMPLATE_MAP } from '@/content/quests/entityTemplates'
-import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
-import { BEANSTALK_CLIMB } from '@/content/quests/beanstalkClimb'
-import { FOREST_QUEST, FOREST_GOAL } from '@/content/quests/forest'
-import { playerQuestWeapons } from '@/content/items/playerLoadout'
+import { ACT0_SECRETS } from '@/content/secrets'
 import { inventoryView } from '@/content/items/inventoryView'
 import { WOODEN_SPOON, ITEM_MAP } from '@/content/items/items'
 import { GRANDMA_DIALOGUE, GRANDMA_INTRO_VARIANT_ID } from '@/content/dialogue/grandma'
@@ -46,9 +36,9 @@ import type { GameTextKey } from '@/content/i18n/schema'
 import { createStatusBar, type StatusBar } from '@/render/StatusBar'
 import { createHealthBar, type HealthBar } from '@/render/healthBar'
 import { createOverworldRenderer, type OverworldRenderer } from '@/render/Overworld'
-import { createArenaRenderer, type ArenaRenderer } from '@/render/ArenaRenderer'
-import { BEANSTALK_BACKDROP } from '@/render/arenaBackdrop'
-import { toArenaModel } from '@/engine/content/arenaView'
+import { createTownScreens, type TownScreens } from '@/render/townScreens'
+import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
+import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
 import { createHotkeyLayer, acceleratorKey, underlinedLabel, type HotkeyLayer } from '@/render/hotkeys'
 import { wireLifecycleEvents, wasDiscarded } from '@/render/lifecycleEvents'
@@ -64,7 +54,6 @@ import type { CellMetrics } from '@/render/font'
 // It is verified end-to-end by the Playwright suite (e2e/) rather than unit tests, so it is
 // excluded from coverage like src/main.ts. Keep it free of game logic so that stays honest.
 
-const STEP_MS = 100
 const FALLBACK_METRICS: CellMetrics = { cellW: 9, cellH: 19.2 }
 const tk = (key: GameTextKey): string => t(key)
 
@@ -72,19 +61,6 @@ const tk = (key: GameTextKey): string => t(key)
 function maxHpOf(s: ReturnType<GameSession['getState']>): number {
   return s.numbers[MAX_HP_KEY] ?? derivedMaxHp(s.lifetimeCandiesEaten)
 }
-
-// The forest arena backdrop (drawn UNDER the entities): a sparse treeline up top and a ground
-// line along the bottom row, so the @ and the gummy critters walk a path rather than a void.
-const FOREST_BACKDROP: readonly string[] = [
-  '     ^          ^             ^             ^           ^',
-  '    /=\\        /=\\           /=\\           /=\\         /=\\',
-  '     |          |             |             |           |',
-  '',
-  '',
-  '',
-  '',
-  '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
-]
 
 export interface BootstrapHandles {
   readonly session: GameSession
@@ -169,26 +145,17 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   mainRoot.insertBefore(screen, eventLog.el)
 
   let map: OverworldRenderer | null = null
-  let arena: ArenaRenderer | null = null
-  let questCleanup: (() => void) | null = null
-  // Screen-scoped teardown (effects, subscriptions) cleared on every screen switch.
+  // Screen-scoped teardown (effects, subscriptions, quest intervals + arena unmounts) cleared on
+  // every screen switch. Quest screens register their interval/arena teardown here via onScreen.
   const screenDisposers: Array<() => void> = []
   const onScreen = (dispose: () => void): void => void screenDisposers.push(dispose)
 
   function clearScreen(): void {
-    if (questCleanup) {
-      questCleanup()
-      questCleanup = null
-    }
     for (const d of screenDisposers.splice(0)) d()
     hotkeys.clearBindings()
     if (map) {
       map.unmount()
       map = null
-    }
-    if (arena) {
-      arena.unmount()
-      arena = null
     }
     screen.replaceChildren()
     // Leaving a quest: the status-bar health bar reflects the persisted (town) HP again. During
@@ -276,7 +243,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     controls.className = 'field-controls'
     screen.appendChild(controls)
 
-    let signature = ' ' // force the first build
+    let signature = ' ' // force the first build
 
     function buildControls(): void {
       const s = session.getState()
@@ -484,11 +451,15 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   function routeZone(action: string): void {
     const { kind, target } = parseAction(action)
     if (kind === 'enter' && target === 'field') return showField()
+    if (kind === 'enter' && target === 'village') return town.showVillage()
     if (kind === 'enter' && target === 'beanstalkGarden') return showGarden()
-    if (kind === 'quest' && target === 'forest') return startForest()
-    if (kind === 'quest' && target === 'beanstalkClimb') return startClimb()
-    // Everything else is wired in the next build steps (forest/village/mines/mountain quests +
-    // screens). Until then a click responds VISIBLY so a location never feels dead.
+    if (kind === 'quest' && target === 'forest') return quests.startForest()
+    if (kind === 'quest' && target === 'beanstalkClimb') return quests.startClimb()
+    if (kind === 'quest' && target === 'sugarMines') return quests.startMines()
+    if (kind === 'quest' && target === 'mountain') return quests.startMountain()
+    if (kind === 'enter' && target === 'observatory') return town.showObservatory()
+    // The sky (beanstalk fast-travel) is wired in a later step. Until then a click responds
+    // VISIBLY so a location never feels dead.
     const name = ZONE_NAMES[target] ?? (target || kind)
     notify(`${name} — not open yet (building this out next).`)
   }
@@ -535,186 +506,59 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       fedLine.textContent = `fed: ${fed}`
       screen.appendChild(fedLine)
     }
+    // The single-lollipop leaf secret: a great leaf unfurls into a hammock if you hold EXACTLY one
+    // lollipop while you rest (lollipops come from the gummy-worm cellar). The trigger does the
+    // exactly-one check; we only surface the option once you hold any.
+    if (session.getState().lollipops.current >= 1) {
+      screen.appendChild(
+        button('rest in the great leaf', 'garden-leaf', () => {
+          const before = session.getState()
+          const result = fireAny(before, ACT0_SECRETS, { kind: 'hold', resource: 'lollipops' })
+          if (result.fired && result.revealKey) {
+            session.dispatch(() => result.state)
+            logText(tk(result.revealKey as GameTextKey))
+          } else {
+            notify('You curl up in the leaf. It is just a leaf. (Try holding exactly one lollipop.)')
+          }
+        }),
+      )
+    }
     screen.appendChild(button('back to the map', 'garden-to-map', () => showMap()))
   }
 
-  // --- the beanstalk climb (the vertical quest) ---------------------------
+  // The quest screens (the forest, the beanstalk climb, the mine-gate fight + the sugar-mines
+  // descent) live in a sub-module to keep this file lean; they receive this host's DOM + session
+  // + the status-bar HP signals + helpers, and self-manage their step interval/arena via onScreen.
+  const quests: QuestScreens = createQuestScreens({
+    doc,
+    screen,
+    session,
+    metrics: FALLBACK_METRICS,
+    hp,
+    maxHp,
+    maxHpOf,
+    button,
+    notify,
+    log,
+    logText,
+    clearScreen,
+    showMap,
+    onScreen,
+  })
 
-  function startClimb(): void {
-    clearScreen()
-    const driver = new VerticalDriver({
-      gravityY: 0.6,
-      climbSpeed: 9,
-      gustPeriodMs: 2000,
-      gustStrength: 1,
-      inversionVolumes: [],
-    })
-    const host = createQuestHost({
-      def: BEANSTALK_CLIMB,
-      driver,
-      entityFactory: createEntityFactory(TEMPLATE_MAP),
-      playerAbilities: spellAbilities(GRIMOIRE_SPELLS, session.getState()),
-    })
-
-    const hud = doc.createElement('p')
-    hud.setAttribute('data-testid', 'climb-status')
-    hud.className = 'climb-hud'
-    hud.textContent = 'climbing the beanstalk…'
-    screen.appendChild(hud)
-
-    arena = createArenaRenderer(screen, { metrics: FALLBACK_METRICS })
-
-    const controls = doc.createElement('div')
-    controls.className = 'climb-controls'
-    screen.appendChild(controls)
-
-    let boost = false
-    let boostTicks = 0
-    const climbBtn = button('▲ climb', 'climb-up', () => {
-      boostTicks = 5
-    })
-    climbBtn.addEventListener('pointerdown', () => {
-      boost = true
-    })
-    const release = (): void => {
-      boost = false
-    }
-    climbBtn.addEventListener('pointerup', release)
-    climbBtn.addEventListener('pointerleave', release)
-    controls.appendChild(climbBtn)
-    controls.appendChild(button('leave', 'climb-leave', () => showMap()))
-
-    const GOAL = 40
-    let finished = false
-
-    const paint = (): void => {
-      const scene = host.scene()
-      arena?.render({ ...toArenaModel(scene, TEMPLATE_MAP), background: BEANSTALK_BACKDROP })
-      if (scene.phase === 'won') {
-        if (!finished) {
-          finished = true
-          hud.textContent = 'reached the top'
-          session.dispatch((s) => applyQuestWin(s, BEANSTALK_CLIMB))
-          log('beanstalk.elevatorReady')
-          controls.replaceChildren(button('back to the map', 'climb-done', () => showMap()))
-          stop()
-        }
-        return
-      }
-      hud.textContent = `climbing the beanstalk — ${Math.min(GOAL, Math.round(scene.scroll))} / ${GOAL}`
-    }
-
-    const interval = setInterval(() => {
-      const fast = boost || boostTicks > 0
-      if (boostTicks > 0) boostTicks--
-      for (let i = 0; i < (fast ? 2 : 1); i++) {
-        host.step({ playerInput: { moveX: 0, moveY: 1, jump: false } }, STEP_MS)
-      }
-      paint()
-    }, STEP_MS)
-    function stop(): void {
-      clearInterval(interval)
-    }
-    questCleanup = stop
-    paint()
-  }
-
-  // --- the forest (the first HorizontalDriver combat quest) ---------------
-
-  function startForest(): void {
-    clearScreen()
-    const startState = session.getState()
-    // The quest's player HP floor is overridden by the player's eaten-candy-derived max HP, so
-    // eating candies before the fight genuinely matters.
-    const def = { ...FOREST_QUEST, playerMaxHp: maxHpOf(startState) }
-    const driver = new HorizontalDriver({ gravityY: 30, moveSpeed: 7, jumpVelocity: 14 })
-    const host = createQuestHost({
-      def,
-      driver,
-      entityFactory: createEntityFactory(TEMPLATE_MAP),
-      playerAbilities: spellAbilities(GRIMOIRE_SPELLS, startState),
-      playerWeapons: playerQuestWeapons(startState),
-    })
-
-    const hud = doc.createElement('p')
-    hud.setAttribute('data-testid', 'forest-status')
-    hud.className = 'climb-hud'
-    hud.textContent = 'into the forest…'
-    screen.appendChild(hud)
-
-    arena = createArenaRenderer(screen, { metrics: FALLBACK_METRICS })
-
-    const controls = doc.createElement('div')
-    controls.className = 'climb-controls'
-    screen.appendChild(controls)
-
-    // The march east is hands-free (you auto-advance and auto-swing); holding — or mashing —
-    // ▶ hurry doubles the pace, the same agency the climb gives.
-    let boost = false
-    let boostTicks = 0
-    const hurry = button('▶ hurry', 'forest-hurry', () => {
-      boostTicks = 5
-    })
-    hurry.addEventListener('pointerdown', () => {
-      boost = true
-    })
-    const release = (): void => {
-      boost = false
-    }
-    hurry.addEventListener('pointerup', release)
-    hurry.addEventListener('pointerleave', release)
-    controls.appendChild(hurry)
-    controls.appendChild(button('retreat', 'forest-leave', () => showMap()))
-
-    let finished = false
-
-    const paint = (): void => {
-      const scene = host.scene()
-      arena?.render({ ...toArenaModel(scene, TEMPLATE_MAP), background: FOREST_BACKDROP })
-      if (scene.phase === 'won') {
-        if (!finished) {
-          finished = true
-          hud.textContent = 'the forest is clear'
-          session.dispatch((s) => applyQuestWin(s, def))
-          notify('The forest is clear. The village lies to the east.')
-          controls.replaceChildren(button('back to the map', 'forest-done', () => showMap()))
-          stop()
-        }
-        return
-      }
-      const player = scene.player
-      // Drive the status-bar health bar from the LIVE quest HP while fighting.
-      if (player) {
-        hp.set(player.hp)
-        maxHp.set(player.maxHp)
-      }
-      const curHp = player ? Math.max(0, Math.round(player.hp)) : 0
-      const maxV = player ? player.maxHp : 0
-      hud.textContent = `into the forest — ${Math.min(FOREST_GOAL, Math.round(scene.scroll))} / ${FOREST_GOAL}   hp ${curHp}/${maxV}`
-      // A respawn (death) raises lastDeath for exactly one frame — surface its line once.
-      if (scene.lastDeath) log(scene.lastDeath.message as GameTextKey)
-    }
-
-    const interval = setInterval(() => {
-      const scene = host.scene()
-      const player = scene.player
-      const reach = player ? player.weapons.reduce((m, w) => Math.max(m, w.range), 0) : 0
-      const dist = player ? nearestHostileDistance(player, scene.entities) : Infinity
-      // Advance east, but HOLD to fight when a critter is within weapon reach (then resume).
-      const moveX = dist <= reach ? 0 : 1
-      const fast = boost || boostTicks > 0
-      if (boostTicks > 0) boostTicks--
-      for (let i = 0; i < (fast ? 2 : 1); i++) {
-        host.step({ playerInput: { moveX, moveY: 0, jump: false } }, STEP_MS)
-      }
-      paint()
-    }, STEP_MS)
-    function stop(): void {
-      clearInterval(interval)
-    }
-    questCleanup = stop
-    paint()
-  }
+  // The town screens (the village hub + the forge) live in a sub-module to keep this file lean;
+  // they receive this host's DOM + session + helpers and route clicks back through showMap.
+  const town: TownScreens = createTownScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    startCellar: quests.startCellar,
+  })
 
   // --- driver + lifecycle wiring ------------------------------------------
 
@@ -766,8 +610,18 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showField,
     showGarden,
     showInventory,
-    startClimb,
-    startForest,
+    showVillage: town.showVillage,
+    showForge: town.showForge,
+    showShop: town.showShop,
+    showObservatory: town.showObservatory,
+    showCauldron: town.showCauldron,
+    showTavern: town.showTavern,
+    startClimb: quests.startClimb,
+    startForest: quests.startForest,
+    startMineGate: quests.startMineGate,
+    startMines: quests.startMines,
+    startMountain: quests.startMountain,
+    startCellar: quests.startCellar,
     armSeed,
     log: logText,
   }

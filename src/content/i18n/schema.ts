@@ -12,6 +12,12 @@ export interface GameText {
   'item.woodenSword.desc': string
   'item.ironSword.name': string
   'item.ironSword.desc': string
+  'item.candyCaneBow.name': string
+  'item.candyCaneBow.desc': string
+  'item.licoriceWhip.name': string
+  'item.licoriceWhip.desc': string
+  'item.jawbreakerMace.name': string
+  'item.jawbreakerMace.desc': string
   'item.leatherHat.name': string
   'item.leatherHat.desc': string
   'item.beginnerGrimoire.name': string
@@ -26,6 +32,9 @@ export interface GameText {
   'shop.beginnerGrimoire.thanks': string
   'forge.woodenSword.thanks': string
   'forge.ironSword.thanks': string
+  'forge.candyCaneBow.thanks': string
+  'forge.licoriceWhip.thanks': string
+  'forge.jawbreakerMace.thanks': string
   'obs.beginnerGrimoire.thanks': string
   'obs.telescope.thanks': string
 
@@ -75,6 +84,8 @@ export interface GameText {
   'death.gummyBear': string
   'death.gummyAphid': string
   'death.cloudRat': string
+  'death.mineSentinel': string
+  'death.rockImp': string
   'death.fall': string
   'death.generic': string
 

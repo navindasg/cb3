@@ -74,3 +74,54 @@ export function buildBeanstalkBackdrop(): readonly string[] {
 
 /** The beanstalk world, built once (it never changes during a climb). */
 export const BEANSTALK_BACKDROP: readonly string[] = buildBeanstalkBackdrop()
+
+// The forest arena backdrop (drawn UNDER the entities): a sparse treeline up top and a ground
+// line along the bottom row, so the @ and the gummy critters walk a path rather than a void.
+export const FOREST_BACKDROP: readonly string[] = [
+  '     ^          ^             ^             ^           ^',
+  '    /=\\        /=\\           /=\\           /=\\         /=\\',
+  '     |          |             |             |           |',
+  '',
+  '',
+  '',
+  '',
+  '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+]
+
+// The sugar-mines arena backdrop (the gate fight + the descent): a stalactite ceiling, sparse
+// rock-candy glitter, and a rocky floor. Decorative only; the live veins/sentinel draw over it.
+export const MINES_BACKDROP: readonly string[] = [
+  'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
+  '',
+  '      *                  *                    *                  *              ',
+  '',
+  '',
+  '              *                  *                       *                      ',
+  '',
+  '##############################################################################',
+]
+
+// The gummy-worm cellar arena backdrop (the CB2 rat-cellar homage): a low timber-joist ceiling, a
+// wall shelf (where the lollipop sits), and an earthen floor. Sized to the cellar's own 24×6 grid
+// rather than a slice of the mines art. Decorative only; the worms draw over it.
+export const CELLAR_BACKDROP: readonly string[] = [
+  '========================',
+  '                        ',
+  '  [==] [==] [==]    o    ',
+  '                        ',
+  '                        ',
+  '........................',
+]
+
+// The mountain arena backdrop (the climb to the observatory): a rising ridgeline against the sky
+// and a scree path along the bottom. Decorative only; the imps + the gummy bear draw over it.
+export const MOUNTAIN_BACKDROP: readonly string[] = [
+  '                                                  .  *        .                 ',
+  '                                        /\\      .        .          *           ',
+  '                          /\\          /    \\         *                          ',
+  '            /\\          /    \\      /        \\                                   ',
+  '   /\\     /    \\      /        \\  /            \\                                 ',
+  ' /    \\ /        \\  /                                                            ',
+  '/                                                                               ',
+  '................................................................................',
+]
