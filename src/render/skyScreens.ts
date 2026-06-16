@@ -2,8 +2,9 @@ import type { GameSession } from '@/engine/session/gameSession'
 import type { GameState } from '@/engine/types/GameState'
 import { formatCount } from '@/engine/number/format'
 import { buyCloudSheep, cloudSheepCount, cloudSheepPrice } from '@/engine/content/paddock'
+import { payToll, TOLL_GIANT_COST } from '@/engine/content/tollGiant'
 import { PADDOCK_CONFIG } from '@/content/sky/paddock'
-import { CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
+import { CLOUD_COMMONS_REACHED_FLAG, TOLL_GIANT_PAID_FLAG } from '@/content/flags'
 
 // The sky screens (Act 1 — the cumulus commons, the cloud village at the top of the beanstalk).
 // A wiring sub-module of the DOM bootstrap, sibling to townScreens: it owns NO game logic. Every
@@ -134,16 +135,52 @@ export function createSkyScreens(ctx: SkyContext): SkyScreens {
     }
 
     function renderTollGiant(): void {
+      const s = session.getState()
       heading('the toll giant', 'toll-giant-section')
+
+      if (s.flags[TOLL_GIANT_PAID_FLAG] === true) {
+        paragraph(
+          'The giant shifts aside, still knitting. "Mind the updrafts," he says. The bridge is open — the storm front stacks and flickers beyond it. (Find it on the map.)',
+          'blurb',
+          'toll-giant-paid',
+        )
+        return
+      }
+
       paragraph(
-        'A giant sits across the only bridge upward, knitting. "Hundred thousand candies to pass," he says pleasantly, "or you can try your luck. I\'d pay, personally."',
+        `A giant sits across the only bridge upward, knitting. "${formatCount(TOLL_GIANT_COST)} candies to pass," he says pleasantly, "or you can try your luck. I'd pay, personally."`,
         'blurb',
       )
+      const pay = ctx.button(
+        `pay the toll (${formatCount(TOLL_GIANT_COST)} candies)`,
+        'pay-toll',
+        () => payTollGiant(),
+      )
+      if (s.candies.current < TOLL_GIANT_COST) {
+        pay.disabled = true
+        pay.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(pay)
       screen.appendChild(
-        ctx.button('size up the bridge', 'toll-giant-look', () =>
-          ctx.notify('Beyond the bridge: storm clouds, stacked and flickering. Not open yet — building this out next.'),
+        ctx.button('size up a fight', 'toll-giant-fight', () =>
+          ctx.notify('You measure the giant against yourself. This is not the day. (Fighting him comes later; for now, pay.)'),
         ),
       )
+    }
+
+    function payTollGiant(): void {
+      const result = payToll(session.getState(), TOLL_GIANT_COST, TOLL_GIANT_PAID_FLAG)
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'alreadyPaid'
+            ? 'The bridge is already open.'
+            : "you can't cover the toll yet.",
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('You hand over the toll. The giant counts it twice, nods, and shifts aside. The bridge is open.')
+      render()
     }
 
     render()

@@ -16,19 +16,22 @@ import { applyQuestWin } from '@/engine/quest/questRewards'
 import { fireAny } from '@/engine/content/secrets'
 import { createArenaRenderer } from '@/render/ArenaRenderer'
 import { toArenaModel } from '@/engine/content/arenaView'
-import { BEANSTALK_BACKDROP, FOREST_BACKDROP, MINES_BACKDROP, MOUNTAIN_BACKDROP, CELLAR_BACKDROP } from '@/render/arenaBackdrop'
+import { BEANSTALK_BACKDROP, FOREST_BACKDROP, MINES_BACKDROP, MOUNTAIN_BACKDROP, CELLAR_BACKDROP, STORM_FRONT_BACKDROP } from '@/render/arenaBackdrop'
 import { STEP_MS } from '@/render/loopTiming'
 import { TEMPLATE_MAP } from '@/content/quests/entityTemplates'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
 import { BEANSTALK_CLIMB, CLIMB_HEIGHT } from '@/content/quests/beanstalkClimb'
+import { STORM_FRONT, STORM_FRONT_GOAL } from '@/content/quests/stormFront'
 import { FOREST_QUEST, FOREST_GOAL } from '@/content/quests/forest'
 import { playerQuestWeapons } from '@/content/items/playerLoadout'
 import { MINE_GATE, MINE_GATE_GOAL } from '@/content/quests/mineGate'
 import { SUGAR_MINES, SUGAR_MINES_GOAL } from '@/content/quests/sugarMines'
 import { MOUNTAIN, MOUNTAIN_GOAL } from '@/content/quests/mountain'
 import { GUMMY_WORM_CELLAR, GUMMY_WORM_CELLAR_GOAL } from '@/content/quests/gummyWormCellar'
+import { BOTTLED_TEMPEST, STORM_SILK } from '@/content/items/items'
+import { grantItem } from '@/engine/shop/purchase'
 import { ACT0_SECRETS } from '@/content/secrets'
-import { MINE_GATE_CLEARED_FLAG } from '@/content/flags'
+import { MINE_GATE_CLEARED_FLAG, FIZZY_LIFTING_SODA_FLAG } from '@/content/flags'
 
 // The quest screens — a wiring sub-module of the DOM bootstrap (extracted to keep bootstrap.ts
 // thin as Act 0 grows several quests). Like bootstrap it owns NO game logic: the Scene/quest
@@ -63,6 +66,42 @@ interface HorizontalQuestOpts {
   onEject?(): void
 }
 
+/** VerticalDriver tuning for a climb quest (gravity pulls down, gusts buffet, you climb up). */
+interface VerticalDriverParams {
+  readonly gravityY: number
+  readonly climbSpeed: number
+  readonly gustPeriodMs: number
+  readonly gustStrength: number
+}
+
+/** What a vertical climb quest needs beyond its QuestDef (the beanstalk, the storm front). */
+interface VerticalQuestOpts {
+  readonly def: QuestDef
+  readonly backdrop: readonly string[]
+  /** Climb-scroll goal, for the HUD denominator. */
+  readonly goal: number
+  /** testid prefix for the status/up/leave controls (e.g. 'climb' for the beanstalk). */
+  readonly idPrefix: string
+  readonly hudEnter: string
+  readonly hudPrefix: string
+  readonly hudWon: string
+  readonly driver: VerticalDriverParams
+  /** Label of the climb button (default '▲ climb'). */
+  readonly climbLabel?: string
+  /**
+   * When true, STOP climbing to fight a hostile within weapon reach (then resume) — the boss-gate
+   * behaviour that lets the thunderhead djinn wall the path. Off (default) = the beanstalk's
+   * continuous climb, unchanged: you ascend past weak obstacles, trading hits in passing.
+   */
+  readonly holdToFight?: boolean
+  /** 'respawn' = farmable (log the death, climb on); 'eject' = one-life. */
+  readonly death: 'respawn' | 'eject'
+  /** Run on victory; owns the win side-effects + the post-win controls (gets the controls row). */
+  onWon(controls: HTMLElement): void
+  /** Run on a death when `death === 'eject'`. */
+  onEject?(): void
+}
+
 /** Everything the quest screens need from the bootstrap host (its DOM + session + helpers). */
 export interface QuestContext {
   readonly doc: Document
@@ -86,6 +125,7 @@ export interface QuestContext {
 export interface QuestScreens {
   startForest(): void
   startClimb(): void
+  startStormFront(): void
   startMineGate(): void
   startMines(): void
   startMountain(): void
@@ -346,28 +386,28 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
     else ctx.notify('The fossil accepts the candy and does nothing. As fossils do.')
   }
 
-  // --- the beanstalk climb (Quest 2, the vertical quest) -------------------------------------
+  // --- the generic vertical climb quest (the beanstalk / the storm front) --------------------
+  // The vertical sibling of runHorizontal: climb upward (auto-advance + auto-swing), holding ▲
+  // doubles the pace. With holdToFight on, a hostile within weapon reach halts the climb so a boss
+  // genuinely walls the path (the thunderhead djinn); off, the climb is continuous (the beanstalk).
 
-  function startClimb(): void {
+  function runVertical(opts: VerticalQuestOpts): void {
     ctx.clearScreen()
-    const driver = new VerticalDriver({
-      gravityY: 0.6,
-      climbSpeed: 9,
-      gustPeriodMs: 2000,
-      gustStrength: 1,
-      inversionVolumes: [],
-    })
+    const startState = session.getState()
+    const def: QuestDef = { ...opts.def, playerMaxHp: ctx.maxHpOf(startState) }
+    const driver = new VerticalDriver({ ...opts.driver, inversionVolumes: [] })
     const host = createQuestHost({
-      def: BEANSTALK_CLIMB,
+      def,
       driver,
       entityFactory: factory,
-      playerAbilities: spellAbilities(GRIMOIRE_SPELLS, session.getState()),
+      playerAbilities: spellAbilities(GRIMOIRE_SPELLS, startState),
+      playerWeapons: playerQuestWeapons(startState),
     })
 
     const hud = doc.createElement('p')
-    hud.setAttribute('data-testid', 'climb-status')
+    hud.setAttribute('data-testid', `${opts.idPrefix}-status`)
     hud.className = 'climb-hud'
-    hud.textContent = 'climbing the beanstalk…'
+    hud.textContent = opts.hudEnter
     screen.appendChild(hud)
 
     const arena = createArenaRenderer(screen, { metrics: ctx.metrics })
@@ -378,7 +418,7 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
 
     let boost = false
     let boostTicks = 0
-    const climbBtn = ctx.button('▲ climb', 'climb-up', () => {
+    const climbBtn = ctx.button(opts.climbLabel ?? '▲ climb', `${opts.idPrefix}-up`, () => {
       boostTicks = TAP_BOOST_TICKS
     })
     climbBtn.addEventListener('pointerdown', () => {
@@ -390,34 +430,59 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
     climbBtn.addEventListener('pointerup', release)
     climbBtn.addEventListener('pointerleave', release)
     controls.appendChild(climbBtn)
-    controls.appendChild(ctx.button('leave', 'climb-leave', () => ctx.showMap()))
+    controls.appendChild(ctx.button('leave', `${opts.idPrefix}-leave`, () => ctx.showMap()))
 
-    const GOAL = CLIMB_HEIGHT
     let finished = false
 
     const paint = (): void => {
       const scene = host.scene()
-      arena.render({ ...toArenaModel(scene, TEMPLATE_MAP), background: BEANSTALK_BACKDROP })
+      arena.render({ ...toArenaModel(scene, TEMPLATE_MAP), background: opts.backdrop })
       if (scene.phase === 'won') {
         if (!finished) {
           finished = true
-          hud.textContent = 'reached the top'
-          session.dispatch((s) => applyQuestWin(s, BEANSTALK_CLIMB))
-          ctx.log('beanstalk.elevatorReady')
-          controls.replaceChildren(ctx.button('back to the map', 'climb-done', () => ctx.showMap()))
+          hud.textContent = opts.hudWon
           stop()
+          opts.onWon(controls)
         }
         return
       }
-      hud.textContent = `climbing the beanstalk — ${Math.min(GOAL, Math.round(scene.scroll))} / ${GOAL}`
+      const player = scene.player
+      if (player) {
+        ctx.hp.set(player.hp)
+        ctx.maxHp.set(player.maxHp)
+      }
+      const curHp = player ? Math.max(0, Math.round(player.hp)) : 0
+      const maxV = player ? player.maxHp : 0
+      hud.textContent = `${opts.hudPrefix} — ${Math.min(opts.goal, Math.round(scene.scroll))} / ${opts.goal}   hp ${curHp}/${maxV}`
+      if (scene.lastDeath) {
+        if (opts.death === 'eject') {
+          if (!finished) {
+            finished = true
+            stop()
+            opts.onEject?.()
+          }
+          return
+        }
+        ctx.log(scene.lastDeath.message as GameTextKey)
+      }
     }
 
     const interval = setInterval(() => {
       if (finished) return
+      const scene = host.scene()
+      const player = scene.player
+      // Climb up by default. With holdToFight, stop (moveY 0) when a hostile is within weapon reach
+      // so the climb cannot bypass a living boss — the vertical mirror of runHorizontal's gate.
+      let moveY = 1
+      if (opts.holdToFight && player) {
+        const reach = player.weapons.reduce((m, w) => Math.max(m, w.range), 0)
+        const dist = nearestHostileDistance(player, scene.entities)
+        moveY = dist <= reach ? 0 : 1
+      }
       const fast = boost || boostTicks > 0
       if (boostTicks > 0) boostTicks--
       for (let i = 0; i < (fast ? 2 : 1); i++) {
-        host.step({ playerInput: { moveX: 0, moveY: 1, jump: false } }, STEP_MS)
+        host.step({ playerInput: { moveX: 0, moveY, jump: false } }, STEP_MS)
       }
       paint()
     }, STEP_MS)
@@ -431,5 +496,55 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
     paint()
   }
 
-  return { startForest, startClimb, startMineGate, startMines, startMountain, startCellar }
+  // --- the beanstalk climb (Quest 2) ---------------------------------------------------------
+
+  function startClimb(): void {
+    runVertical({
+      def: BEANSTALK_CLIMB,
+      backdrop: BEANSTALK_BACKDROP,
+      goal: CLIMB_HEIGHT,
+      idPrefix: 'climb',
+      hudEnter: 'climbing the beanstalk…',
+      hudPrefix: 'climbing the beanstalk',
+      hudWon: 'reached the top',
+      driver: { gravityY: 0.6, climbSpeed: 9, gustPeriodMs: 2000, gustStrength: 1 },
+      death: 'respawn',
+      onWon: (controls) => {
+        session.dispatch((s) => applyQuestWin(s, BEANSTALK_CLIMB))
+        ctx.log('beanstalk.elevatorReady')
+        controls.replaceChildren(ctx.button('back to the map', 'climb-done', () => ctx.showMap()))
+      },
+    })
+  }
+
+  // --- the storm front (Quest 3) — gated on the fizzy lifting soda, capped by the djinn ---------
+
+  function startStormFront(): void {
+    // The updrafts demand the fizzy lifting soda (a cauldron brew). Refuse entry without it,
+    // pointing the player at the cauldron — the gate, like the mine gate, is a real prerequisite.
+    if (session.getState().flags[FIZZY_LIFTING_SODA_FLAG] !== true) {
+      ctx.notify('The first updraft hurls you back onto the bridge. You need a fizzy lifting soda to ride them — brew one at the cauldron.')
+      return ctx.showMap()
+    }
+    runVertical({
+      def: STORM_FRONT,
+      backdrop: STORM_FRONT_BACKDROP,
+      goal: STORM_FRONT_GOAL,
+      idPrefix: 'storm',
+      hudEnter: 'into the storm front…',
+      hudPrefix: 'into the storm front',
+      hudWon: 'the thunderhead breaks',
+      driver: { gravityY: 0.6, climbSpeed: 9, gustPeriodMs: 1800, gustStrength: 1.5 },
+      holdToFight: true,
+      death: 'respawn',
+      onWon: (controls) => {
+        // Bank the clear flag + candy drop, then press the djinn's loot into the player's hands.
+        session.dispatch((s) => grantItem(grantItem(applyQuestWin(s, STORM_FRONT), BOTTLED_TEMPEST), STORM_SILK))
+        ctx.notify('The thunderhead breaks apart. A bottled tempest and a bolt of storm-silk fall out of the dispersing cloud.')
+        controls.replaceChildren(ctx.button('back to the map', 'storm-done', () => ctx.showMap()))
+      },
+    })
+  }
+
+  return { startForest, startClimb, startStormFront, startMineGate, startMines, startMountain, startCellar }
 }

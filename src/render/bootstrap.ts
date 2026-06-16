@@ -470,6 +470,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     if (kind === 'quest' && target === 'beanstalkClimb') return quests.startClimb()
     if (kind === 'quest' && target === 'sugarMines') return quests.startMines()
     if (kind === 'quest' && target === 'mountain') return quests.startMountain()
+    if (kind === 'quest' && target === 'stormFront') return quests.startStormFront()
     if (kind === 'enter' && target === 'observatory') return town.showObservatory()
     if (kind === 'enter' && target === 'cloudCommons') return sky.showCloudCommons()
     // "the sky" is the cloud band itself; once the beanstalk is an elevator it carries you up to
@@ -649,6 +650,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showTavern: town.showTavern,
     showCloudCommons: sky.showCloudCommons,
     startClimb: quests.startClimb,
+    startStormFront: quests.startStormFront,
     startForest: quests.startForest,
     startMineGate: quests.startMineGate,
     startMines: quests.startMines,

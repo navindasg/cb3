@@ -194,7 +194,41 @@ export const ACT0_TEMPLATES: readonly EntityTemplate[] = [
   ROCK_IMP,
 ]
 
+// --- the storm front (Quest 3, VerticalDriver) ---
+// Past the toll giant's bridge, the storm front is a vertical climb through a charged cloud bank.
+// Storm sprites are fast, fragile motes of static that dart in and zap; the thunderhead djinn
+// caps it — a boss with a lot of HP and a long, slow lightning reach. Both are armed, so the
+// climb is a real fight, gated behind the fizzy lifting soda (the updrafts fling you off without
+// it). The djinn out-ranges a melee weapon's reach but not the candy-cane bow, rewarding the
+// ranged archetype again (continuity with the mine gate's lesson).
+
+export const STORM_SPRITE: EntityTemplate = {
+  id: 'stormSprite',
+  team: 'enemy',
+  width: 1,
+  height: 1,
+  hp: 3,
+  glyph: 'z', // a crackle of static (pure ASCII — DESIGN §2a)
+  color: '#ad6',
+  tags: ['stormSprite', 'flying'],
+  attack: { damage: 2, range: 1.6, cooldownMs: 600 },
+}
+
+export const THUNDERHEAD_DJINN: EntityTemplate = {
+  id: 'thunderheadDjinn',
+  team: 'enemy',
+  width: 3,
+  height: 2,
+  hp: 60,
+  glyph: '(~)', // a roiling thunderhead, three cells wide
+  color: '#9bd',
+  tags: ['thunderheadDjinn', 'boss', 'flying'],
+  attack: { damage: 4, range: 2.6, cooldownMs: 700 },
+}
+
+export const ACT1_TEMPLATES: readonly EntityTemplate[] = [STORM_SPRITE, THUNDERHEAD_DJINN]
+
 /** Template registry keyed by id, for the engine entity factory. */
 export const TEMPLATE_MAP: ReadonlyMap<string, EntityTemplate> = new Map(
-  ACT0_TEMPLATES.map((t) => [t.id, t]),
+  [...ACT0_TEMPLATES, ...ACT1_TEMPLATES].map((t) => [t.id, t]),
 )

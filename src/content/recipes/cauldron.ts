@@ -31,4 +31,26 @@ export const SYRUP_OF_HEALTH: RecipeDef = {
   },
 }
 
-export const CAULDRON_RECIPES: readonly RecipeDef[] = [SYRUP_OF_HEALTH]
+// Fizzy lifting soda (DESIGN §11) — the float draught. Brewing it sets the capability flag the
+// storm front's updrafts demand (FIZZY_LIFTING_SODA_FLAG). A distinct sequence from the syrup:
+// TWO candies, then heat, then stir (boil it, then whisk the fizz in). It naturally stays disjoint
+// from the syrup recipe — matchRecipe is first-match-wins and the syrup (listed first) demands a
+// lollipop, so a lollipop-free fizzy log never satisfies it. No resource output; the worth is the
+// flag.
+export const FIZZY_LIFTING_SODA: RecipeDef = {
+  id: 'fizzyLiftingSoda',
+  displayKey: 'recipe.fizzyLiftingSoda.name',
+  output: null,
+  outputFlag: 'fizzyLiftingSodaKnown',
+  matcher: {
+    kind: 'inOrder',
+    steps: [
+      { kind: 'action', action: 'add', subject: 'candy' },
+      { kind: 'action', action: 'add', subject: 'candy' },
+      { kind: 'action', action: 'heat' },
+      { kind: 'action', action: 'stir' },
+    ],
+  },
+}
+
+export const CAULDRON_RECIPES: readonly RecipeDef[] = [SYRUP_OF_HEALTH, FIZZY_LIFTING_SODA]

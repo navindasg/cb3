@@ -24,6 +24,10 @@ export const en: GameText = {
   'item.beginnerGrimoire.desc': 'Two spells and a great many warnings about candy.',
   'item.telescope.name': 'telescope',
   'item.telescope.desc': 'For looking up. You will look up a great deal now.',
+  'item.bottledTempest.name': 'bottled tempest',
+  'item.bottledTempest.desc': 'A whole storm, corked. It rattles. One day you will learn to uncork it.',
+  'item.stormSilk.name': 'storm-silk',
+  'item.stormSilk.desc': 'Cloth woven from a tamed gale. Enough for a sail, if you had a ship.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 
@@ -60,6 +64,7 @@ export const en: GameText = {
 
   // recipes
   'recipe.syrupOfHealth.name': 'syrup of health',
+  'recipe.fizzyLiftingSoda.name': 'fizzy lifting soda',
 
   // spells
   'spell.sugarBolt.name': 'sugar bolt',
@@ -75,6 +80,8 @@ export const en: GameText = {
   'rumor.fossil': 'Old-timers feed the fossil exactly one candy. No more. No less.',
   'rumor.telescope': 'The astronomer counts the stars. He never says the count out loud.',
   'rumor.well': 'Throw a candy in the well, they say. See what comes back.',
+  'rumor.stormFront': 'The giant on the cloud bridge takes candy, not blows — pay him, then mind the updrafts past him.',
+  'rumor.fizzyLiftingSoda': 'To ride an updraft you want a fizzy soda: two candies in the pot, heat it, then stir.',
 
   // death messages
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
@@ -86,6 +93,8 @@ export const en: GameText = {
   'death.cloudRat': 'A cloud rat ran you off the edge. You wake on a lower leaf.',
   'death.mineSentinel': 'The rock-candy sentinel knocks you flat. It does not even chase you.',
   'death.rockImp': 'A rock imp trips you off the path. You slide back to the trailhead.',
+  'death.stormSprite': 'A storm sprite earths itself through you. You come to on a lower ledge, hair on end.',
+  'death.thunderheadDjinn': 'The djinn folds you into the cloud and wrings you out. You wake further down, damp.',
   'death.fall': 'You lost your grip. The garden floor is, at least, soft. You climb again.',
   'death.generic': 'You died. You feel fine about it. You respawn.',
 

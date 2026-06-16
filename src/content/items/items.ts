@@ -99,6 +99,29 @@ export const TELESCOPE: ItemDef = {
   saveFlag: 'telescopeOwned',
 }
 
+// --- the storm front drops (Act 1, the thunderhead djinn) ---
+// Both are won by clearing the storm front. The bottled tempest's active "summon a storm once per
+// fight" use (DESIGN §10) is deferred — held as an owned keepsake for now. Storm-silk is sail tier
+// 2 (DESIGN §13), banked for a galleon that does not exist until Act 2.
+
+/** The thunderhead djinn's signature drop — a storm in a bottle (active use lands later). */
+export const BOTTLED_TEMPEST: ItemDef = {
+  id: 'bottledTempest',
+  displayKey: 'item.bottledTempest.name',
+  descKey: 'item.bottledTempest.desc',
+  ascii: '~o',
+  saveFlag: 'bottledTempestOwned',
+}
+
+/** Storm-silk — tier-2 sail cloth, banked until there is a ship to rig it to. */
+export const STORM_SILK: ItemDef = {
+  id: 'stormSilk',
+  displayKey: 'item.stormSilk.name',
+  descKey: 'item.stormSilk.desc',
+  ascii: '%/',
+  saveFlag: 'stormSilkOwned',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -125,6 +148,8 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   LEATHER_HAT,
   BEGINNER_GRIMOIRE,
   TELESCOPE,
+  BOTTLED_TEMPEST,
+  STORM_SILK,
   MANTLE_SWORD,
 ]
 

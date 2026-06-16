@@ -24,6 +24,10 @@ export interface GameText {
   'item.beginnerGrimoire.desc': string
   'item.telescope.name': string
   'item.telescope.desc': string
+  'item.bottledTempest.name': string
+  'item.bottledTempest.desc': string
+  'item.stormSilk.name': string
+  'item.stormSilk.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 
@@ -60,6 +64,7 @@ export interface GameText {
 
   // --- recipes ---
   'recipe.syrupOfHealth.name': string
+  'recipe.fizzyLiftingSoda.name': string
 
   // --- spells ---
   'spell.sugarBolt.name': string
@@ -75,6 +80,8 @@ export interface GameText {
   'rumor.fossil': string
   'rumor.telescope': string
   'rumor.well': string
+  'rumor.stormFront': string
+  'rumor.fizzyLiftingSoda': string
 
   // --- death messages ---
   'death.candyBat': string
@@ -86,6 +93,8 @@ export interface GameText {
   'death.cloudRat': string
   'death.mineSentinel': string
   'death.rockImp': string
+  'death.stormSprite': string
+  'death.thunderheadDjinn': string
   'death.fall': string
   'death.generic': string
 

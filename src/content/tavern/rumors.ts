@@ -9,4 +9,6 @@ export const TAVERN_RUMORS: readonly RumorDef[] = [
   { id: 'fossil', textKey: 'rumor.fossil' },
   { id: 'telescope', textKey: 'rumor.telescope' },
   { id: 'well', textKey: 'rumor.well' },
+  { id: 'stormFront', textKey: 'rumor.stormFront' },
+  { id: 'fizzyLiftingSoda', textKey: 'rumor.fizzyLiftingSoda' },
 ]

@@ -113,6 +113,65 @@ export const CELLAR_BACKDROP: readonly string[] = [
   '........................',
 ]
 
+// The storm-front arena backdrop (Quest 3, a VerticalDriver climb): an 18×52 cloud shaft you
+// ascend from the bridge head (bottom) to the thunderhead at the summit (top). Updraft arrows mark
+// the gusts the fizzy lifting soda lets you ride; stray lightning crackles down the flanks. Built
+// (not hand-laid) so the column stays exactly the quest's width; decorative only — the sprites and
+// the djinn draw over it. Matches STORM_FRONT.width × .height and its safe-zone rows.
+const STORM_W = 18
+const STORM_H = 52
+
+function stampRow(grid: string[][], y: number, text: string): void {
+  const row = grid[y]
+  if (!row) return
+  for (let x = 0; x < text.length && x < STORM_W; x++) {
+    const ch = text[x]
+    if (ch !== undefined) row[x] = ch
+  }
+}
+
+/** Build the 18×52 storm-front world as exactly-`STORM_W`-wide rows. Pure. */
+export function buildStormFrontBackdrop(): readonly string[] {
+  const grid: string[][] = Array.from({ length: STORM_H }, () =>
+    Array.from({ length: STORM_W }, () => ' '),
+  )
+
+  // The bridge head at the bottom (the start / a safe zone).
+  for (let y = STORM_H - 2; y < STORM_H; y++) stampRow(grid, y, '='.repeat(STORM_W))
+  stampRow(grid, STORM_H - 3, '  the bridge head ')
+
+  // Updraft arrows climbing the flanks — the gusts you ride with the fizzy lifting soda.
+  for (let y = STORM_H - 6; y > 8; y -= 5) {
+    const row = grid[y]
+    if (row) {
+      row[2] = '^'
+      row[STORM_W - 3] = '^'
+    }
+  }
+
+  // A sheltered eddy ledge mid-climb (matches STORM_FRONT safe zone y:28).
+  stampRow(grid, 29, ' ~~~~ eddy ~~~~ ')
+
+  // Stray lightning down the flanks (decorative crackle).
+  for (let y = 12; y < 40; y += 9) {
+    const row = grid[y]
+    if (row) row[1] = '/'
+    const row2 = grid[y + 1]
+    if (row2) row2[STORM_W - 2] = '\\'
+  }
+
+  // The thunderhead at the summit (where the djinn looms — the goal).
+  stampRow(grid, 0, '  the thunderhead ')
+  stampRow(grid, 1, '  .--~~~~~~~--.   ')
+  stampRow(grid, 2, ' (             )  ')
+  stampRow(grid, 3, "  `~~-.....-~~`   ")
+
+  return grid.map((row) => row.join(''))
+}
+
+/** The storm-front world, built once (it never changes during a climb). */
+export const STORM_FRONT_BACKDROP: readonly string[] = buildStormFrontBackdrop()
+
 // The mountain arena backdrop (the climb to the observatory): a rising ridgeline against the sky
 // and a scree path along the bottom. Decorative only; the imps + the gummy bear draw over it.
 export const MOUNTAIN_BACKDROP: readonly string[] = [

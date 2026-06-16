@@ -60,6 +60,22 @@ export const ACT0_OVERWORLD: OverworldDef = {
       ],
     },
 
+    // --- the storm front: up past the toll giant's bridge (Act 1) ---------------------------
+    // Appears once the toll giant is paid (tollGiantPaid). The thunderhead djinn caps the climb.
+    {
+      id: 'stormFront',
+      x: 58,
+      y: 2,
+      revealFlag: 'tollGiantPaid',
+      label: 'the storm front',
+      action: 'quest:stormFront',
+      art: [
+        '    .-~~ zap ~~-.',
+        '   ~ the storm front ~',
+        "    `-~^^^^^^^~-'",
+      ],
+    },
+
     // --- the observatory, atop the mountain (revealed after the climb) ----------------------
     {
       id: 'observatory',

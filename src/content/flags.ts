@@ -24,3 +24,13 @@ export const MOUNTAIN_CLIMBED_FLAG = 'mountainClimbed'
  * cotton-candy readout in the status bar — the new sky resource only surfaces once it's relevant.
  */
 export const CLOUD_COMMONS_REACHED_FLAG = 'cloudCommonsReached'
+
+/** Set when the toll giant is paid; opens the bridge upward and reveals the storm front. */
+export const TOLL_GIANT_PAID_FLAG = 'tollGiantPaid'
+
+/** Set when a fizzy lifting soda is brewed (the cauldron). The capability that survives the storm
+ * front's updrafts — its quest is gated on this (DESIGN §11: "fizzy lifting soda — float"). */
+export const FIZZY_LIFTING_SODA_FLAG = 'fizzyLiftingSodaKnown'
+
+/** Set on storm-front victory (the thunderhead djinn falls). */
+export const STORM_FRONT_CLEARED_FLAG = 'stormFrontCleared'
