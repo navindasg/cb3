@@ -29,6 +29,34 @@ export interface PaddockConfig {
   readonly cottonPerSheepPerSec: number
 }
 
+// --- Jawbreaker-moon strata mining (Act 1, §6/§8) --------------------------
+// The moon is mined in colored strata, each harder than the last and gated on a tool tier (candy
+// pick → iron pick → rock candy drill). Mining a stratum yields rock candy and digs toward the
+// next; a too-soft pick can't break the next layer. Pure config the engine (engine/content/
+// moonStrata) reads — no logic here.
+
+/** One colored stratum of the jawbreaker moon: how hard, what it yields, how deep to the next. */
+export interface StratumDef {
+  readonly id: string
+  /** i18n key for the stratum's display name. */
+  readonly displayKey: string
+  /** Minimum pick tier required to break this stratum (DESIGN's tool-tier gating). */
+  readonly requiredPickTier: number
+  /** Rock candy gained per successful dig. */
+  readonly yieldPerDig: number
+  /** Digs needed to break through to the next stratum. */
+  readonly digsToClear: number
+}
+
+/** One pick tier in the upgrade ladder (the cost to UPGRADE to it). */
+export interface MoonPickDef {
+  readonly tier: number
+  /** i18n key for the pick's display name. */
+  readonly displayKey: string
+  /** Cost to upgrade to this tier (all lines paid). */
+  readonly price: readonly PriceLine[]
+}
+
 // --- Map / world ----------------------------------------------------------
 // The realized map is a 2D flag-revealed landscape (OverworldDef, see engine/types/overworld.ts):
 // regions placed at world-cell (x,y), each revealed by a flag, panned in 2D — the ground spreads

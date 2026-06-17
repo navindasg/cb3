@@ -122,6 +122,16 @@ export const STORM_SILK: ItemDef = {
   saveFlag: 'stormSilkOwned',
 }
 
+/** The cotton-candy balloon (Act 1) — built in the cumulus commons, it carries you to the moon.
+ * Not equippable; owning it (the saveFlag) reveals the jawbreaker moon on the overworld. */
+export const COTTON_CANDY_BALLOON: ItemDef = {
+  id: 'cottonCandyBalloon',
+  displayKey: 'item.cottonCandyBalloon.name',
+  descKey: 'item.cottonCandyBalloon.desc',
+  ascii: 'OO',
+  saveFlag: 'balloonBuilt',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -150,6 +160,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   TELESCOPE,
   BOTTLED_TEMPEST,
   STORM_SILK,
+  COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]
 

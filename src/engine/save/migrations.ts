@@ -35,6 +35,8 @@ export const MIGRATIONS: Readonly<Record<number, StateMigration>> = {
   // per migration, the createResource idiom) so a pre-Act-1 save climbs cleanly; an existing field
   // is preserved (the spread of `s` wins over the default when a save already carries it).
   1: (s) => ({ cottonCandy: createResource(0), ...s }),
+  // v2 → v3: Act 1 adds licorice (cut from the thickened beanstalk). Same idiom.
+  2: (s) => ({ licorice: createResource(0), ...s }),
 }
 
 export interface MigrateOptions {

@@ -34,3 +34,13 @@ export const FIZZY_LIFTING_SODA_FLAG = 'fizzyLiftingSodaKnown'
 
 /** Set on storm-front victory (the thunderhead djinn falls). */
 export const STORM_FRONT_CLEARED_FLAG = 'stormFrontCleared'
+
+/** Set when the cotton-candy balloon is built (the item's saveFlag); reveals the jawbreaker moon. */
+export const BALLOON_BUILT_FLAG = 'balloonBuilt'
+
+/**
+ * Set when the beanstalk thickens (fed past the thicken threshold) — engine/content/beanstalk's
+ * feedBeanstalk writes the same literal in lock-step. Content owns this constant: the licorice
+ * cuttings producer reads it, so the gate stays content-only (no engine-logic import — ADR §3).
+ */
+export const BEANSTALK_THICKENED_FLAG = 'beanstalkThickened'

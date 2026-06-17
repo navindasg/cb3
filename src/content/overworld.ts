@@ -60,6 +60,25 @@ export const ACT0_OVERWORLD: OverworldDef = {
       ],
     },
 
+    // --- the jawbreaker moon: reached by the cotton-candy balloon (Act 1) --------------------
+    // Appears once the balloon is built (balloonBuilt). The big Act-1 destination; you mine its
+    // colored strata. (Everyone assumed it was cheese. It is a jawbreaker.)
+    {
+      id: 'jawbreakerMoon',
+      x: 98,
+      y: 0,
+      revealFlag: 'balloonBuilt',
+      label: 'the jawbreaker moon',
+      action: 'enter:moon',
+      art: [
+        '    .-~~~~~-.',
+        '   ( o     o )',
+        '  the jawbreaker moon',
+        '   ( ~~~~~~~ )',
+        "    `-~~~~~-'",
+      ],
+    },
+
     // --- the storm front: up past the toll giant's bridge (Act 1) ---------------------------
     // Appears once the toll giant is paid (tollGiantPaid). The thunderhead djinn caps the climb.
     {

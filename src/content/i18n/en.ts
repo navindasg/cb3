@@ -28,6 +28,8 @@ export const en: GameText = {
   'item.bottledTempest.desc': 'A whole storm, corked. It rattles. One day you will learn to uncork it.',
   'item.stormSilk.name': 'storm-silk',
   'item.stormSilk.desc': 'Cloth woven from a tamed gale. Enough for a sail, if you had a ship.',
+  'item.cottonCandyBalloon.name': 'cotton-candy balloon',
+  'item.cottonCandyBalloon.desc': 'A balloon of spun pink cloud, rigged with licorice. It strains upward, toward the moon.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 
@@ -82,6 +84,7 @@ export const en: GameText = {
   'rumor.well': 'Throw a candy in the well, they say. See what comes back.',
   'rumor.stormFront': 'The giant on the cloud bridge takes candy, not blows — pay him, then mind the updrafts past him.',
   'rumor.fizzyLiftingSoda': 'To ride an updraft you want a fizzy soda: two candies in the pot, heat it, then stir.',
+  'rumor.beanstalkCuttings': 'Keep stuffing the beanstalk with candy past the clouds — a thick stalk drops licorice. The balloonwright wants both that and cotton candy.',
 
   // death messages
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
@@ -138,6 +141,18 @@ export const en: GameText = {
   'beanstalk.feedProgress': 'You feed the beanstalk. It drinks the candy and grows a little taller.',
   'beanstalk.reachedClouds': 'The beanstalk reaches the clouds. The world, it turns out, goes up.',
   'beanstalk.elevatorReady': 'The beanstalk will carry you now. Up is just a place you go.',
+  'beanstalk.thickened': 'The stalk has gone woody and thick. It sheds licorice cuttings now, steadily.',
+
+  // the balloon
+  'balloon.built': 'The balloon fills with spun cloud and tugs at its line. It wants to go up.',
+
+  // the jawbreaker moon: strata + picks
+  'moon.stratum.sugarCrust': 'the sugar crust',
+  'moon.stratum.cobaltCandy': 'the cobalt-candy stratum',
+  'moon.stratum.jawbreakerCore': 'the jawbreaker core',
+  'moon.pick.candyPick': 'candy pick',
+  'moon.pick.ironPick': 'iron pick',
+  'moon.pick.rockCandyDrill': 'rock candy drill',
 
   // misc UI
   'ui.starCounter': 'stars in the sky',

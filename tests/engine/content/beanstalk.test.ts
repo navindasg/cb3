@@ -1,9 +1,11 @@
 import { createDefaultSave } from '@/engine/state/defaultSave'
 import {
   BEANSTALK_CLOUD_THRESHOLD,
+  BEANSTALK_THICKEN_THRESHOLD,
   CANDIES_FED_KEY,
   SEED_PLANTED_FLAG,
   REACHED_CLOUDS_FLAG,
+  THICKENED_FLAG,
   candiesFed,
   reachedClouds,
   plantSeed,
@@ -116,5 +118,32 @@ describe('feeding to the threshold reveals the clouds (appends the sky stratum)'
     expect(input.candies.current).toBe(BEANSTALK_CLOUD_THRESHOLD)
     expect(input.numbers[CANDIES_FED_KEY]).toBeUndefined()
     expect(input.flags[REACHED_CLOUDS_FLAG]).toBeUndefined()
+  })
+})
+
+describe('feeding past the thicken threshold sheds licorice cuttings', () => {
+  it('does not thicken below the threshold', () => {
+    const result = feedBeanstalk(withCandies(BEANSTALK_THICKEN_THRESHOLD), BEANSTALK_THICKEN_THRESHOLD - 1)
+    expect(result.thickened).toBe(false)
+    expect(result.state.flags[THICKENED_FLAG]).toBeUndefined()
+  })
+
+  it('thickens on the feeding that crosses the threshold and sets the flag', () => {
+    const result = feedBeanstalk(withCandies(BEANSTALK_THICKEN_THRESHOLD), BEANSTALK_THICKEN_THRESHOLD)
+    expect(result.thickened).toBe(true)
+    expect(result.state.flags[THICKENED_FLAG]).toBe(true)
+  })
+
+  it('is idempotent: feeding again after thickening never re-fires it', () => {
+    const thick = feedBeanstalk(withCandies(BEANSTALK_THICKEN_THRESHOLD + 500), BEANSTALK_THICKEN_THRESHOLD).state
+    const more = feedBeanstalk(thick, 100)
+    expect(more.thickened).toBe(false)
+    expect(more.state.flags[THICKENED_FLAG]).toBe(true)
+  })
+
+  it('a single huge feed can cross BOTH the cloud and thicken thresholds at once', () => {
+    const result = feedBeanstalk(withCandies(BEANSTALK_THICKEN_THRESHOLD), BEANSTALK_THICKEN_THRESHOLD)
+    expect(result.reachedClouds).toBe(true)
+    expect(result.thickened).toBe(true)
   })
 })

@@ -87,7 +87,7 @@ Every material's behavior follows its flavor. Apply this rule when inventing any
 | Lollipops | 2 | Planted/farmed (classic) | Magic regen, recipes, secrets | Act 0 |
 | Chocolate | 3 | Rare drops, squirrel rewards, quests | Enchanting items | Act 0 (rare) |
 | Caramel | 3 | Boil 100 candies → 1 caramel | Automation gizmos, ship hull, adhesives | Act 0 (late) |
-| Rock candy | 4 | Sugar mines, asteroids | Spell foci, weapons, sphere struts | Act 0 |
+| Rock candy | 4 | Sugar mines, jawbreaker-moon strata, asteroids | Spell foci, weapons, sphere struts | Act 0 |
 | Cotton candy | 4 | Shearing cloud sheep (idle: ~1/sheep/10 min) | Balloon, sails, void suit | Act 1 |
 | Pop rocks | 5 | Moon vents, the comet | Cannon ammo, propellant, boots | Act 1–2 |
 | Licorice | 5 | Beanstalk cuttings, moon worm drops | Cables, whip, sphere tethers | Act 1 |

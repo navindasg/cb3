@@ -25,6 +25,7 @@ import { plantSeed, feedBeanstalk } from '@/engine/content/beanstalk'
 import { fireAny } from '@/engine/content/secrets'
 import { CANDY_PRODUCERS } from '@/content/producers/candy'
 import { COTTON_CANDY_PRODUCERS } from '@/content/producers/cottonCandy'
+import { LICORICE_PRODUCERS } from '@/content/producers/licorice'
 import { ACT0_OVERWORLD } from '@/content/overworld'
 import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
 import { ACT0_SECRETS } from '@/content/secrets'
@@ -40,6 +41,7 @@ import { createHealthBar, type HealthBar } from '@/render/healthBar'
 import { createOverworldRenderer, type OverworldRenderer } from '@/render/Overworld'
 import { createTownScreens, type TownScreens } from '@/render/townScreens'
 import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
+import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -74,9 +76,10 @@ export interface BootstrapHandles {
 export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): BootstrapHandles {
   const doc = statusRoot.ownerDocument
   const session = createGameSession({
-    // The tick sums producers by resource, so the candy + cotton-candy registries simply concat:
-    // cotton candy is inert until you own cloud sheep (the cumulus commons paddock).
-    producers: [...CANDY_PRODUCERS, ...COTTON_CANDY_PRODUCERS],
+    // The tick sums producers by resource, so the registries simply concat: cotton candy is inert
+    // until you own cloud sheep, licorice until the beanstalk thickens. Offline catch-up credits
+    // every produced resource (engine/loop/catchup is resource-agnostic).
+    producers: [...CANDY_PRODUCERS, ...COTTON_CANDY_PRODUCERS, ...LICORICE_PRODUCERS],
     onEvents: (events) => events.forEach((e) => log(e as GameTextKey)),
   })
 
@@ -87,6 +90,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   const initial = session.getState()
   const candy = signal(initial.candies.current)
   const cottonCandy = signal(initial.cottonCandy.current)
+  const licorice = signal(initial.licorice.current)
   const hp = signal(initial.playerHpCurrent)
   const maxHp = signal(maxHpOf(initial))
   const statusBarUnlocked = signal(initial.flags[STATUS_BAR_UNLOCKED_FLAG] === true)
@@ -94,10 +98,13 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   // Cotton candy (Act 1) only joins the bar once you've reached the cumulus commons — a new
   // resource should not haunt the HUD with a 0 for all of Act 0.
   const cloudCommonsReached = signal(initial.flags[CLOUD_COMMONS_REACHED_FLAG] === true)
+  // Licorice surfaces the moment you've ever produced any (the beanstalk thickened), not before.
+  const licoriceSeen = signal(initial.licorice.historicalMax > 0)
 
   const bar: StatusBar = createStatusBar(statusRoot, [
     { id: 'candy', label: 'candies: ', source: candy, visible: statusBarUnlocked },
     { id: 'cottonCandy', label: 'cotton candy: ', source: cottonCandy, visible: cloudCommonsReached },
+    { id: 'licorice', label: 'licorice: ', source: licorice, visible: licoriceSeen },
   ])
   // The HP readout is a graphical health bar (green→orange→red), gated on the health-bar unlock.
   const healthBar: HealthBar = createHealthBar(statusRoot, {
@@ -116,11 +123,13 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   const offState = session.subscribe((s) => {
     candy.set(s.candies.current)
     cottonCandy.set(s.cottonCandy.current)
+    licorice.set(s.licorice.current)
     hp.set(s.playerHpCurrent)
     maxHp.set(maxHpOf(s))
     statusBarUnlocked.set(s.flags[STATUS_BAR_UNLOCKED_FLAG] === true)
     healthBarUnlocked.set(s.flags[HEALTH_BAR_UNLOCKED_FLAG] === true)
     cloudCommonsReached.set(s.flags[CLOUD_COMMONS_REACHED_FLAG] === true)
+    licoriceSeen.set(s.licorice.historicalMax > 0)
   })
 
   // --- the event log (capped + fading; never the old uncapped clutter) ---------------------
@@ -473,6 +482,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     if (kind === 'quest' && target === 'stormFront') return quests.startStormFront()
     if (kind === 'enter' && target === 'observatory') return town.showObservatory()
     if (kind === 'enter' && target === 'cloudCommons') return sky.showCloudCommons()
+    if (kind === 'enter' && target === 'moon') return moon.showMoon()
     // "the sky" is the cloud band itself; once the beanstalk is an elevator it carries you up to
     // the cumulus commons. Before that it's just sky — answer visibly, never with a dead click.
     if (kind === 'travel' && target === 'sky') {
@@ -516,6 +526,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
           session.dispatch(() => fed.state)
           if (fed.reachedClouds) log('beanstalk.reachedClouds')
           else if (fed.fed) log('beanstalk.feedProgress')
+          if (fed.thickened) log('beanstalk.thickened') // the stalk sheds licorice cuttings now
           showGarden()
         }),
       )
@@ -592,6 +603,19 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showMap,
   })
 
+  // The moon screens (Act 1 — the jawbreaker moon, reached by the balloon). Same thin-wiring
+  // contract; strata mining + pick upgrades live in the tested engine, routed back through showMap.
+  const moon: MoonScreens = createMoonScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+  })
+
   // --- driver + lifecycle wiring ------------------------------------------
 
   const initialSpeed = import.meta.env.DEV
@@ -649,6 +673,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showCauldron: town.showCauldron,
     showTavern: town.showTavern,
     showCloudCommons: sky.showCloudCommons,
+    showMoon: moon.showMoon,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
     startForest: quests.startForest,

@@ -28,6 +28,8 @@ export interface GameText {
   'item.bottledTempest.desc': string
   'item.stormSilk.name': string
   'item.stormSilk.desc': string
+  'item.cottonCandyBalloon.name': string
+  'item.cottonCandyBalloon.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 
@@ -82,6 +84,7 @@ export interface GameText {
   'rumor.well': string
   'rumor.stormFront': string
   'rumor.fizzyLiftingSoda': string
+  'rumor.beanstalkCuttings': string
 
   // --- death messages ---
   'death.candyBat': string
@@ -138,6 +141,18 @@ export interface GameText {
   'beanstalk.feedProgress': string
   'beanstalk.reachedClouds': string
   'beanstalk.elevatorReady': string
+  'beanstalk.thickened': string
+
+  // --- the balloon (Act 1) ---
+  'balloon.built': string
+
+  // --- the jawbreaker moon: strata + picks (Act 1) ---
+  'moon.stratum.sugarCrust': string
+  'moon.stratum.cobaltCandy': string
+  'moon.stratum.jawbreakerCore': string
+  'moon.pick.candyPick': string
+  'moon.pick.ironPick': string
+  'moon.pick.rockCandyDrill': string
 
   // --- misc UI flavor ---
   'ui.starCounter': string

@@ -38,6 +38,8 @@ const RESOURCE_LABEL: Partial<Record<ResourceKey, string>> = {
   lollipops: 'lollipops',
   chocolate: 'chocolate',
   caramel: 'caramel',
+  cottonCandy: 'cotton candy',
+  licorice: 'licorice',
 }
 
 function priceText(entry: ShopEntry): string {

@@ -15,6 +15,14 @@ import { spendResource } from '@/engine/types/Resource'
 /** Candies that must be fed to the beanstalk before it reaches the clouds. */
 export const BEANSTALK_CLOUD_THRESHOLD = 1000
 
+/**
+ * Candies fed before the beanstalk THICKENS — past the clouds it grows woody and starts shedding
+ * licorice cuttings (DESIGN §8 Act 1: "further feeding thickens it: licorice cuttings harvestable").
+ * The cuttings producer (content/producers/licorice) gates its trickle on this; it's the first
+ * licorice source, and the candy you feed past the clouds is its (large, ongoing) sink.
+ */
+export const BEANSTALK_THICKEN_THRESHOLD = 10000
+
 /** Running total of candies fed to the beanstalk, stored in numbers. */
 export const CANDIES_FED_KEY = 'beanstalkCandiesFed'
 
@@ -23,6 +31,11 @@ export const SEED_PLANTED_FLAG = 'beanstalkPlanted'
 
 /** Flag set the instant the beanstalk reaches the clouds; gates the sky strata reveal. */
 export const REACHED_CLOUDS_FLAG = 'beanstalkReachedClouds'
+
+/** Flag set once the beanstalk thickens (fed past BEANSTALK_THICKEN_THRESHOLD); gates the licorice
+ * cuttings. Kept in lock-step with content/flags.BEANSTALK_THICKENED_FLAG (content owns the named
+ * constant the producer reads; this engine writer compares the same literal — the flags.ts idiom). */
+export const THICKENED_FLAG = 'beanstalkThickened'
 
 /** Candies fed to the beanstalk so far. */
 export function candiesFed(state: GameState): number {
@@ -52,7 +65,9 @@ export interface FeedResult {
   readonly fed: boolean
   /** True only on the single pass that crosses the cloud threshold (the reveal). */
   readonly reachedClouds: boolean
-  /** The state after feeding (candies spent, total advanced, reveal flag set on crossing). */
+  /** True only on the single pass that crosses the thicken threshold (licorice cuttings begin). */
+  readonly thickened: boolean
+  /** The state after feeding (candies spent, total advanced, reveal/thicken flags set on crossing). */
   readonly state: GameState
 }
 
@@ -64,23 +79,34 @@ export interface FeedResult {
  * never re-fires the reveal. Immutable; SAME reference when nothing can be fed.
  */
 export function feedBeanstalk(state: GameState, count: number): FeedResult {
-  if (count <= 0) return { fed: false, reachedClouds: false, state }
+  if (count <= 0) return { fed: false, reachedClouds: false, thickened: false, state }
   const amount = Math.min(count, state.candies.current)
-  if (amount <= 0) return { fed: false, reachedClouds: false, state }
+  if (amount <= 0) return { fed: false, reachedClouds: false, thickened: false, state }
 
   const candies = spendResource(state.candies, amount)
-  if (!candies) return { fed: false, reachedClouds: false, state }
+  if (!candies) return { fed: false, reachedClouds: false, thickened: false, state }
 
   const total = candiesFed(state) + amount
   const crossing = !reachedClouds(state) && total >= BEANSTALK_CLOUD_THRESHOLD
+  // Thicken the FIRST time the fed total reaches the threshold (and the flag is not yet set — so a
+  // save that somehow passed the mark unflagged still thickens on the next feed). Sets the flag the
+  // licorice-cuttings producer gates on.
+  const thickening = state.flags[THICKENED_FLAG] !== true && total >= BEANSTALK_THICKEN_THRESHOLD
 
+  const flagsChanged = crossing || thickening
   const next: GameState = {
     ...state,
     candies,
     numbers: { ...state.numbers, [CANDIES_FED_KEY]: total },
-    ...(crossing
-      ? { flags: { ...state.flags, [REACHED_CLOUDS_FLAG]: true } }
+    ...(flagsChanged
+      ? {
+          flags: {
+            ...state.flags,
+            ...(crossing ? { [REACHED_CLOUDS_FLAG]: true } : {}),
+            ...(thickening ? { [THICKENED_FLAG]: true } : {}),
+          },
+        }
       : {}),
   }
-  return { fed: true, reachedClouds: crossing, state: next }
+  return { fed: true, reachedClouds: crossing, thickened: thickening, state: next }
 }

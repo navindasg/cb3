@@ -4,9 +4,10 @@ import type { ResourceState } from '@/engine/types/Resource'
 // the save schema. Signals are a *view* over this; this object is what gets
 // JSON-stringified. No functions, no class instances, no signal wrappers here.
 
-// v2 (Act 1) adds the cottonCandy resource (sheared from cloud sheep in the cumulus commons);
-// the migration ladder (engine/save/migrations) climbs a v1 save up to it.
-export const CURRENT_SCHEMA_VERSION = 2
+// Act 1 schema growth (the migration ladder in engine/save/migrations climbs old saves up):
+//   v2 adds cottonCandy (sheared from cloud sheep in the cumulus commons),
+//   v3 adds licorice (cut from the thickened beanstalk; later, moon-worm drops).
+export const CURRENT_SCHEMA_VERSION = 3
 
 export const RESOURCE_KEYS = [
   'candies',
@@ -15,6 +16,7 @@ export const RESOURCE_KEYS = [
   'caramel',
   'rockCandy',
   'cottonCandy',
+  'licorice',
 ] as const
 export type ResourceKey = (typeof RESOURCE_KEYS)[number]
 
@@ -26,13 +28,14 @@ export interface GameState {
   totalPlaytimeSeconds: number
   nGPlusRun: number
 
-  // --- resources (later phases add popRocks/licorice/peppermint/… via migrations) ---
+  // --- resources (later phases add popRocks/peppermint/stardust/… via migrations) ---
   candies: ResourceState
   lollipops: ResourceState
   chocolate: ResourceState
   caramel: ResourceState
   rockCandy: ResourceState
   cottonCandy: ResourceState // Act 1: sheared from cloud sheep (the cumulus commons paddock)
+  licorice: ResourceState // Act 1: cut from the thickened beanstalk (later, moon-worm drops)
 
   // --- lifetime stats (never reset; survive NG+) ---
   lifetimeCandiesEaten: number // gates ending 3, scales "wrapper"

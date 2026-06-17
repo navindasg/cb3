@@ -1,10 +1,15 @@
 import type { GameSession } from '@/engine/session/gameSession'
 import type { GameState } from '@/engine/types/GameState'
+import { t } from '@/content/i18n/en'
+import type { GameTextKey } from '@/content/i18n/schema'
 import { formatCount } from '@/engine/number/format'
 import { buyCloudSheep, cloudSheepCount, cloudSheepPrice } from '@/engine/content/paddock'
 import { payToll, TOLL_GIANT_COST } from '@/engine/content/tollGiant'
+import { purchase, canPurchase } from '@/engine/shop/purchase'
 import { PADDOCK_CONFIG } from '@/content/sky/paddock'
-import { CLOUD_COMMONS_REACHED_FLAG, TOLL_GIANT_PAID_FLAG } from '@/content/flags'
+import { BALLOON_ENTRY } from '@/content/sky/balloon'
+import { ITEM_MAP } from '@/content/items/items'
+import { CLOUD_COMMONS_REACHED_FLAG, TOLL_GIANT_PAID_FLAG, BALLOON_BUILT_FLAG } from '@/content/flags'
 
 // The sky screens (Act 1 — the cumulus commons, the cloud village at the top of the beanstalk).
 // A wiring sub-module of the DOM bootstrap, sibling to townScreens: it owns NO game logic. Every
@@ -13,6 +18,8 @@ import { CLOUD_COMMONS_REACHED_FLAG, TOLL_GIANT_PAID_FLAG } from '@/content/flag
 // Playwright, so it shares bootstrap's coverage exclusion. The cloud-sheep paddock is the working
 // centrepiece; the balloon workshop and the toll giant are signposted "next" the way Act 0
 // signposted unfinished locations (a visible, in-voice notice, never a dead click).
+
+const tk = (key: string): string => t(key as GameTextKey)
 
 /** Cotton candy a full paddock grazes per minute (the screen shows a friendlier per-minute rate). */
 const PER_MINUTE = PADDOCK_CONFIG.cottonPerSheepPerSec * 60
@@ -120,18 +127,56 @@ export function createSkyScreens(ctx: SkyContext): SkyScreens {
       render()
     }
 
-    // Signposted-but-not-yet-built (the Act 0 idiom): the balloon needs licorice + somewhere to go.
+    // The balloon workshop: spend cotton candy + licorice to build the balloon (the tested generic
+    // purchase handler), which reveals the jawbreaker moon. The licorice comes from the thickened
+    // beanstalk (feed it past the clouds); the cotton candy from the paddock — its first real sink.
     function renderBalloonWorkshop(): void {
+      const s = session.getState()
       heading('the balloon workshop', 'balloon-section')
+
+      if (s.flags[BALLOON_BUILT_FLAG] === true) {
+        paragraph(
+          'The cotton-candy balloon strains at its mooring line, fully rigged. "She\'ll carry you to the moon whenever you like," the balloonwright says. (It\'s on the map now.)',
+          'blurb',
+          'balloon-built',
+        )
+        return
+      }
+
+      const cost = BALLOON_ENTRY.price
+        .map((l) => `${formatCount(l.amount)} ${l.resource === 'cottonCandy' ? 'cotton candy' : l.resource}`)
+        .join(' + ')
       paragraph(
-        'A cotton-candy balloon, half-rigged. "Bring me 500 cotton candy and 50 licorice," the balloonwright says, "and I\'ll fly you to the moon. Once I find some licorice."',
+        `A balloon half-rigged in spun cloud. "Bring me ${cost}," the balloonwright says, "and I'll fly you to the moon."`,
         'blurb',
       )
-      screen.appendChild(
-        ctx.button('ask about the balloon', 'balloon-ask', () =>
-          ctx.notify('The balloonwright shrugs. "No licorice, no moon. Come back when the storm front opens up."'),
-        ),
+      paragraph(
+        `you have: ${formatCount(s.cottonCandy.current)} cotton candy, ${formatCount(s.licorice.current)} licorice`,
+        'blurb',
+        'balloon-have',
       )
+
+      const build = ctx.button(`build the balloon (${cost})`, 'build-balloon', () => buildBalloon())
+      if (!canPurchase(s, BALLOON_ENTRY)) {
+        build.disabled = true
+        build.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(build)
+    }
+
+    function buildBalloon(): void {
+      const result = purchase(session.getState(), BALLOON_ENTRY, ITEM_MAP)
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'unaffordable'
+            ? "you don't have the cotton candy and licorice yet."
+            : 'the balloon is not available.',
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      if (result.speechKey) ctx.logText(tk(result.speechKey))
+      render()
     }
 
     function renderTollGiant(): void {
