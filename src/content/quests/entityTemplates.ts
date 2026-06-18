@@ -226,7 +226,29 @@ export const THUNDERHEAD_DJINN: EntityTemplate = {
   attack: { damage: 4, range: 2.6, cooldownMs: 700 },
 }
 
-export const ACT1_TEMPLATES: readonly EntityTemplate[] = [STORM_SPRITE, THUNDERHEAD_DJINN]
+// --- the moon worm (Quest 4, HorizontalDriver) ---
+// A colossal gummy worm eating the jawbreaker moon from inside; you fight it in the bore-holes it
+// leaves (DESIGN §8 Act 1). The mine-gate lesson a third time: its long maw (reach 2.7) out-pokes a
+// melee swing (spoon/sword reach 2), so a short weapon stands inside its bite and loses the trade.
+// Like the djinn, the candy-cane BOW (range 5) is the clean answer — it plinks from well outside the
+// maw and is never touched; the licorice WHIP (3) nominally out-reaches the maw and wins the trade,
+// but its short margin means it still gets bitten up close (a scrappier answer than the bow). A
+// boss's worth of HP makes the reach matter. Three cells wide and two tall (djinn-class) so it fills
+// the tunnel; glyph is pure ASCII (§2a).
+
+export const MOON_WORM: EntityTemplate = {
+  id: 'moonWorm',
+  team: 'enemy',
+  width: 3,
+  height: 2,
+  hp: 80,
+  glyph: '~O~', // a bulbous gummy segment with tapering ends — a fat worm
+  color: '#7c5',
+  tags: ['moonWorm', 'boss'],
+  attack: { damage: 5, range: 2.7, cooldownMs: 800 },
+}
+
+export const ACT1_TEMPLATES: readonly EntityTemplate[] = [STORM_SPRITE, THUNDERHEAD_DJINN, MOON_WORM]
 
 /** Template registry keyed by id, for the engine entity factory. */
 export const TEMPLATE_MAP: ReadonlyMap<string, EntityTemplate> = new Map(

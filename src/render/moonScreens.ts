@@ -11,6 +11,7 @@ import {
   stratumProgress,
   canMine,
   canUpgradePick,
+  wormTunnelsOpen,
 } from '@/engine/content/moonStrata'
 import {
   MOON_STRATA,
@@ -18,6 +19,7 @@ import {
   STARTER_PICK_TIER,
   MOON_PICK_TIER_KEY,
 } from '@/content/moon/strata'
+import { MOON_WORM_DEFEATED_FLAG } from '@/content/flags'
 import { t } from '@/content/i18n/en'
 import type { GameTextKey } from '@/content/i18n/schema'
 
@@ -57,6 +59,8 @@ export interface MoonContext {
   notify(text: string): void
   logText(text: string): void
   showMap(): void
+  /** Launch the moon-worm quest (Quest 4) — wired by the bootstrap to the quest screens. */
+  startMoonWorm(): void
 }
 
 export interface MoonScreens {
@@ -106,8 +110,30 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
 
       renderStratum(s)
       renderOutfitter(s)
+      renderWormTunnels(s)
 
       screen.appendChild(ctx.button('back to the map', 'moon-to-map', () => ctx.showMap(), 0))
+    }
+
+    /** The moon worm (Quest 4) surfaces once your digging breaks into its tunnels; gone once it's
+     * dead, with a note that its mold now doubles your haul. The engine owns both predicates. */
+    function renderWormTunnels(s: GameState): void {
+      if (!wormTunnelsOpen(s)) return
+      heading('the worm tunnels', 'moon-worm-section')
+      if (s.flags[MOON_WORM_DEFEATED_FLAG] === true) {
+        paragraph(
+          'The colossal worm is dead. Its mold is yours — gummy pressed into it digs alongside you, and every dig comes up doubled.',
+          'blurb',
+          'moon-worm-cleared',
+        )
+        return
+      }
+      paragraph(
+        'Your digging has broken into a glistening bore-hole, chewed clean through the candy. Something colossal is still in there, eating.',
+        'blurb',
+        'moon-worm-blurb',
+      )
+      screen.appendChild(ctx.button('into the worm tunnels', 'moon-worm-enter', () => ctx.startMoonWorm(), 0))
     }
 
     function renderStratum(s: GameState): void {

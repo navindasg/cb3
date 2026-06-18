@@ -14,6 +14,21 @@ export const MOON_DIGS_KEY = 'moonDigs'
 /** The pick tier the lunar outfitter hands every arrival for free (the candy pick). */
 export const STARTER_PICK_TIER = 1
 
+/**
+ * The stratum index at which the moon worm's tunnels open (Quest 4). Once your digging has broken
+ * past the sugar crust into the cobalt stratum, you intersect the bore-holes the worm has chewed —
+ * so the fight surfaces mid-arc (after the first pick upgrade, before the moon is mined clean).
+ */
+export const WORM_TUNNEL_MIN_STRATUM = 1
+
+/**
+ * Rock-candy yield multiplier granted by owning the worm mold (DESIGN §12: burrower, mining boost).
+ * A flat doubling of every dig's haul — the moon-worm reward made immediately tangible in the
+ * existing mining loop (it only ever adds rock candy, so it cannot soft-lock the pick economy).
+ * A §22-open tuning knob.
+ */
+export const WORM_MOLD_YIELD_MULT = 2
+
 export const MOON_STRATA: readonly StratumDef[] = [
   { id: 'sugarCrust', displayKey: 'moon.stratum.sugarCrust', requiredPickTier: 1, yieldPerDig: 3, digsToClear: 6 },
   { id: 'cobaltCandy', displayKey: 'moon.stratum.cobaltCandy', requiredPickTier: 2, yieldPerDig: 8, digsToClear: 10 },

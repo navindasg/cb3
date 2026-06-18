@@ -8,13 +8,18 @@ import {
   stratumProgress,
   canMine,
   canUpgradePick,
+  wormTunnelsOpen,
+  miningYieldMultiplier,
 } from '@/engine/content/moonStrata'
 import {
   MOON_STRATA,
   MOON_PICKS,
   MOON_PICK_TIER_KEY,
   MOON_STRATUM_KEY,
+  WORM_TUNNEL_MIN_STRATUM,
+  WORM_MOLD_YIELD_MULT,
 } from '@/content/moon/strata'
+import { WORM_MOLD_OWNED_FLAG } from '@/content/flags'
 import type { GameState } from '@/engine/types/GameState'
 
 const withMoon = (over: Partial<Record<string, number>> = {}): GameState => ({
@@ -23,6 +28,12 @@ const withMoon = (over: Partial<Record<string, number>> = {}): GameState => ({
   candies: { current: 10_000_000, lifetimeAccumulated: 10_000_000, historicalMax: 10_000_000 },
   rockCandy: { current: 10_000, lifetimeAccumulated: 10_000, historicalMax: 10_000 },
 })
+
+/** A moon state carrying the worm mold (its mining-yield boost is active). */
+const withMold = (over: Partial<Record<string, number>> = {}): GameState => {
+  const s = withMoon(over)
+  return { ...s, flags: { ...s.flags, [WORM_MOLD_OWNED_FLAG]: true } }
+}
 
 describe('jawbreaker-moon strata mining', () => {
   it('starts on the first stratum', () => {
@@ -140,5 +151,41 @@ describe('jawbreaker-moon gating predicates (for the wiring layer)', () => {
     expect(canUpgradePick(broke, MOON_PICKS)).toBe(false)
     const maxed = withMoon({ [MOON_PICK_TIER_KEY]: MOON_PICKS[MOON_PICKS.length - 1]!.tier })
     expect(canUpgradePick(maxed, MOON_PICKS)).toBe(false) // top of the ladder
+  })
+})
+
+describe('the moon worm — tunnels open + the worm mold mining boost (Quest 4)', () => {
+  it('the worm tunnels are shut on the surface crust and open once you dig deeper', () => {
+    expect(WORM_TUNNEL_MIN_STRATUM).toBeGreaterThan(0) // not visible the instant you land
+    expect(wormTunnelsOpen(withMoon())).toBe(false) // stratum 0 (the sugar crust)
+    expect(wormTunnelsOpen(withMoon({ [MOON_STRATUM_KEY]: WORM_TUNNEL_MIN_STRATUM }))).toBe(true)
+    expect(wormTunnelsOpen(withMoon({ [MOON_STRATUM_KEY]: MOON_STRATA.length }))).toBe(true) // still open when mined clean
+  })
+
+  it('the mining-yield multiplier is 1 without the mold and the boost value with it', () => {
+    expect(miningYieldMultiplier(withMoon())).toBe(1)
+    expect(miningYieldMultiplier(withMold())).toBe(WORM_MOLD_YIELD_MULT)
+  })
+
+  it('a dig with the worm mold yields the boosted haul of rock candy', () => {
+    const before = withMold()
+    const plain = mineStratum(withMoon(), MOON_STRATA)
+    const boosted = mineStratum(before, MOON_STRATA)
+    expect(boosted.gained).toBe(plain.gained * WORM_MOLD_YIELD_MULT)
+    expect(boosted.state.rockCandy.current).toBe(before.rockCandy.current + boosted.gained)
+    expect(stratumProgress(boosted.state)).toBe(1) // one dig sunk, exactly like the unboosted dig
+  })
+
+  it('the boost only adds rock candy — it never blocks the next pick (no soft-lock risk)', () => {
+    // The crust still clears in digsToClear digs; the mold just makes each dig pay more.
+    const toClear = MOON_STRATA[0]!.digsToClear
+    let s = withMold()
+    let last
+    for (let i = 0; i < toClear; i++) {
+      last = mineStratum(s, MOON_STRATA)
+      s = last.state
+    }
+    expect(last!.advanced).toBe(true)
+    expect(currentStratum(s, MOON_STRATA)?.id).toBe(MOON_STRATA[1]!.id)
   })
 })

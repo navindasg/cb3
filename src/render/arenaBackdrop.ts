@@ -184,3 +184,15 @@ export const MOUNTAIN_BACKDROP: readonly string[] = [
   '/                                                                               ',
   '................................................................................',
 ]
+
+// The moon-worm tunnel backdrop (Quest 4): a bore-hole chewed clean through the banded jawbreaker —
+// a candy-rock ceiling, the pockmarked gouges the worm left in the walls, and a chewed-gummy floor.
+// Sized to the quest's own 32×6 grid. Decorative only; the larvae + the colossal worm draw over it.
+export const WORM_TUNNEL_BACKDROP: readonly string[] = [
+  '================================',
+  '   o      O       o      O     o',
+  '                                ',
+  '                                ',
+  '   .     o    .      o    .    .',
+  '................................',
+]

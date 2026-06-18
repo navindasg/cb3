@@ -58,6 +58,11 @@ export const THUNDERHEAD_DJINN_DEATH: DeathMessage = {
   message: 'death.thunderheadDjinn',
 }
 
+export const MOON_WORM_DEATH: DeathMessage = {
+  source: 'moonWorm',
+  message: 'death.moonWorm',
+}
+
 export const FALL_DEATH: DeathMessage = {
   source: 'fall',
   message: 'death.fall',
@@ -81,6 +86,7 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   ROCK_IMP_DEATH,
   STORM_SPRITE_DEATH,
   THUNDERHEAD_DJINN_DEATH,
+  MOON_WORM_DEATH,
   FALL_DEATH,
   GENERIC_DEATH,
 ]

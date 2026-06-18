@@ -614,6 +614,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     notify,
     logText,
     showMap,
+    startMoonWorm: quests.startMoonWorm,
   })
 
   // --- driver + lifecycle wiring ------------------------------------------
@@ -681,6 +682,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     startMines: quests.startMines,
     startMountain: quests.startMountain,
     startCellar: quests.startCellar,
+    startMoonWorm: quests.startMoonWorm,
     armSeed,
     log: logText,
   }

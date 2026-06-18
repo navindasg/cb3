@@ -122,6 +122,18 @@ export const STORM_SILK: ItemDef = {
   saveFlag: 'stormSilkOwned',
 }
 
+/** The worm mold (Act 1, the moon-worm drop) — a worm-shaped cast prised from the colossal one.
+ * Not equippable; while owned it grants the strata-mining yield boost (engine/content/moonStrata
+ * reads its saveFlag). The gummy-army system that grows units from molds lands in a later increment
+ * (DESIGN §12); this banks the first mold and makes its "burrower, mining boost" tangible now. */
+export const WORM_MOLD: ItemDef = {
+  id: 'wormMold',
+  displayKey: 'item.wormMold.name',
+  descKey: 'item.wormMold.desc',
+  ascii: '[w',
+  saveFlag: 'wormMoldOwned',
+}
+
 /** The cotton-candy balloon (Act 1) — built in the cumulus commons, it carries you to the moon.
  * Not equippable; owning it (the saveFlag) reveals the jawbreaker moon on the overworld. */
 export const COTTON_CANDY_BALLOON: ItemDef = {
@@ -160,6 +172,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   TELESCOPE,
   BOTTLED_TEMPEST,
   STORM_SILK,
+  WORM_MOLD,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

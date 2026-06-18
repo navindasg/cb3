@@ -44,3 +44,15 @@ export const BALLOON_BUILT_FLAG = 'balloonBuilt'
  * cuttings producer reads it, so the gate stays content-only (no engine-logic import — ADR §3).
  */
 export const BEANSTALK_THICKENED_FLAG = 'beanstalkThickened'
+
+/** Set on moon-worm victory (Quest 4 — the colossal gummy worm falls); the moon screen then shows
+ * the tunnels as cleared and stops offering the fight. */
+export const MOON_WORM_DEFEATED_FLAG = 'moonWormDefeated'
+
+/**
+ * Set when the worm mold is acquired (the item's saveFlag) — the moon-worm drop. While owned it
+ * grants the strata-mining yield boost (DESIGN §12: the worm mold = burrower, mining boost).
+ * engine/content/moonStrata reads the SAME literal in lock-step (the beanstalk-thickened idiom),
+ * so the mining engine stays free of a content-value import (ADR §3 layering).
+ */
+export const WORM_MOLD_OWNED_FLAG = 'wormMoldOwned'

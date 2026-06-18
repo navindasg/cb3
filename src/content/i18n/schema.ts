@@ -30,6 +30,8 @@ export interface GameText {
   'item.stormSilk.desc': string
   'item.cottonCandyBalloon.name': string
   'item.cottonCandyBalloon.desc': string
+  'item.wormMold.name': string
+  'item.wormMold.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 
@@ -85,6 +87,7 @@ export interface GameText {
   'rumor.stormFront': string
   'rumor.fizzyLiftingSoda': string
   'rumor.beanstalkCuttings': string
+  'rumor.moonWorm': string
 
   // --- death messages ---
   'death.candyBat': string
@@ -98,6 +101,7 @@ export interface GameText {
   'death.rockImp': string
   'death.stormSprite': string
   'death.thunderheadDjinn': string
+  'death.moonWorm': string
   'death.fall': string
   'death.generic': string
 

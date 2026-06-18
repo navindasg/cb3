@@ -16,7 +16,7 @@ import { applyQuestWin } from '@/engine/quest/questRewards'
 import { fireAny } from '@/engine/content/secrets'
 import { createArenaRenderer } from '@/render/ArenaRenderer'
 import { toArenaModel } from '@/engine/content/arenaView'
-import { BEANSTALK_BACKDROP, FOREST_BACKDROP, MINES_BACKDROP, MOUNTAIN_BACKDROP, CELLAR_BACKDROP, STORM_FRONT_BACKDROP } from '@/render/arenaBackdrop'
+import { BEANSTALK_BACKDROP, FOREST_BACKDROP, MINES_BACKDROP, MOUNTAIN_BACKDROP, CELLAR_BACKDROP, STORM_FRONT_BACKDROP, WORM_TUNNEL_BACKDROP } from '@/render/arenaBackdrop'
 import { STEP_MS } from '@/render/loopTiming'
 import { TEMPLATE_MAP } from '@/content/quests/entityTemplates'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
@@ -28,7 +28,8 @@ import { MINE_GATE, MINE_GATE_GOAL } from '@/content/quests/mineGate'
 import { SUGAR_MINES, SUGAR_MINES_GOAL } from '@/content/quests/sugarMines'
 import { MOUNTAIN, MOUNTAIN_GOAL } from '@/content/quests/mountain'
 import { GUMMY_WORM_CELLAR, GUMMY_WORM_CELLAR_GOAL } from '@/content/quests/gummyWormCellar'
-import { BOTTLED_TEMPEST, STORM_SILK } from '@/content/items/items'
+import { MOON_WORM_QUEST, MOON_WORM_GOAL } from '@/content/quests/moonWorm'
+import { BOTTLED_TEMPEST, STORM_SILK, WORM_MOLD } from '@/content/items/items'
 import { grantItem } from '@/engine/shop/purchase'
 import { ACT0_SECRETS } from '@/content/secrets'
 import { MINE_GATE_CLEARED_FLAG, FIZZY_LIFTING_SODA_FLAG } from '@/content/flags'
@@ -130,6 +131,7 @@ export interface QuestScreens {
   startMines(): void
   startMountain(): void
   startCellar(): void
+  startMoonWorm(): void
 }
 
 /** Wire the Act 0 quest screens over a bootstrap host. */
@@ -546,5 +548,26 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
     })
   }
 
-  return { startForest, startClimb, startStormFront, startMineGate, startMines, startMountain, startCellar }
+  // --- the moon worm (Quest 4) — a horizontal boss in the tunnels under the jawbreaker moon -------
+
+  function startMoonWorm(): void {
+    runHorizontal({
+      def: MOON_WORM_QUEST,
+      backdrop: WORM_TUNNEL_BACKDROP,
+      goal: MOON_WORM_GOAL,
+      idPrefix: 'worm',
+      hudEnter: 'into the worm tunnels…',
+      hudPrefix: 'into the worm tunnels',
+      hudWon: 'the moon worm bursts',
+      death: 'respawn',
+      onWon: (controls) => {
+        // Bank the clear flag + the industrial-licorice drop, then press the worm mold into hand.
+        session.dispatch((s) => grantItem(applyQuestWin(s, MOON_WORM_QUEST), WORM_MOLD))
+        ctx.notify('The colossal worm bursts in a spray of gummy. A heavy coil of industrial-grade licorice and a worm-shaped mold are all it leaves behind.')
+        controls.replaceChildren(ctx.button('back to the map', 'worm-done', () => ctx.showMap()))
+      },
+    })
+  }
+
+  return { startForest, startClimb, startStormFront, startMineGate, startMines, startMountain, startCellar, startMoonWorm }
 }

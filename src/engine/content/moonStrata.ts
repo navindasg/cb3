@@ -6,12 +6,21 @@ import {
   MOON_PICK_TIER_KEY,
   MOON_STRATUM_KEY,
   MOON_DIGS_KEY,
+  WORM_TUNNEL_MIN_STRATUM,
+  WORM_MOLD_YIELD_MULT,
 } from '@/content/moon/strata'
 
 // Jawbreaker-moon strata mining (Act 1, §6/§8 — v1). Pure & immutable, mirroring engine/shop/
 // purchase + engine/content/paddock: compute from state, return the next state. Mining a stratum
 // yields rock candy and digs toward the next; a too-soft pick can't break the next layer (the
 // tool-tier gate). Upgrading the pick spends its price lines. All progress lives in numbers.
+
+/**
+ * Kept in lock-step with content/flags.WORM_MOLD_OWNED_FLAG (content owns the named constant — the
+ * beanstalk-thickened idiom). Owning the worm mold doubles every dig's haul; the engine reads the
+ * literal here rather than importing a content value, so the layering stays clean (ADR §3).
+ */
+const WORM_MOLD_FLAG = 'wormMoldOwned'
 
 export function moonPickTier(state: GameState): number {
   return Math.max(0, Math.floor(state.numbers[MOON_PICK_TIER_KEY] ?? 0))
@@ -33,6 +42,20 @@ export function currentStratum(state: GameState, strata: readonly StratumDef[]):
 /** Digs sunk into the current stratum so far (for the HUD's progress readout). */
 export function stratumProgress(state: GameState): number {
   return digs(state)
+}
+
+/**
+ * Whether the moon worm's tunnels have opened — true once your digging has broken at least into the
+ * cobalt stratum (you intersect the bore-holes the worm has chewed). Drives the moon screen's
+ * worm-tunnel affordance; pure, derived from the existing mining-depth number (no new flag needed).
+ */
+export function wormTunnelsOpen(state: GameState): boolean {
+  return stratumIndex(state) >= WORM_TUNNEL_MIN_STRATUM
+}
+
+/** Rock-candy yield multiplier from the worm mold's burrower boost — doubled while it is owned. */
+export function miningYieldMultiplier(state: GameState): number {
+  return state.flags[WORM_MOLD_FLAG] === true ? WORM_MOLD_YIELD_MULT : 1
 }
 
 /** The next pick upgrade available (tier === current + 1), or null at the top of the ladder. */
@@ -76,14 +99,15 @@ export function mineStratum(state: GameState, strata: readonly StratumDef[]): Mi
     return { ok: false, state, gained: 0, advanced: false, reason: 'pickTooWeak' }
   }
 
-  const banked: GameState = { ...state, rockCandy: addResource(state.rockCandy, stratum.yieldPerDig) }
+  const gain = stratum.yieldPerDig * miningYieldMultiplier(state) // the worm mold doubles the haul
+  const banked: GameState = { ...state, rockCandy: addResource(state.rockCandy, gain) }
   const sunk = digs(state) + 1
   const advanced = sunk >= stratum.digsToClear
   const next = advanced
     ? setNumber(setNumber(banked, MOON_STRATUM_KEY, stratumIndex(state) + 1), MOON_DIGS_KEY, 0)
     : setNumber(banked, MOON_DIGS_KEY, sunk)
 
-  return { ok: true, state: next, gained: stratum.yieldPerDig, advanced }
+  return { ok: true, state: next, gained: gain, advanced }
 }
 
 export interface PickUpgradeResult {

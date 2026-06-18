@@ -30,6 +30,8 @@ export const en: GameText = {
   'item.stormSilk.desc': 'Cloth woven from a tamed gale. Enough for a sail, if you had a ship.',
   'item.cottonCandyBalloon.name': 'cotton-candy balloon',
   'item.cottonCandyBalloon.desc': 'A balloon of spun pink cloud, rigged with licorice. It strains upward, toward the moon.',
+  'item.wormMold.name': 'gummy worm mold',
+  'item.wormMold.desc': 'A worm-shaped cast prised from the colossal one. Press gummy into it and a burrower takes shape — it digs alongside you, and your haul comes up doubled.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 
@@ -85,6 +87,7 @@ export const en: GameText = {
   'rumor.stormFront': 'The giant on the cloud bridge takes candy, not blows — pay him, then mind the updrafts past him.',
   'rumor.fizzyLiftingSoda': 'To ride an updraft you want a fizzy soda: two candies in the pot, heat it, then stir.',
   'rumor.beanstalkCuttings': 'Keep stuffing the beanstalk with candy past the clouds — a thick stalk drops licorice. The balloonwright wants both that and cotton candy.',
+  'rumor.moonWorm': 'Mind the moon, they say — a worm the size of a church eats it from within. Bring something with reach; it out-chews anything that fights up close.',
 
   // death messages
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
@@ -98,6 +101,7 @@ export const en: GameText = {
   'death.rockImp': 'A rock imp trips you off the path. You slide back to the trailhead.',
   'death.stormSprite': 'A storm sprite earths itself through you. You come to on a lower ledge, hair on end.',
   'death.thunderheadDjinn': 'The djinn folds you into the cloud and wrings you out. You wake further down, damp.',
+  'death.moonWorm': 'The moon worm finds you chewy. This is a compliment, from a worm. You wake at the tunnel mouth.',
   'death.fall': 'You lost your grip. The garden floor is, at least, soft. You climb again.',
   'death.generic': 'You died. You feel fine about it. You respawn.',
 
