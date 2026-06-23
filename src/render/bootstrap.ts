@@ -26,6 +26,7 @@ import { fireAny } from '@/engine/content/secrets'
 import { CANDY_PRODUCERS } from '@/content/producers/candy'
 import { COTTON_CANDY_PRODUCERS } from '@/content/producers/cottonCandy'
 import { LICORICE_PRODUCERS } from '@/content/producers/licorice'
+import { ROCK_CANDY_PRODUCERS } from '@/content/producers/rockCandy'
 import { ACT0_OVERWORLD } from '@/content/overworld'
 import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
 import { ACT0_SECRETS } from '@/content/secrets'
@@ -79,7 +80,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     // The tick sums producers by resource, so the registries simply concat: cotton candy is inert
     // until you own cloud sheep, licorice until the beanstalk thickens. Offline catch-up credits
     // every produced resource (engine/loop/catchup is resource-agnostic).
-    producers: [...CANDY_PRODUCERS, ...COTTON_CANDY_PRODUCERS, ...LICORICE_PRODUCERS],
+    producers: [...CANDY_PRODUCERS, ...COTTON_CANDY_PRODUCERS, ...LICORICE_PRODUCERS, ...ROCK_CANDY_PRODUCERS],
     onEvents: (events) => events.forEach((e) => log(e as GameTextKey)),
   })
 

@@ -155,3 +155,46 @@ test('the lunar lighthouse: plot the cyclops courses and learn celestial navigat
   expect(learned.flags['celestialNavigationLearned']).toBe(true)
   expect(learned.ownedItems['brassSextant']).toBe(true)
 })
+
+test('the gummy vat: press a worm gummy that mines rock candy (incl. offline)', async ({ page }) => {
+  // The passive trickle is driven by the resource-agnostic offline catch-up — a deterministic mock-
+  // clock check (not the rAF tick, which throttles flakily when many pages run in parallel).
+  await page.clock.install({ time: new Date('2026-06-13T08:00:00') })
+  await page.addInitScript(() => localStorage.clear())
+  await page.goto('/')
+  await page.getByTestId('ack-opener').click()
+
+  // A player holding the worm mold (the Quest-4 drop opens the vat), with candies + licorice to press
+  // gummies and no rock candy yet — so the burrower's credit is unambiguous.
+  await page.evaluate(() => {
+    const s = (window as any).__cb3.session
+    s.dispatch((state: any) => ({
+      ...state,
+      flags: { ...state.flags, balloonBuilt: true, mapUnlocked: true, wormMoldOwned: true },
+      ownedItems: { ...state.ownedItems, wormMold: true },
+      candies: { current: 1000, lifetimeAccumulated: 1000, historicalMax: 1000 },
+      licorice: { current: 50, lifetimeAccumulated: 50, historicalMax: 50 },
+      rockCandy: { current: 0, lifetimeAccumulated: 0, historicalMax: 0 },
+    }))
+  })
+
+  await page.evaluate(() => (window as any).__cb3.showMoon())
+  await expect(page.getByTestId('moon-screen')).toBeVisible()
+  await expect(page.getByTestId('moon-vat-section')).toBeVisible()
+
+  // Press a worm gummy — the count rises and candies + licorice are spent.
+  await page.getByTestId('moon-vat-grow').click()
+  const grown = await getState(page)
+  expect(grown.numbers['gummyWormCount']).toBe(1)
+  expect(grown.candies.current).toBe(1000 - 50)
+  expect(grown.licorice.current).toBe(50 - 1)
+  expect(grown.rockCandy.current).toBe(0) // none yet
+
+  // Background, three hours pass, return: the burrower's rock candy is credited offline (the producer
+  // is wired into the resource-agnostic catch-up). 1 gummy * (1/30)/s * 3h = ~360 rock candy.
+  await page.evaluate(() => (window as any).__cb3.session.onHidden())
+  await page.clock.fastForward('03:00:00')
+  await page.evaluate(() => (window as any).__cb3.session.onVisible())
+  const after = await getState(page)
+  expect(after.rockCandy.current).toBeGreaterThan(100)
+})

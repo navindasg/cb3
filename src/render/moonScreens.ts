@@ -31,6 +31,13 @@ import {
   lighthousePlot,
 } from '@/engine/content/lighthouse'
 import {
+  growGummy,
+  gummyVatOpen,
+  gummyWormCount,
+  gummyMiningRate,
+  canGrowGummy,
+} from '@/engine/content/gummyVat'
+import {
   MOON_STRATA,
   MOON_PICKS,
   STARTER_PICK_TIER,
@@ -38,6 +45,12 @@ import {
 } from '@/content/moon/strata'
 import { TARGET_ROUNDS } from '@/content/moon/hollowCore'
 import { STAR_FIELD, NAV_COURSES } from '@/content/moon/lighthouse'
+import {
+  MOLDS,
+  FLAVORS,
+  GUMMY_CANDY_COST,
+  GUMMY_LICORICE_COST,
+} from '@/content/gummy/molds'
 import { SHED_SHELL, BRASS_SEXTANT } from '@/content/items/items'
 import { MOON_WORM_DEFEATED_FLAG } from '@/content/flags'
 import { t } from '@/content/i18n/en'
@@ -65,6 +78,18 @@ const echoGlyph = (call: EchoCall): string => ECHO_GLYPH[call]
 
 /** Display name of a lighthouse star by id (the field is small; a lookup is fine). */
 const starName = (id: string): string => STAR_FIELD.find((s) => s.id === id)?.name ?? id
+
+/** Render a molds/flavors catalog as one line: available entries described, locked ones listed after.
+ * Teaches the molds x flavors shape without claiming the locked half is usable yet. */
+function catalogLine<T extends { name: string; available: boolean }>(
+  entries: readonly T[],
+  describe: (entry: T) => string,
+): string {
+  const have = entries.filter((e) => e.available).map(describe)
+  const locked = entries.filter((e) => !e.available).map((e) => e.name)
+  const lockedNote = locked.length > 0 ? `   ${locked.join(', ')} (not yet)` : ''
+  return `${have.join(', ')}${lockedNote}`
+}
 
 /** The display name of a pick tier (the free starter, then the buyable ladder). */
 function pickName(tier: number): string {
@@ -140,9 +165,61 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       renderOutfitter(s)
       renderLighthouse(s)
       renderWormTunnels(s)
+      renderGummyVat(s)
       renderHollowCore(s)
 
       screen.appendChild(ctx.button('back to the map', 'moon-to-map', () => ctx.showMap(), 0))
+    }
+
+    /** The gummy vat (the gummy army v1, DESIGN §12) — opens once you hold the worm mold. You press
+     * worm gummies (mold x licorice flavor) that burrow the moon for a passive rock-candy trickle.
+     * The rest of the molds x flavors catalog is shown locked, to teach the shape. Engine owns the
+     * growing + the rate; this only draws + routes (the producer feeds rock candy on the tick). */
+    function renderGummyVat(s: GameState): void {
+      if (!gummyVatOpen(s)) return
+      heading('the gummy vat', 'moon-vat-section')
+      paragraph(
+        'You press gummy into the worm mold. Worked through with a flavor, it takes shape, twitches once, and burrows into the moon — and comes back up with rock candy.',
+        'blurb',
+        'moon-vat-blurb',
+      )
+      paragraph(`molds:    ${catalogLine(MOLDS, (m) => `${m.name} (${m.role})`)}`, 'blurb', 'moon-vat-molds')
+      paragraph(`flavors:  ${catalogLine(FLAVORS, (f) => `${f.name} (${f.stat})`)}`, 'blurb', 'moon-vat-flavors')
+
+      const count = gummyWormCount(s)
+      const noun = count === 1 ? 'gummy' : 'gummies'
+      paragraph(
+        `your burrowers: ${count} licorice worm ${noun} — mining ${gummyMiningRate(s).toFixed(2)} rock candy/sec`,
+        'blurb',
+        'moon-vat-roster',
+      )
+
+      const grow = ctx.button(
+        `grow a worm gummy (${GUMMY_CANDY_COST} candies + ${GUMMY_LICORICE_COST} licorice)`,
+        'moon-vat-grow',
+        () => doGrow(),
+        0,
+      )
+      if (!canGrowGummy(s)) {
+        grow.disabled = true
+        grow.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(grow)
+    }
+
+    function doGrow(): void {
+      const result = growGummy(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'noMold'
+            ? 'You have no mold to press.'
+            : `You need ${GUMMY_CANDY_COST} candies and ${GUMMY_LICORICE_COST} licorice to grow one.`,
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('A licorice worm gummy wriggles free of the mold and burrows into the moon.')
+      render()
     }
 
     /** The lunar lighthouse (DESIGN §167) — a landmark visible from the moment you land. The cyclops
