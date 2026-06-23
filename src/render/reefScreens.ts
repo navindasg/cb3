@@ -1,6 +1,8 @@
 import type { GameSession } from '@/engine/session/gameSession'
 import type { GameState } from '@/engine/types/GameState'
 import { formatCount } from '@/engine/number/format'
+import { setNumber, setFlag } from '@/engine/state/reducers'
+import { addResource, spendResource } from '@/engine/types/Resource'
 import {
   plotWaypoint,
   reefReached,
@@ -9,23 +11,49 @@ import {
   voyageWaypoint,
 } from '@/engine/content/reefVoyage'
 import {
-  breakAsteroid,
-  currentAsteroid,
-  asteroidProgress,
-  reefHarvested,
-} from '@/engine/content/reef'
+  createDrift,
+  driftStep,
+  fireDrift,
+  driftCleared,
+  respawnPlayer,
+  bestFireDir,
+  type DriftState,
+} from '@/engine/content/driftReef'
 import { WAYPOINTS, VOYAGE_LEGS } from '@/content/reef/voyage'
-import { ASTEROID_FIELD } from '@/content/reef/asteroids'
+import {
+  DRIFT_SEEDS,
+  FIRE_DIRS,
+  ASTEROID_SIZES,
+  ARENA_W,
+  ARENA_H,
+  DRIFT_BURST_STEPS,
+  DRIFT_DT,
+  GUMBALLS_KEY,
+  GUMBALL_CRAFT_CANDY_COST,
+  GUMBALL_CRAFT_BATCH,
+  type Coord,
+} from '@/content/reef/driftField'
+import { REEF_DRIFT_CLEARED_FLAG } from '@/content/flags'
 
-// The rock candy reef (Act 2 — the first voyage, DESIGN §178). A wiring sub-module of the DOM
+// The rock candy reef (Act 2 — the first voyage, DESIGN §125/§178). A wiring sub-module of the DOM
 // bootstrap, sibling to skyPortScreens/moonScreens: it owns NO game logic. The crossing (plot-a-
-// course) and the asteroid harvest are pure, tested engine (engine/content/reefVoyage + reef) over
-// content config (content/reef/*); this only composes them into DOM and routes clicks. Coverage-
-// excluded, Playwright-verified. Two phases: plot the course out (the brass sextant, applied), then
-// break the asteroid field for rock candy. Routed back through showSkyPort / showMap.
+// course) and the zero-G drift combat are pure, tested engine (engine/content/reefVoyage + driftReef)
+// over content config (content/reef/*); this only composes them into DOM, draws the ASCII arena, and
+// routes clicks. Coverage-excluded, Playwright-verified. Two phases: plot the course out (the brass
+// sextant, applied), then break the asteroid field in drift combat. Routed back through showSkyPort.
+//
+// The drift sim is TRANSIENT (it never persists — a run that is abandoned is forfeit, like a quest).
+// Only the gumball ammo, the rock candy, and the cleared flag are persisted (in GameState). To stay
+// farm-proof, the run's rock-candy haul is committed ONLY when the field is fully cleared — leaving
+// mid-run banks nothing, so you cannot partial-clear / leave / re-enter to mint rock candy.
 
 /** Display name of a waypoint by id (the field is small; a lookup is fine). */
 const waypointName = (id: string): string => WAYPOINTS.find((w) => w.id === id)?.name ?? id
+
+/** Current gumball ammo (a numbers counter; crafted from candies). */
+const gumballs = (state: GameState): number => Math.max(0, Math.floor(state.numbers[GUMBALLS_KEY] ?? 0))
+
+const driftClearedFlag = (state: GameState): boolean => state.flags[REEF_DRIFT_CLEARED_FLAG] === true
 
 export interface ReefContext {
   readonly doc: Document
@@ -64,18 +92,36 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
     screen.appendChild(p)
   }
 
+  /** Draw the toroidal arena as an ASCII grid: asteroids by size glyph, the pod as '@'. */
+  function arenaText(sim: DriftState): string {
+    const rows: string[][] = Array.from({ length: ARENA_H }, () => Array<string>(ARENA_W).fill(' '))
+    const put = (x: number, y: number, ch: string): void => {
+      const cx = ((Math.round(x) % ARENA_W) + ARENA_W) % ARENA_W
+      const cy = ((Math.round(y) % ARENA_H) + ARENA_H) % ARENA_H
+      rows[cy]![cx] = ch
+    }
+    for (const a of sim.asteroids) put(a.pos.x, a.pos.y, ASTEROID_SIZES[a.size]!.glyph)
+    put(sim.player.pos.x, sim.player.pos.y, '@')
+    return rows.map((r) => r.join('')).join('\n')
+  }
+
   function showReef(): void {
+    // The drift sim is transient to this visit; the haul is held until a full clear commits it.
+    let sim: DriftState | null = null
+    let haul = 0
+
     function render(): void {
       ctx.clearScreen()
       const s = session.getState()
-      if (reefReached(s)) renderHarvest(s)
+      if (reefReached(s)) renderDrift(s)
       else renderCrossing(s)
 
       screen.appendChild(ctx.button('back to the sky port', 'reef-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'reef-to-map', () => ctx.showMap()))
     }
 
-    /** Phase 1 — the crossing: plot the leg waypoints in order with the brass sextant (DESIGN §178). */
+    // --- phase 1: the crossing (plot a course with the brass sextant) ---------------------------
+
     function renderCrossing(s: GameState): void {
       heading('the crossing', 'reef-crossing-screen')
       paragraph(
@@ -116,43 +162,93 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
       render()
     }
 
-    /** Phase 2 — the harvest: break the asteroid field for rock candy (DESIGN §178/§90). */
-    function renderHarvest(s: GameState): void {
-      heading('the rock candy reef', 'reef-screen')
-      paragraph(`rock candy: ${formatCount(s.rockCandy.current)}`, 'blurb', 'reef-resources')
+    // --- phase 2: zero-G drift combat (the gumball cannon as weapon AND engine) ------------------
 
-      if (reefHarvested(s, ASTEROID_FIELD)) {
+    function renderDrift(s: GameState): void {
+      heading('the rock candy reef', 'reef-screen')
+
+      if (driftClearedFlag(s)) {
         paragraph(
-          'The last asteroid breaks apart into drifting rock candy and the galleon\'s hold is full. The reef drifts on, picked clean for now. Further out, an acorn-shaped capsule turns slowly against the stars — something small is inside it, watching, and plainly unimpressed it took you this long. You cannot reach it yet.',
+          'The reef drifts on, picked clean for now, its rock candy secured in the hold. Further out, an acorn-shaped capsule turns slowly against the stars — something small is inside it, watching, and plainly unimpressed it took you this long. You cannot reach it yet.',
           'blurb',
           'reef-harvested',
         )
         return
       }
 
+      if (!sim) sim = createDrift(DRIFT_SEEDS)
+
       paragraph(
-        'The reef is a slow storm of candied rock. You bring the galleon alongside and start breaking the nearest asteroids — each one shatters into rock candy you scoop from the dark.',
+        'Zero gravity. The gumball cannon is your only engine — every shot you fire shoves the pod the opposite way. Break the asteroids; mind your drift, and mind your ammo.',
         'blurb',
-        'reef-harvest-blurb',
+        'reef-drift-blurb',
+      )
+      paragraph(
+        `gumballs: ${gumballs(s)}    rock candy in the hold (banked when clear): ${haul}    rocks left: ${sim.asteroids.length}`,
+        'blurb',
+        'reef-hud',
       )
 
-      const asteroid = currentAsteroid(s, ASTEROID_FIELD)
-      if (!asteroid) return // guarded by reefHarvested above; mirror the moon screen's guard-not-assert
-      paragraph(
-        `ahead:  ${asteroid.name}  (${asteroidProgress(s)}/${asteroid.hitsToBreak} broken, +${asteroid.yieldPerHit} rock candy a hit)`,
-        'blurb',
-        'reef-asteroid',
+      const pre = doc.createElement('pre')
+      pre.className = 'arena'
+      pre.setAttribute('data-testid', 'reef-arena')
+      pre.textContent = arenaText(sim)
+      screen.appendChild(pre)
+
+      // The aim hint: prose for the player, plus a machine-readable data-aim (the dir id) so the e2e
+      // can follow it without parsing prose.
+      const hint = bestFireDir(sim, FIRE_DIRS)
+      const hintP = doc.createElement('p')
+      hintP.className = 'blurb'
+      hintP.setAttribute('data-testid', 'reef-hint')
+      hintP.setAttribute('data-aim', hint?.id ?? '')
+      hintP.textContent = hint
+        ? `a rock lines up — ${hint.label}.`
+        : 'no rock lined up — drift to bring one into your sights.'
+      screen.appendChild(hintP)
+
+      for (const dir of FIRE_DIRS) {
+        screen.appendChild(ctx.button(dir.label, `reef-fire-${dir.id}`, () => doFire(dir.vec)))
+      }
+      screen.appendChild(
+        ctx.button(`roll ${GUMBALL_CRAFT_BATCH} gumballs (${GUMBALL_CRAFT_CANDY_COST} candies)`, 'reef-craft', () => doCraft()),
       )
-      screen.appendChild(ctx.button('break it', 'reef-break', () => doBreak(), 0))
     }
 
-    function doBreak(): void {
-      const result = breakAsteroid(session.getState(), ASTEROID_FIELD)
-      if (!result.ok) return
-      session.dispatch(() => result.state)
-      if (result.broke) {
-        ctx.logText(`The asteroid cracks open — ${formatCount(result.gained)} rock candy into the hold.`)
+    function doFire(dir: Coord): void {
+      if (!sim) return
+      if (gumballs(session.getState()) <= 0) {
+        ctx.notify('You drift forever. A gummy alien waves politely. (You are out of gumballs — roll some more.)')
+        sim = respawnPlayer(sim)
+        render()
+        return
       }
+      session.dispatch((s) => setNumber(s, GUMBALLS_KEY, gumballs(s) - 1))
+
+      const fired = fireDrift(sim, dir)
+      sim = fired.state
+      if (fired.hit) haul += fired.gained
+      for (let k = 0; k < DRIFT_BURST_STEPS; k++) sim = driftStep(sim, DRIFT_DT)
+
+      if (driftCleared(sim)) {
+        session.dispatch((s) => setFlag({ ...s, rockCandy: addResource(s.rockCandy, haul) }, REEF_DRIFT_CLEARED_FLAG))
+        ctx.logText(`The last asteroid breaks apart. ${formatCount(haul)} rock candy, secured in the hold.`)
+      }
+      render()
+    }
+
+    function doCraft(): void {
+      const s = session.getState()
+      if (s.candies.current < GUMBALL_CRAFT_CANDY_COST) {
+        ctx.notify(`You need ${GUMBALL_CRAFT_CANDY_COST} candies to roll a batch of gumballs.`)
+        return
+      }
+      session.dispatch((st) => {
+        const spent = spendResource(st.candies, GUMBALL_CRAFT_CANDY_COST)
+        if (!spent) return st
+        return setNumber({ ...st, candies: spent }, GUMBALLS_KEY, gumballs(st) + GUMBALL_CRAFT_BATCH)
+      })
+      ctx.logText(`You roll ${GUMBALL_CRAFT_BATCH} gumballs from ${GUMBALL_CRAFT_CANDY_COST} candies.`)
       render()
     }
 

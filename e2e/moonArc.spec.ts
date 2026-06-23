@@ -186,8 +186,11 @@ test('the gummy vat: press a worm gummy that mines rock candy (incl. offline)', 
   await page.getByTestId('moon-vat-grow').click()
   const grown = await getState(page)
   expect(grown.numbers['gummyWormCount']).toBe(1)
-  expect(grown.candies.current).toBe(1000 - 50)
-  expect(grown.licorice.current).toBe(50 - 1)
+  // The grow spends 50 candies; the live base candy producer may have ticked a few hundredths on top
+  // between the grant and the click, so assert a tolerant floor (not exact equality on a ticking value).
+  expect(grown.candies.current).toBeGreaterThanOrEqual(1000 - 50)
+  expect(grown.candies.current).toBeLessThan(1000 - 50 + 5)
+  expect(grown.licorice.current).toBe(50 - 1) // licorice does not tick here (beanstalk not thickened)
   expect(grown.rockCandy.current).toBe(0) // none yet
 
   // Background, three hours pass, return: the burrower's rock candy is credited offline (the producer

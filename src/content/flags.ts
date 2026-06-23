@@ -98,3 +98,12 @@ export const GALLEON_COMMISSIONED_FLAG = 'galleonCommissioned'
  * never imports this content value (ADR §3). Flips the reef screen from the crossing to the harvest.
  */
 export const REEF_REACHED_FLAG = 'reefReached'
+
+/**
+ * Set when the rock candy reef's asteroid field is cleared in zero-G drift combat (DESIGN §125/§178).
+ * The drift sim (engine/content/driftReef) is transient and never persists, so the reef screen sets
+ * this flag when the field comes up empty; it reads it forever after to show the reef as harvested
+ * (and to signpost the space squirrel's still-unreachable acorn capsule). The engine never imports
+ * this content value (ADR §3) — the screen owns the persistence.
+ */
+export const REEF_DRIFT_CLEARED_FLAG = 'reefDriftCleared'
