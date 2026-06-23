@@ -49,4 +49,16 @@ export const FORGE_ENTRIES: readonly ShopEntry[] = [
     unlock: (s) => s.flags['rockCandyUnlocked'] === true,
     speechKey: 'forge.jawbreakerMace.thanks',
   },
+  {
+    // The Act-1 capstone: first vacuum gear (DESIGN §171/§233). Gated on celestial navigation
+    // (the lighthouse) — once you can sail into the dark, the blacksmith seals you a helm. A real
+    // capstone haul of candies + the moon's rock candy. Forging it closes the Act-1 gate.
+    itemId: 'fishbowlHelm',
+    price: [
+      { resource: 'candies', amount: 250_000 },
+      { resource: 'rockCandy', amount: 30 },
+    ],
+    unlock: (s) => s.flags['celestialNavigationLearned'] === true,
+    speechKey: 'forge.fishbowlHelm.thanks',
+  },
 ]

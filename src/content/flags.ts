@@ -73,3 +73,11 @@ export const HOLLOW_CORE_REACHED_FLAG = 'hollowCoreReached'
  * (the other half is the blacksmith's fishbowl helm, §171).
  */
 export const CELESTIAL_NAVIGATION_FLAG = 'celestialNavigationLearned'
+
+/**
+ * Set when the blacksmith forges the fishbowl helm (the item's saveFlag) — first vacuum gear, the
+ * OTHER half of the Act-1 gate (DESIGN §171/§233). Its forge entry is gated on celestial navigation,
+ * so this flag implies both halves are done. engine/content/actGate reads the SAME literal in
+ * lock-step to derive act1GateCleared (the Act-2 hook). The helm's airtight protection lands in Act 2.
+ */
+export const FISHBOWL_HELM_FORGED_FLAG = 'fishbowlHelmForged'

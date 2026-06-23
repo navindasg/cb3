@@ -48,3 +48,38 @@ test('entering the village reveals the mines/mountain and opens the forge', asyn
   )
   expect(owned).toBe(true)
 })
+
+test('the fishbowl helm closes the Act-1 gate once navigation is learned', async ({ page }) => {
+  await page.goto('/')
+  await page.getByTestId('ack-opener').click()
+
+  // An end-of-Act-1 player: the spoon (forge access), celestial navigation learned (the lighthouse
+  // half of the gate), and a capstone haul of candies + the moon's rock candy for the helm.
+  await page.evaluate(() => {
+    const s = (window as any).__cb3.session
+    s.dispatch((state: any) => ({
+      ...state,
+      flags: { ...state.flags, spoonOwned: true, celestialNavigationLearned: true },
+      ownedItems: { ...state.ownedItems, woodenSpoon: true },
+      candies: { current: 500_000, lifetimeAccumulated: 500_000, historicalMax: 500_000 },
+      rockCandy: { current: 60, lifetimeAccumulated: 60, historicalMax: 60 },
+    }))
+  })
+
+  // The forge now eyes you for the big commission, and the fishbowl-helm row is on offer (gated on
+  // celestial navigation).
+  await page.evaluate(() => (window as any).__cb3.showForge())
+  await expect(page.getByTestId('forge-screen')).toBeVisible()
+  await expect(page.getByTestId('forge-fishbowl-ready')).toBeVisible()
+  await expect(page.getByTestId('buy-fishbowlHelm')).toBeVisible()
+
+  // Forge it: owned + auto-equipped to the hat slot, the flag set, the Act-1 gate closed.
+  await page.getByTestId('buy-fishbowlHelm').click()
+  await expect(page.getByTestId('shop-row-fishbowlHelm')).toContainText('owned')
+  await expect(page.getByTestId('forge-fishbowl-done')).toBeVisible()
+
+  const s = await page.evaluate(() => (window as any).__cb3.session.getState())
+  expect(s.flags['fishbowlHelmForged']).toBe(true)
+  expect(s.ownedItems['fishbowlHelm']).toBe(true)
+  expect(s.equipped['hat']).toBe('fishbowlHelm')
+})

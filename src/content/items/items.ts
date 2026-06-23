@@ -83,6 +83,20 @@ export const LEATHER_HAT: ItemDef = {
   slot: 'hat',
 }
 
+/** The fishbowl helm (Act 1 capstone, DESIGN §171/§233) — first vacuum gear, hammered onto a gorget
+ * by the proud blacksmith once you can navigate. A hat-slot piece (auto-equips, over the leather
+ * hat); airtight, but its protection only matters once you're breathing vacuum in Act 2. Forging it
+ * closes the Act-1 gate (its forge entry is gated on celestial navigation). The Konami goldfish
+ * (§317) is deferred until that secret exists. */
+export const FISHBOWL_HELM: ItemDef = {
+  id: 'fishbowlHelm',
+  displayKey: 'item.fishbowlHelm.name',
+  descKey: 'item.fishbowlHelm.desc',
+  ascii: '()',
+  saveFlag: 'fishbowlHelmForged',
+  slot: 'hat',
+}
+
 export const BEGINNER_GRIMOIRE: ItemDef = {
   id: 'beginnerGrimoire',
   displayKey: 'item.beginnerGrimoire.name',
@@ -196,6 +210,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   TELESCOPE,
   BOTTLED_TEMPEST,
   STORM_SILK,
+  FISHBOWL_HELM,
   WORM_MOLD,
   SHED_SHELL,
   BRASS_SEXTANT,

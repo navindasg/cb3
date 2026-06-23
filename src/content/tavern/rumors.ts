@@ -14,4 +14,5 @@ export const TAVERN_RUMORS: readonly RumorDef[] = [
   { id: 'beanstalkCuttings', textKey: 'rumor.beanstalkCuttings' },
   { id: 'moonWorm', textKey: 'rumor.moonWorm' },
   { id: 'lighthouse', textKey: 'rumor.lighthouse' },
+  { id: 'fishbowlHelm', textKey: 'rumor.fishbowlHelm' },
 ]

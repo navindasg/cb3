@@ -20,6 +20,8 @@ export const en: GameText = {
   'item.jawbreakerMace.desc': 'A jawbreaker on a stick. Slow to swing. Nothing it hits stays standing.',
   'item.leatherHat.name': 'leather hat',
   'item.leatherHat.desc': 'Keeps the sun off. Keeps very little else off.',
+  'item.fishbowlHelm.name': 'fishbowl helm',
+  'item.fishbowlHelm.desc': 'A great glass bowl blown from melted jawbreaker, sealed onto a gorget. Airtight. Absurd. It fogs when you breathe. Up where there is nothing to breathe, that will be the point.',
   'item.beginnerGrimoire.name': "beginner's grimoire",
   'item.beginnerGrimoire.desc': 'Two spells and a great many warnings about candy.',
   'item.telescope.name': 'telescope',
@@ -47,6 +49,7 @@ export const en: GameText = {
   'forge.candyCaneBow.thanks': 'Aim away from your foot. That is the whole lesson.',
   'forge.licoriceWhip.thanks': 'Snap the wrist. Do not ask where I learned that.',
   'forge.jawbreakerMace.thanks': 'Mind your toes. And the floor. And the wall behind it.',
+  'forge.fishbowlHelm.thanks': 'There. Hammered onto a good gorget. You will look ridiculous, and you will breathe. I have wanted to make one of these my whole life. Go on — go and need it.',
   'obs.beginnerGrimoire.thanks': 'Magic is mostly reading. Here is the reading.',
   'obs.telescope.thanks': 'There. Now you can see them all. All eight thousand of them.',
 
@@ -93,6 +96,7 @@ export const en: GameText = {
   'rumor.beanstalkCuttings': 'Keep stuffing the beanstalk with candy past the clouds — a thick stalk drops licorice. The balloonwright wants both that and cotton candy.',
   'rumor.moonWorm': 'Mind the moon, they say — a worm the size of a church eats it from within. Bring something with reach; it out-chews anything that fights up close.',
   'rumor.lighthouse': 'A one-eyed keeper minds a lighthouse up on the moon. Plot his courses and he will teach you to read the sky — you will want that before you ever put to sail.',
+  'rumor.fishbowlHelm': 'Once you can read the sky, take the blacksmith a haul of rock candy. She has been wanting to seal a fishbowl over a gorget for years — vacuum gear, she calls it. You will want air where you are going.',
 
   // death messages
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',

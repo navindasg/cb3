@@ -11,6 +11,7 @@ import { buyTelescope } from '@/engine/content/observatory'
 import { brew } from '@/engine/cauldron/brew'
 import { fireAny } from '@/engine/content/secrets'
 import { tellRumor, rumorAvailable } from '@/engine/content/tavern'
+import { act1GateCleared } from '@/engine/content/actGate'
 import { selectVariant } from '@/engine/content/dialogue'
 import { FORGE_ENTRIES } from '@/content/shops/forge'
 import { SHOP_ENTRIES } from '@/content/shops/shop'
@@ -86,9 +87,10 @@ export function createTownScreens(ctx: TownContext): TownScreens {
     screen.appendChild(h)
   }
 
-  function paragraph(text: string, className: string): void {
+  function paragraph(text: string, className: string, testid?: string): void {
     const p = doc.createElement('p')
     p.className = className
+    if (testid) p.setAttribute('data-testid', testid)
     p.textContent = text
     screen.appendChild(p)
   }
@@ -210,8 +212,19 @@ export function createTownScreens(ctx: TownContext): TownScreens {
 
   function showForge(): void {
     ctx.clearScreen()
+    const s = session.getState()
     heading('the forge', 'forge-screen')
     paragraph('The blacksmith wipes her hands. "Spoon will only get you so far. Pick something."', 'blurb')
+
+    // The Act-1 capstone framing (DESIGN §171): once you can navigate, she eyes the moon dust on
+    // your boots and the great commission she has waited her whole life to attempt; once it is done,
+    // the gate is closed and the dark is the next thing.
+    if (act1GateCleared(s)) {
+      paragraph('The fishbowl helm sits finished on the bench, catching the forge-light. She keeps glancing at it. "Go on, then. The dark will not sail itself."', 'blurb', 'forge-fishbowl-done')
+    } else if (s.flags['celestialNavigationLearned'] === true) {
+      paragraph('She nods at the moon dust on your boots. "So. You will be wanting to breathe up there. Bring me rock candy and I will seal you something ridiculous."', 'blurb', 'forge-fishbowl-ready')
+    }
+
     appendShopRows(FORGE_ENTRIES, purchase, showForge)
     screen.appendChild(ctx.button('back to the village', 'forge-to-village', () => showVillage(), 0))
   }

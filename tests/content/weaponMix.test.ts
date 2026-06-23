@@ -39,9 +39,13 @@ describe('the forge is a varied, non-sword-only arsenal', () => {
     const [bow] = playerQuestWeapons(equip('candyCaneBow'))
     expect(bow?.id).toBe('candyCaneBow')
     expect(bow?.range).toBeGreaterThanOrEqual(5)
-    // Each forge weapon item carries combat stats (no equippable dud).
+    // No equippable dud: each forge WEAPON carries combat stats; any non-weapon offering (the
+    // Act-1 fishbowl helm is armour, not a sword ladder) is still a real equippable with a slot.
     for (const { itemId } of FORGE_ENTRIES) {
-      expect(ITEM_MAP.get(itemId)?.weapon, itemId).toBeDefined()
+      const item = ITEM_MAP.get(itemId)
+      expect(item, itemId).toBeDefined()
+      if (item!.slot === 'weapon') expect(item!.weapon, itemId).toBeDefined()
+      else expect(item!.slot, itemId).toBeDefined()
     }
   })
 

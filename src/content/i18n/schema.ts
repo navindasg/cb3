@@ -20,6 +20,8 @@ export interface GameText {
   'item.jawbreakerMace.desc': string
   'item.leatherHat.name': string
   'item.leatherHat.desc': string
+  'item.fishbowlHelm.name': string
+  'item.fishbowlHelm.desc': string
   'item.beginnerGrimoire.name': string
   'item.beginnerGrimoire.desc': string
   'item.telescope.name': string
@@ -47,6 +49,7 @@ export interface GameText {
   'forge.candyCaneBow.thanks': string
   'forge.licoriceWhip.thanks': string
   'forge.jawbreakerMace.thanks': string
+  'forge.fishbowlHelm.thanks': string
   'obs.beginnerGrimoire.thanks': string
   'obs.telescope.thanks': string
 
@@ -93,6 +96,7 @@ export interface GameText {
   'rumor.beanstalkCuttings': string
   'rumor.moonWorm': string
   'rumor.lighthouse': string
+  'rumor.fishbowlHelm': string
 
   // --- death messages ---
   'death.candyBat': string
