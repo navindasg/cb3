@@ -2,6 +2,7 @@ import type { GameSession } from '@/engine/session/gameSession'
 import type { GameState } from '@/engine/types/GameState'
 import { formatCount } from '@/engine/number/format'
 import { setNumber, setFlag } from '@/engine/state/reducers'
+import { grantItem } from '@/engine/shop/purchase'
 import { addResource, spendResource } from '@/engine/types/Resource'
 import {
   plotWaypoint,
@@ -19,7 +20,10 @@ import {
   bestFireDir,
   type DriftState,
 } from '@/engine/content/driftReef'
+import { answerRiddle, currentRiddle } from '@/engine/content/squirrel'
 import { WAYPOINTS, VOYAGE_LEGS } from '@/content/reef/voyage'
+import { SQUIRREL_RIDDLES } from '@/content/reef/squirrel'
+import { ACORN_OF_KNOWLEDGE } from '@/content/items/items'
 import {
   DRIFT_SEEDS,
   FIRE_DIRS,
@@ -169,10 +173,11 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
 
       if (driftClearedFlag(s)) {
         paragraph(
-          'The reef drifts on, picked clean for now, its rock candy secured in the hold. Further out, an acorn-shaped capsule turns slowly against the stars — something small is inside it, watching, and plainly unimpressed it took you this long. You cannot reach it yet.',
+          'The reef drifts on, picked clean for now, its rock candy secured in the hold. With the rocks cleared, the acorn-shaped capsule that was turning out past them is finally within reach.',
           'blurb',
           'reef-harvested',
         )
+        renderSquirrel(s)
         return
       }
 
@@ -249,6 +254,52 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
         return setNumber({ ...st, candies: spent }, GUMBALLS_KEY, gumballs(st) + GUMBALL_CRAFT_BATCH)
       })
       ctx.logText(`You roll ${GUMBALL_CRAFT_BATCH} gumballs from ${GUMBALL_CRAFT_CANDY_COST} candies.`)
+      render()
+    }
+
+    // --- the space squirrel (reachable once the reef is cleared, DESIGN §178/§339) --------------
+
+    function renderSquirrel(s: GameState): void {
+      if (s.flags[ACORN_OF_KNOWLEDGE.saveFlag] === true) {
+        paragraph(
+          'The squirrel has gone back to watching the dark, the acorn of knowledge already yours. It does not say goodbye. You get the sense it never really says hello.',
+          'blurb',
+          'reef-squirrel-done',
+        )
+        return
+      }
+
+      paragraph(
+        'A squirrel watches from inside the acorn-shaped capsule. It is not surprised to see you — only mildly let down that it took this long. "You again. Or you for the first time; hard to tell, with your kind. Riddles, then. I have nothing out here but time."',
+        'blurb',
+        'reef-squirrel-blurb',
+      )
+
+      const riddle = currentRiddle(s, SQUIRREL_RIDDLES)
+      if (!riddle) return // guarded by the acorn flag above; the squirrel is done with you
+      paragraph(riddle.prompt, 'blurb', 'reef-riddle')
+      for (const opt of riddle.options) {
+        screen.appendChild(ctx.button(opt.text, `reef-riddle-${opt.id}`, () => doAnswer(opt.id)))
+      }
+    }
+
+    function doAnswer(choiceId: string): void {
+      const result = answerRiddle(session.getState(), choiceId, SQUIRREL_RIDDLES)
+      if (!result.ok) return
+      if (!result.correct) {
+        ctx.notify('The squirrel blinks, slowly. "No." Try another.')
+        return
+      }
+      session.dispatch(() => result.state) // advance the riddle march
+      if (result.solved) {
+        const reward = result.solved.chocolateReward
+        session.dispatch((st) => ({ ...st, chocolate: addResource(st.chocolate, reward) }))
+        ctx.logText(`The squirrel flicks you ${formatCount(reward)} chocolate. "Hm."`)
+      }
+      if (result.allSolved) {
+        session.dispatch((st) => grantItem(st, ACORN_OF_KNOWLEDGE))
+        ctx.logText('The squirrel presses the acorn of knowledge into your hand, and is already looking past you.')
+      }
       render()
     }
 

@@ -182,6 +182,18 @@ export const COTTON_CANDY_BALLOON: ItemDef = {
   saveFlag: 'balloonBuilt',
 }
 
+/** The acorn of knowledge (Act 2, the space squirrel's reward at the rock candy reef, DESIGN §178).
+ * A keepsake won by answering the squirrel's riddles. Its design role — revealing secret hints on the
+ * overworld map — lands in a later slice (the map-hint system does not exist yet), like the storm /
+ * shed-shell / sextant keepsakes before it; owning it marks the squirrel's riddles solved. */
+export const ACORN_OF_KNOWLEDGE: ItemDef = {
+  id: 'acornOfKnowledge',
+  displayKey: 'item.acornOfKnowledge.name',
+  descKey: 'item.acornOfKnowledge.desc',
+  ascii: '(o',
+  saveFlag: 'acornOfKnowledgeOwned',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -214,6 +226,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   WORM_MOLD,
   SHED_SHELL,
   BRASS_SEXTANT,
+  ACORN_OF_KNOWLEDGE,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

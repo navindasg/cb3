@@ -38,6 +38,8 @@ export interface GameText {
   'item.shedShell.desc': string
   'item.brassSextant.name': string
   'item.brassSextant.desc': string
+  'item.acornOfKnowledge.name': string
+  'item.acornOfKnowledge.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 

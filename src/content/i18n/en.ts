@@ -38,6 +38,8 @@ export const en: GameText = {
   'item.shedShell.desc': 'A curl of translucent shell, shed from the inside. Whatever lay coiled in the moon’s heart left this behind. It has not yet gone cold.',
   'item.brassSextant.name': 'brass sextant',
   'item.brassSextant.desc': 'A brass arc and a sighting-glass, its use taught to your hands by the lighthouse cyclops. You can read a course in the stars now — enough to point a ship, once you have one.',
+  'item.acornOfKnowledge.name': 'the acorn of knowledge',
+  'item.acornOfKnowledge.desc': 'A small, very ordinary acorn, pressed into your hand by a squirrel who clearly expected more of you. It is said to know where things are hidden. It has not said anything yet.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 

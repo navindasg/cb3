@@ -75,4 +75,18 @@ test('the first voyage: set sail, plot the crossing, harvest the reef', async ({
   const after = await getState(page)
   expect(after.flags['reefDriftCleared']).toBe(true)
   expect(after.rockCandy.current).toBeGreaterThan(0) // the haul, committed on clear
+
+  // (4) With the reef cleared, the space squirrel's acorn capsule is reachable — answer its riddles
+  // (correct option ids match content/reef/squirrel.ts) for chocolate, then the acorn of knowledge.
+  await expect(page.getByTestId('reef-squirrel-blurb')).toBeVisible()
+  const chocolateBefore = after.chocolate.current
+  const ANSWERS = ['b', 'a', 'c', 'a', 'b', 'b'] // hole, jawbreaker, wind, coming, drift, meta
+  for (const answerId of ANSWERS) {
+    await page.getByTestId(`reef-riddle-${answerId}`).click()
+  }
+  await expect(page.getByTestId('reef-squirrel-done')).toBeVisible()
+  const final = await getState(page)
+  expect(final.flags['acornOfKnowledgeOwned']).toBe(true)
+  expect(final.ownedItems['acornOfKnowledge']).toBe(true)
+  expect(final.chocolate.current).toBeGreaterThan(chocolateBefore) // the squirrel's chocolate rewards
 })
