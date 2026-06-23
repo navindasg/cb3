@@ -44,6 +44,7 @@ import { createTownScreens, type TownScreens } from '@/render/townScreens'
 import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
 import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
 import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScreens'
+import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -635,6 +636,23 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showMoon: moon.showMoon,
+    // The reef is its own screen, reached by setting sail (a thunk: reef is created just below).
+    showReef: () => reef.showReef(),
+  })
+
+  // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
+  // its asteroids for rock candy). Same thin-wiring contract; the crossing + harvest live in the
+  // tested engine (engine/content/reefVoyage + reef), routed back through showSkyPort / showMap.
+  const reef: ReefScreens = createReefScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showSkyPort: skyport.showSkyPort,
   })
 
   // --- driver + lifecycle wiring ------------------------------------------
@@ -696,6 +714,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showCloudCommons: sky.showCloudCommons,
     showMoon: moon.showMoon,
     showSkyPort: skyport.showSkyPort,
+    showReef: reef.showReef,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
     startForest: quests.startForest,

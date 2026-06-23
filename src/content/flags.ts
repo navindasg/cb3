@@ -90,3 +90,11 @@ export const FISHBOWL_HELM_FORGED_FLAG = 'fishbowlHelmForged'
  * the §18 "Candy Box" naming consequence reads the galleon name from the strings namespace.
  */
 export const GALLEON_COMMISSIONED_FLAG = 'galleonCommissioned'
+
+/**
+ * Set when the candied galleon's first voyage is plotted clean and she reaches the rock candy reef
+ * (DESIGN §178) — the brass sextant put to use. engine/content/reefVoyage sets the SAME literal in
+ * lock-step (the moonStrata/lighthouse idiom) on the leg that completes the crossing; the engine
+ * never imports this content value (ADR §3). Flips the reef screen from the crossing to the harvest.
+ */
+export const REEF_REACHED_FLAG = 'reefReached'

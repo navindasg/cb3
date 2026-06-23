@@ -43,6 +43,8 @@ export interface SkyPortContext {
   showMap(): void
   /** Return to the jawbreaker moon (the near side). */
   showMoon(): void
+  /** Set sail for the rock candy reef (Act 2 — the first voyage) — wired by the bootstrap. */
+  showReef(): void
 }
 
 export interface SkyPortScreens {
@@ -203,7 +205,8 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         'blurb',
         'skyport-launched',
       )
-      screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon(), 0))
+      screen.appendChild(ctx.button('set sail for the rock candy reef', 'skyport-set-sail', () => ctx.showReef(), 0))
+      screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon()))
       screen.appendChild(ctx.button('back to the map', 'skyport-to-map', () => ctx.showMap()))
     }
 
