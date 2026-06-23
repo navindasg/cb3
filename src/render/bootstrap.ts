@@ -43,6 +43,7 @@ import { createOverworldRenderer, type OverworldRenderer } from '@/render/Overwo
 import { createTownScreens, type TownScreens } from '@/render/townScreens'
 import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
 import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
+import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -616,6 +617,24 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     startMoonWorm: quests.startMoonWorm,
+    // The sky port lives on its own screen; cross to it from the moon's far side (a thunk because
+    // skyport is created just below — it is only read at click time, by which point it is assigned).
+    showSkyPort: () => skyport.showSkyPort(),
+  })
+
+  // The sky-port screens (Act 2 — the shipwright's commission for the candied galleon, on the moon's
+  // far side). Same thin-wiring contract; the commission ledger + naming live in the tested engine
+  // (engine/content/galleonCommission), routed back through showMoon / showMap.
+  const skyport: SkyPortScreens = createSkyPortScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showMoon: moon.showMoon,
   })
 
   // --- driver + lifecycle wiring ------------------------------------------
@@ -676,6 +695,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showTavern: town.showTavern,
     showCloudCommons: sky.showCloudCommons,
     showMoon: moon.showMoon,
+    showSkyPort: skyport.showSkyPort,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
     startForest: quests.startForest,

@@ -81,3 +81,12 @@ export const CELESTIAL_NAVIGATION_FLAG = 'celestialNavigationLearned'
  * lock-step to derive act1GateCleared (the Act-2 hook). The helm's airtight protection lands in Act 2.
  */
 export const FISHBOWL_HELM_FORGED_FLAG = 'fishbowlHelmForged'
+
+/**
+ * Set when the candied galleon is named + laid down at the sky port (DESIGN §13/§177) — the Act-2
+ * opening commission is closed. engine/content/galleonCommission sets the SAME literal in lock-step
+ * (the moonStrata idiom) when the player names a fully-funded commission; the engine never imports
+ * this content value (ADR §3). Hull tiers / drift / ship combat build on this in later slices, and
+ * the §18 "Candy Box" naming consequence reads the galleon name from the strings namespace.
+ */
+export const GALLEON_COMMISSIONED_FLAG = 'galleonCommissioned'

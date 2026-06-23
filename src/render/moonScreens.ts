@@ -37,6 +37,7 @@ import {
   gummyMiningRate,
   canGrowGummy,
 } from '@/engine/content/gummyVat'
+import { skyPortOpen } from '@/engine/content/galleonCommission'
 import {
   MOON_STRATA,
   MOON_PICKS,
@@ -114,6 +115,8 @@ export interface MoonContext {
   showMap(): void
   /** Launch the moon-worm quest (Quest 4) — wired by the bootstrap to the quest screens. */
   startMoonWorm(): void
+  /** Cross to the sky port on the moon's far side (Act 2) — wired by the bootstrap. */
+  showSkyPort(): void
 }
 
 export interface MoonScreens {
@@ -167,8 +170,23 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       renderWormTunnels(s)
       renderGummyVat(s)
       renderHollowCore(s)
+      renderSkyPortEntry(s)
 
       screen.appendChild(ctx.button('back to the map', 'moon-to-map', () => ctx.showMap(), 0))
+    }
+
+    /** The sky port (Act 2, DESIGN §13) — opens on the moon's far side once the Act-1 gate is cleared
+     * (celestial navigation + the fishbowl helm). The dedicated sky-port screen owns the commission;
+     * this only signposts the crossing and routes the click. */
+    function renderSkyPortEntry(s: GameState): void {
+      if (!skyPortOpen(s)) return
+      heading('the far side', 'moon-skyport-section')
+      paragraph(
+        'On the moon\'s dark far side, where the lighthouse beam never reaches, scaffolding has gone up against the stars. A shipwright is taking commissions. You can read the sky now, and breathe up here — there is a ship to build.',
+        'blurb',
+        'moon-skyport-blurb',
+      )
+      screen.appendChild(ctx.button('cross to the sky port', 'moon-to-skyport', () => ctx.showSkyPort(), 0))
     }
 
     /** The gummy vat (the gummy army v1, DESIGN §12) — opens once you hold the worm mold. You press

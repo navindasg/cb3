@@ -7,6 +7,7 @@ import {
   unequip,
   setFlag,
   setNumber,
+  setString,
 } from '@/engine/state/reducers'
 import { MAX_HP_KEY } from '@/engine/state/recomputeCaches'
 import { addResource } from '@/engine/types/Resource'
@@ -151,5 +152,17 @@ describe('setFlag / setNumber', () => {
   it('setNumber returns the same reference when unchanged', () => {
     const s = setNumber(createDefaultSave(), 'scrollY', 40)
     expect(setNumber(s, 'scrollY', 40)).toBe(s)
+  })
+
+  it('setString stores a namespace value immutably', () => {
+    const s = createDefaultSave()
+    const after = setString(s, 'galleonName', 'the Sweet Tooth')
+    expect(after.strings['galleonName']).toBe('the Sweet Tooth')
+    expect(s.strings['galleonName']).toBeUndefined()
+  })
+
+  it('setString returns the same reference when unchanged', () => {
+    const s = setString(createDefaultSave(), 'galleonName', 'Candy Box')
+    expect(setString(s, 'galleonName', 'Candy Box')).toBe(s)
   })
 })

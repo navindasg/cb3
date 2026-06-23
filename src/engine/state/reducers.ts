@@ -73,3 +73,8 @@ export function setNumber(state: GameState, key: string, value: number): GameSta
   if (state.numbers[key] === value) return state
   return { ...state, numbers: { ...state.numbers, [key]: value } }
 }
+
+export function setString(state: GameState, key: string, value: string): GameState {
+  if (state.strings[key] === value) return state
+  return { ...state, strings: { ...state.strings, [key]: value } }
+}
