@@ -116,3 +116,42 @@ test('the hollow core: mine clean, echo the chamber, reach the warm centre', asy
   expect(solved.flags['hollowCoreReached']).toBe(true)
   expect(solved.ownedItems['shedShell']).toBe(true)
 })
+
+// The cyclops's courses (content/moon/lighthouse.NAV_COURSES) — plot all three to learn navigation.
+const NAV_COURSES = [
+  ['lantern', 'anchor'],
+  ['wreck', 'lantern', 'hook'],
+  ['anchor', 'kettle', 'spoon', 'wreck'],
+]
+
+test('the lunar lighthouse: plot the cyclops courses and learn celestial navigation', async ({ page }) => {
+  await page.goto('/?speed=1000')
+  await page.getByTestId('ack-opener').click()
+
+  // The lighthouse is a landmark visible the moment you land on the moon — no mining prereq.
+  await page.evaluate(() => {
+    const s = (window as any).__cb3.session
+    s.dispatch((state: any) => ({ ...state, flags: { ...state.flags, balloonBuilt: true, mapUnlocked: true } }))
+  })
+  await page.evaluate(() => (window as any).__cb3.showMoon())
+  await expect(page.getByTestId('moon-screen')).toBeVisible()
+  await expect(page.getByTestId('moon-lighthouse-section')).toBeVisible()
+  await expect(page.getByTestId('moon-lighthouse-blurb')).toBeVisible()
+
+  // A wrong pick loses the course: one correct star, then a wrong one resets the run.
+  await page.getByTestId(`moon-lighthouse-${NAV_COURSES[0][0]}`).click()
+  expect((await getState(page)).numbers['lighthousePlot']).toBe(1)
+  await page.getByTestId('moon-lighthouse-spoon').click() // not next in course 0 → scatter
+  expect((await getState(page)).numbers['lighthousePlot']).toBe(0)
+
+  // Plot every course in order — the cyclops swings the beam to a fresh set each time.
+  for (const course of NAV_COURSES) {
+    for (const starId of course) await page.getByTestId(`moon-lighthouse-${starId}`).click()
+  }
+
+  // Navigation learned: the parting line, the sextant keepsake, the galleon-prereq flag.
+  await expect(page.getByTestId('moon-lighthouse-learned')).toBeVisible()
+  const learned = await getState(page)
+  expect(learned.flags['celestialNavigationLearned']).toBe(true)
+  expect(learned.ownedItems['brassSextant']).toBe(true)
+})

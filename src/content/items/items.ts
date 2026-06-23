@@ -146,6 +146,18 @@ export const SHED_SHELL: ItemDef = {
   saveFlag: 'shedShellOwned',
 }
 
+/** The brass sextant (Act 1, the lunar-lighthouse keepsake) — the cyclops's parting gift once you
+ * can read a course in the stars (DESIGN §167). Not equippable; held as proof of the lesson. Its
+ * use — pointing the candied galleon — lands in Act 2, like the storm-front / shed-shell keepsakes;
+ * owning it marks celestial navigation as learned for the Act gate. */
+export const BRASS_SEXTANT: ItemDef = {
+  id: 'brassSextant',
+  displayKey: 'item.brassSextant.name',
+  descKey: 'item.brassSextant.desc',
+  ascii: '</',
+  saveFlag: 'brassSextantOwned',
+}
+
 /** The cotton-candy balloon (Act 1) — built in the cumulus commons, it carries you to the moon.
  * Not equippable; owning it (the saveFlag) reveals the jawbreaker moon on the overworld. */
 export const COTTON_CANDY_BALLOON: ItemDef = {
@@ -186,6 +198,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   STORM_SILK,
   WORM_MOLD,
   SHED_SHELL,
+  BRASS_SEXTANT,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

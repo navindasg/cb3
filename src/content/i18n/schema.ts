@@ -34,6 +34,8 @@ export interface GameText {
   'item.wormMold.desc': string
   'item.shedShell.name': string
   'item.shedShell.desc': string
+  'item.brassSextant.name': string
+  'item.brassSextant.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 
@@ -90,6 +92,7 @@ export interface GameText {
   'rumor.fizzyLiftingSoda': string
   'rumor.beanstalkCuttings': string
   'rumor.moonWorm': string
+  'rumor.lighthouse': string
 
   // --- death messages ---
   'death.candyBat': string

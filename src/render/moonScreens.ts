@@ -24,13 +24,21 @@ import {
   hollowInput,
 } from '@/engine/content/hollowCore'
 import {
+  plotStar,
+  navigationLearned,
+  currentCourse,
+  lighthouseCourse,
+  lighthousePlot,
+} from '@/engine/content/lighthouse'
+import {
   MOON_STRATA,
   MOON_PICKS,
   STARTER_PICK_TIER,
   MOON_PICK_TIER_KEY,
 } from '@/content/moon/strata'
 import { TARGET_ROUNDS } from '@/content/moon/hollowCore'
-import { SHED_SHELL } from '@/content/items/items'
+import { STAR_FIELD, NAV_COURSES } from '@/content/moon/lighthouse'
+import { SHED_SHELL, BRASS_SEXTANT } from '@/content/items/items'
 import { MOON_WORM_DEFEATED_FLAG } from '@/content/flags'
 import { t } from '@/content/i18n/en'
 import type { GameTextKey } from '@/content/i18n/schema'
@@ -54,6 +62,9 @@ const RESOURCE_LABEL: Record<string, string> = {
 const ECHO_CALLS: readonly EchoCall[] = ['up', 'down', 'left', 'right']
 const ECHO_GLYPH: Record<EchoCall, string> = { up: '^', down: 'v', left: '<', right: '>' }
 const echoGlyph = (call: EchoCall): string => ECHO_GLYPH[call]
+
+/** Display name of a lighthouse star by id (the field is small; a lookup is fine). */
+const starName = (id: string): string => STAR_FIELD.find((s) => s.id === id)?.name ?? id
 
 /** The display name of a pick tier (the free starter, then the buyable ladder). */
 function pickName(tier: number): string {
@@ -127,10 +138,65 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
 
       renderStratum(s)
       renderOutfitter(s)
+      renderLighthouse(s)
       renderWormTunnels(s)
       renderHollowCore(s)
 
       screen.appendChild(ctx.button('back to the map', 'moon-to-map', () => ctx.showMap(), 0))
+    }
+
+    /** The lunar lighthouse (DESIGN §167) — a landmark visible from the moment you land. The cyclops
+     * teaches celestial navigation (the Act-2 galleon prereq) by having you plot courses of stars.
+     * The engine owns the puzzle; this only draws + routes. */
+    function renderLighthouse(s: GameState): void {
+      heading('the lunar lighthouse', 'moon-lighthouse-section')
+
+      if (navigationLearned(s)) {
+        paragraph(
+          'The cyclops nods you back toward the dark. "You can read the sky now — you will not sail off the edge of it. My grandfather would have liked you." The brass sextant is yours.',
+          'blurb',
+          'moon-lighthouse-learned',
+        )
+        return
+      }
+
+      paragraph(
+        'A lighthouse stands on the grey plain, its beam sweeping across nothing. A cyclops keeps it. "My grandfather kept one by the sea," he says. "Plot me a course off this rock, and I will teach you to read the sky."',
+        'blurb',
+        'moon-lighthouse-blurb',
+      )
+
+      const course = currentCourse(s, NAV_COURSES) ?? []
+      const plotted = lighthousePlot(s)
+      paragraph(
+        `the course:  ${course.map(starName).join(' -> ')}    (course ${lighthouseCourse(s) + 1} of ${NAV_COURSES.length})`,
+        'blurb',
+        'moon-lighthouse-course',
+      )
+      paragraph(
+        `you have plotted:  ${course.map((id, i) => (i < plotted ? starName(id) : '?')).join(' -> ')}`,
+        'blurb',
+        'moon-lighthouse-plot',
+      )
+
+      for (const star of STAR_FIELD) {
+        screen.appendChild(ctx.button(star.name, `moon-lighthouse-${star.id}`, () => doPlot(star.id)))
+      }
+    }
+
+    function doPlot(starId: string): void {
+      const result = plotStar(session.getState(), starId, NAV_COURSES)
+      if (!result.ok) return
+      session.dispatch(() => result.state)
+      if (!result.correct) {
+        ctx.notify('The beam wanders off the star. The course is lost — start it again.')
+      } else if (result.learned) {
+        session.dispatch((st) => grantItem(st, BRASS_SEXTANT))
+        ctx.logText('The last star falls into line. The cyclops presses a brass sextant into your hands — you can read the sky now.')
+      } else if (result.courseComplete) {
+        ctx.logText('The course closes, star to star. The cyclops swings the beam to a fresh set.')
+      }
+      render()
     }
 
     /** The hollow core (Quest 5) — surfaces once the moon is mined clean. An echo puzzle: the

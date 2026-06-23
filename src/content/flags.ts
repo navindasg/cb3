@@ -65,3 +65,11 @@ export const WORM_MOLD_OWNED_FLAG = 'wormMoldOwned'
  * after as reached.
  */
 export const HOLLOW_CORE_REACHED_FLAG = 'hollowCoreReached'
+
+/**
+ * Set when the lunar lighthouse cyclops's plot-a-course lesson is finished (DESIGN §167) — celestial
+ * navigation learned, the prerequisite for the Act-2 candied galleon. engine/content/lighthouse sets
+ * the SAME literal in lock-step on the learning call (the moonStrata idiom). Half of the Act-1 gate
+ * (the other half is the blacksmith's fishbowl helm, §171).
+ */
+export const CELESTIAL_NAVIGATION_FLAG = 'celestialNavigationLearned'

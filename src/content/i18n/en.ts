@@ -34,6 +34,8 @@ export const en: GameText = {
   'item.wormMold.desc': 'A worm-shaped cast prised from the colossal one. Press gummy into it and a burrower takes shape — it digs alongside you, and your haul comes up doubled.',
   'item.shedShell.name': 'curl of shed shell',
   'item.shedShell.desc': 'A curl of translucent shell, shed from the inside. Whatever lay coiled in the moon’s heart left this behind. It has not yet gone cold.',
+  'item.brassSextant.name': 'brass sextant',
+  'item.brassSextant.desc': 'A brass arc and a sighting-glass, its use taught to your hands by the lighthouse cyclops. You can read a course in the stars now — enough to point a ship, once you have one.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 
@@ -90,6 +92,7 @@ export const en: GameText = {
   'rumor.fizzyLiftingSoda': 'To ride an updraft you want a fizzy soda: two candies in the pot, heat it, then stir.',
   'rumor.beanstalkCuttings': 'Keep stuffing the beanstalk with candy past the clouds — a thick stalk drops licorice. The balloonwright wants both that and cotton candy.',
   'rumor.moonWorm': 'Mind the moon, they say — a worm the size of a church eats it from within. Bring something with reach; it out-chews anything that fights up close.',
+  'rumor.lighthouse': 'A one-eyed keeper minds a lighthouse up on the moon. Plot his courses and he will teach you to read the sky — you will want that before you ever put to sail.',
 
   // death messages
   'death.candyBat': 'A candy bat drank you dry. You wake at the last safe ledge.',
