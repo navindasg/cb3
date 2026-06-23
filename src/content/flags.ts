@@ -56,3 +56,12 @@ export const MOON_WORM_DEFEATED_FLAG = 'moonWormDefeated'
  * so the mining engine stays free of a content-value import (ADR §3 layering).
  */
 export const WORM_MOLD_OWNED_FLAG = 'wormMoldOwned'
+
+/**
+ * Set when the hollow core's echo puzzle is solved (Quest 5 — you reach the moon's dead centre and
+ * find the warm, empty chamber; lore §15.2 "something hatched and left"). engine/content/hollowCore
+ * sets the SAME literal in lock-step on the solving call (the moonStrata idiom), so the puzzle's
+ * "reached" state stays pure-engine and testable; the moon screen reads it to show the core forever
+ * after as reached.
+ */
+export const HOLLOW_CORE_REACHED_FLAG = 'hollowCoreReached'

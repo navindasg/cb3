@@ -73,3 +73,46 @@ test('the moon arc: cotton candy + licorice flow, build the balloon, mine the mo
   expect(afterCobalt.numbers['moonPickTier']).toBe(2)
   expect(afterCobalt.rockCandy.current).toBe(18 - 15 + 8) // spent 15 on the pick, +8 from a cobalt dig
 })
+
+// The fixed echo the chamber speaks (content/moon/hollowCore.ECHO_SEQUENCE). Rounds 0..3 ask for a
+// growing prefix: lengths 2,3,4,5 → 14 correct calls clear the puzzle.
+const ECHO_SEQUENCE = ['up', 'right', 'right', 'down', 'left', 'up', 'down', 'left']
+const ROUND_LENGTHS = [2, 3, 4, 5]
+
+test('the hollow core: mine clean, echo the chamber, reach the warm centre', async ({ page }) => {
+  await page.goto('/?speed=1000')
+  await page.getByTestId('ack-opener').click()
+
+  // A player who has mined the moon clean (every stratum cleared, holding the top pick).
+  await page.evaluate(() => {
+    const s = (window as any).__cb3.session
+    s.dispatch((state: any) => ({
+      ...state,
+      flags: { ...state.flags, balloonBuilt: true, mapUnlocked: true },
+      numbers: { ...state.numbers, moonPickTier: 3, moonStratum: 3 }, // 3 strata, all cleared
+    }))
+  })
+
+  await page.evaluate(() => (window as any).__cb3.showMoon())
+  await expect(page.getByTestId('moon-screen')).toBeVisible()
+  await expect(page.getByTestId('moon-depleted')).toBeVisible() // mined clean
+  await expect(page.getByTestId('moon-hollow-section')).toBeVisible()
+
+  // A wrong call scatters the echo: one correct call then a wrong one resets the round's progress.
+  await page.getByTestId(`moon-hollow-${ECHO_SEQUENCE[0]}`).click()
+  expect((await getState(page)).numbers['hollowInput']).toBe(1)
+  const wrong = ECHO_SEQUENCE[1] === 'up' ? 'down' : 'up'
+  await page.getByTestId(`moon-hollow-${wrong}`).click()
+  expect((await getState(page)).numbers['hollowInput']).toBe(0) // scattered back to the start
+
+  // Echo every round correctly (lengths 2,3,4,5) — the chamber answers deeper each time.
+  for (const len of ROUND_LENGTHS) {
+    for (let i = 0; i < len; i++) await page.getByTestId(`moon-hollow-${ECHO_SEQUENCE[i]}`).click()
+  }
+
+  // The dead centre opens: the warm empty chamber, the keepsake, the flag.
+  await expect(page.getByTestId('moon-hollow-reached')).toBeVisible()
+  const solved = await getState(page)
+  expect(solved.flags['hollowCoreReached']).toBe(true)
+  expect(solved.ownedItems['shedShell']).toBe(true)
+})

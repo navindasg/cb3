@@ -134,6 +134,18 @@ export const WORM_MOLD: ItemDef = {
   saveFlag: 'wormMoldOwned',
 }
 
+/** The shed shell (Act 1, the hollow-core keepsake) — a curl of warm, translucent shell prised from
+ * the moon's empty heart (DESIGN §15.2: something hatched here and left). Not equippable; held as a
+ * quiet keepsake. Its system (the molds / gummy-army, §12) lands in a later increment, like the
+ * storm-front keepsakes — the lore beat is the point, and the game says nothing. */
+export const SHED_SHELL: ItemDef = {
+  id: 'shedShell',
+  displayKey: 'item.shedShell.name',
+  descKey: 'item.shedShell.desc',
+  ascii: '(C',
+  saveFlag: 'shedShellOwned',
+}
+
 /** The cotton-candy balloon (Act 1) — built in the cumulus commons, it carries you to the moon.
  * Not equippable; owning it (the saveFlag) reveals the jawbreaker moon on the overworld. */
 export const COTTON_CANDY_BALLOON: ItemDef = {
@@ -173,6 +185,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   BOTTLED_TEMPEST,
   STORM_SILK,
   WORM_MOLD,
+  SHED_SHELL,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

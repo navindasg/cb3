@@ -32,6 +32,8 @@ export interface GameText {
   'item.cottonCandyBalloon.desc': string
   'item.wormMold.name': string
   'item.wormMold.desc': string
+  'item.shedShell.name': string
+  'item.shedShell.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 

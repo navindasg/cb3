@@ -114,6 +114,9 @@ export interface ShopEntry {
   readonly speechKey: string
 }
 
+/** A directional call into the hollow core's echo puzzle (Quest 5). Pure-ASCII when drawn. */
+export type EchoCall = 'up' | 'down' | 'left' | 'right'
+
 // --- Quests (Block E) ------------------------------------------------------
 // A QuestDef is pure data; one generic Scene runtime (engine/quest/Scene.ts) executes
 // any of them, switching only the PhysicsDriver + scroll axis + win condition. No

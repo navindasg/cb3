@@ -32,6 +32,8 @@ export const en: GameText = {
   'item.cottonCandyBalloon.desc': 'A balloon of spun pink cloud, rigged with licorice. It strains upward, toward the moon.',
   'item.wormMold.name': 'gummy worm mold',
   'item.wormMold.desc': 'A worm-shaped cast prised from the colossal one. Press gummy into it and a burrower takes shape — it digs alongside you, and your haul comes up doubled.',
+  'item.shedShell.name': 'curl of shed shell',
+  'item.shedShell.desc': 'A curl of translucent shell, shed from the inside. Whatever lay coiled in the moon’s heart left this behind. It has not yet gone cold.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 

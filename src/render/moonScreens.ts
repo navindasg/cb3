@@ -1,7 +1,9 @@
 import type { GameSession } from '@/engine/session/gameSession'
 import type { GameState } from '@/engine/types/GameState'
+import type { EchoCall } from '@/engine/types/defs'
 import { formatCount } from '@/engine/number/format'
 import { setNumber } from '@/engine/state/reducers'
+import { grantItem } from '@/engine/shop/purchase'
 import {
   mineStratum,
   upgradePick,
@@ -14,11 +16,21 @@ import {
   wormTunnelsOpen,
 } from '@/engine/content/moonStrata'
 import {
+  echoCall,
+  hollowCoreAccessible,
+  hollowCoreReached,
+  roundSequence,
+  hollowRound,
+  hollowInput,
+} from '@/engine/content/hollowCore'
+import {
   MOON_STRATA,
   MOON_PICKS,
   STARTER_PICK_TIER,
   MOON_PICK_TIER_KEY,
 } from '@/content/moon/strata'
+import { TARGET_ROUNDS } from '@/content/moon/hollowCore'
+import { SHED_SHELL } from '@/content/items/items'
 import { MOON_WORM_DEFEATED_FLAG } from '@/content/flags'
 import { t } from '@/content/i18n/en'
 import type { GameTextKey } from '@/content/i18n/schema'
@@ -37,6 +49,11 @@ const RESOURCE_LABEL: Record<string, string> = {
   cottonCandy: 'cotton candy',
   licorice: 'licorice',
 }
+
+/** The four hollow-core echo calls and their pure-ASCII glyphs (the directions you call into). */
+const ECHO_CALLS: readonly EchoCall[] = ['up', 'down', 'left', 'right']
+const ECHO_GLYPH: Record<EchoCall, string> = { up: '^', down: 'v', left: '<', right: '>' }
+const echoGlyph = (call: EchoCall): string => ECHO_GLYPH[call]
 
 /** The display name of a pick tier (the free starter, then the buyable ladder). */
 function pickName(tier: number): string {
@@ -111,8 +128,64 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       renderStratum(s)
       renderOutfitter(s)
       renderWormTunnels(s)
+      renderHollowCore(s)
 
       screen.appendChild(ctx.button('back to the map', 'moon-to-map', () => ctx.showMap(), 0))
+    }
+
+    /** The hollow core (Quest 5) — surfaces once the moon is mined clean. An echo puzzle: the
+     * chamber speaks a growing sequence and you click it back. Solving it opens the warm, empty
+     * centre and leaves you a keepsake. The engine owns the puzzle; this only draws + routes. */
+    function renderHollowCore(s: GameState): void {
+      if (!hollowCoreAccessible(s, MOON_STRATA)) return
+      heading('the hollow core', 'moon-hollow-section')
+
+      if (hollowCoreReached(s)) {
+        paragraph(
+          'You step into the dead centre. The chamber is empty. Spherical. Still, faintly, warm. Something lay coiled here once, and is gone. A curl of shed shell is yours.',
+          'blurb',
+          'moon-hollow-reached',
+        )
+        return
+      }
+
+      paragraph(
+        'The mined-out shaft drops to the moon’s exact centre, into a sphere of perfect dark. You cannot see it. You can hear it. The chamber calls; echo it back.',
+        'blurb',
+        'moon-hollow-blurb',
+      )
+
+      const seq = roundSequence(s)
+      const got = hollowInput(s)
+      paragraph(
+        `the chamber calls:  ${seq.map(echoGlyph).join('  ')}    (round ${hollowRound(s) + 1} of ${TARGET_ROUNDS})`,
+        'blurb',
+        'moon-hollow-call',
+      )
+      paragraph(
+        `your echo:          ${seq.map((c, i) => (i < got ? echoGlyph(c) : '_')).join('  ')}`,
+        'blurb',
+        'moon-hollow-echo',
+      )
+
+      for (const call of ECHO_CALLS) {
+        screen.appendChild(ctx.button(echoGlyph(call), `moon-hollow-${call}`, () => doEcho(call)))
+      }
+    }
+
+    function doEcho(call: EchoCall): void {
+      const result = echoCall(session.getState(), call)
+      if (!result.ok) return
+      session.dispatch(() => result.state)
+      if (!result.correct) {
+        ctx.notify('The echo scatters and dies. Start the call again.')
+      } else if (result.solved) {
+        session.dispatch((st) => grantItem(st, SHED_SHELL))
+        ctx.logText('The echoes line up and the dark opens. The chamber is empty, and warm.')
+      } else if (result.roundComplete) {
+        ctx.logText('The chamber answers, and the echo runs deeper.')
+      }
+      render()
     }
 
     /** The moon worm (Quest 4) surfaces once your digging breaks into its tunnels; gone once it's
