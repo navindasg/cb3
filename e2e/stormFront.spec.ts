@@ -71,4 +71,14 @@ test('the storm front: brew the soda, pay the toll, and break the thunderhead dj
   expect(state.flags['stormFrontCleared']).toBe(true)
   expect(state.ownedItems['bottledTempest']).toBe(true)
   expect(state.ownedItems['stormSilk']).toBe(true)
+
+  // The one-off drops must stay one-off: once cleared, re-entry is refused (no re-farming the
+  // storm-silk after it is consumed into the galleon's sails). Simulate consumption, then re-enter.
+  await page.evaluate(() => {
+    const s = (window as any).__cb3.session
+    s.dispatch((st: any) => ({ ...st, flags: { ...st.flags, stormSilkOwned: false }, ownedItems: { ...st.ownedItems, stormSilk: false } }))
+    ;(window as any).__cb3.startStormFront()
+  })
+  await expect(page.getByTestId('storm-status')).toHaveCount(0) // bounced, no new fight
+  expect(await page.evaluate(() => (window as any).__cb3.session.getState().ownedItems['stormSilk'])).toBe(false)
 })

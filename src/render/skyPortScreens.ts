@@ -12,6 +12,13 @@ import {
   nameGalleon,
 } from '@/engine/content/galleonCommission'
 import { GALLEON_COMMISSION, type CommissionLine } from '@/content/ship/galleon'
+import { trackTier, nextTier, canUpgrade, upgradeGalleon } from '@/engine/content/galleonUpgrade'
+import {
+  GALLEON_TRACKS,
+  GALLEON_HULL_KEY,
+  GALLEON_SAILS_KEY,
+  type GalleonTrack,
+} from '@/content/ship/galleonUpgrade'
 
 // The sky port (Act 2 — built on the moon's far side, DESIGN §13/§177). A wiring sub-module of the
 // DOM bootstrap, sibling to moonScreens/skyScreens: it owns NO game logic. The shipwright's commission
@@ -28,6 +35,13 @@ const RESOURCE_LABEL: Record<ResourceKey, string> = {
   rockCandy: 'rock candy',
   cottonCandy: 'cotton candy',
   licorice: 'licorice',
+}
+
+/** A tiny ASCII galleon that gains canvas (sails) and plating (hull) as she is fitted out. Pure ASCII. */
+function galleonArt(hull: number, sails: number): string {
+  const canvas = sails >= 2 ? '  |^^^|' : '  |^^|'
+  const plate = hull >= 3 ? '#' : hull >= 2 ? '=' : '-'
+  return [canvas, '   | |', ` \\${plate.repeat(8)}/`, '  ~~~~~~~~~~'].join('\n')
 }
 
 /** Everything the sky port needs from the bootstrap host (its DOM + session + helpers). */
@@ -206,8 +220,79 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         'skyport-launched',
       )
       screen.appendChild(ctx.button('set sail for the rock candy reef', 'skyport-set-sail', () => ctx.showReef(), 0))
+      screen.appendChild(ctx.button("the shipwright's yard (fit out the galleon)", 'skyport-to-yard', () => showYard()))
       screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon()))
       screen.appendChild(ctx.button('back to the map', 'skyport-to-map', () => ctx.showMap()))
+    }
+
+    render()
+  }
+
+  // The shipwright's yard — fit out the galleon (hull/sails/cannons, DESIGN §13/§269). Drives the pure
+  // engine (engine/content/galleonUpgrade); this only draws the spec + routes the upgrade clicks.
+  function showYard(): void {
+    function render(): void {
+      ctx.clearScreen()
+      const s = session.getState()
+      heading("the shipwright's yard", 'skyport-yard-screen')
+      paragraph(
+        'The shipwright circles the galleon with a measuring eye. "Let us make her worth the dark. What are we fitting?"',
+        'blurb',
+        'skyport-yard-blurb',
+      )
+
+      const art = doc.createElement('pre')
+      art.className = 'arena'
+      art.setAttribute('data-testid', 'skyport-galleon-art')
+      art.textContent = galleonArt(trackTier(s, GALLEON_HULL_KEY), trackTier(s, GALLEON_SAILS_KEY))
+      screen.appendChild(art)
+
+      for (const track of GALLEON_TRACKS) renderTrack(s, track)
+      screen.appendChild(ctx.button('back to the dock', 'yard-to-dock', () => showSkyPort(), 0))
+    }
+
+    function renderTrack(s: GameState, track: GalleonTrack): void {
+      const current = track.tiers.find((t) => t.tier === trackTier(s, track.key))
+      paragraph(`${track.label}:  ${current?.name ?? `tier ${trackTier(s, track.key)}`}`, 'blurb', `yard-${track.label}`)
+
+      const next = nextTier(s, track)
+      if (!next) {
+        paragraph('  fully fitted.', 'blurb', `yard-${track.label}-max`)
+        return
+      }
+      if (next.deferred) {
+        paragraph(`  next: ${next.name} — not yet (${next.note}).`, 'blurb', `yard-${track.label}-locked`)
+        return
+      }
+
+      const priceText = (next.price ?? [])
+        .map((l) => `${formatCount(l.amount)} ${RESOURCE_LABEL[l.resource]}`)
+        .join(' + ')
+      const extra = next.consumes ? ' + the storm-silk' : ''
+      const fit = ctx.button(`fit ${next.name} (${priceText}${extra})`, `yard-upgrade-${track.label}`, () => doUpgrade(track))
+      if (!canUpgrade(s, track)) {
+        fit.disabled = true
+        fit.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(fit)
+    }
+
+    function doUpgrade(track: GalleonTrack): void {
+      const result = upgradeGalleon(session.getState(), track)
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'missingItem'
+            ? 'You do not have what that fitting needs yet.'
+            : result.reason === 'unaffordable'
+              ? "you can't afford that fitting yet."
+              : 'not available yet.',
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      const fitted = track.tiers.find((t) => t.tier === trackTier(result.state, track.key))
+      ctx.logText(`The shipwright fits the ${fitted?.name ?? track.label}. The galleon sits a little prouder.`)
+      render()
     }
 
     render()

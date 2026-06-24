@@ -32,7 +32,12 @@ import { MOON_WORM_QUEST, MOON_WORM_GOAL } from '@/content/quests/moonWorm'
 import { BOTTLED_TEMPEST, STORM_SILK, WORM_MOLD } from '@/content/items/items'
 import { grantItem } from '@/engine/shop/purchase'
 import { ACT0_SECRETS } from '@/content/secrets'
-import { MINE_GATE_CLEARED_FLAG, FIZZY_LIFTING_SODA_FLAG } from '@/content/flags'
+import {
+  MINE_GATE_CLEARED_FLAG,
+  FIZZY_LIFTING_SODA_FLAG,
+  STORM_FRONT_CLEARED_FLAG,
+  MOON_WORM_DEFEATED_FLAG,
+} from '@/content/flags'
 
 // The quest screens — a wiring sub-module of the DOM bootstrap (extracted to keep bootstrap.ts
 // thin as Act 0 grows several quests). Like bootstrap it owns NO game logic: the Scene/quest
@@ -522,6 +527,13 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
   // --- the storm front (Quest 3) — gated on the fizzy lifting soda, capped by the djinn ---------
 
   function startStormFront(): void {
+    // Already broken: refuse re-entry, so the one-off djinn drops (storm-silk, the bottled tempest)
+    // can't be re-farmed and the candy/licorice drop can't be replayed (the storm-silk is consumed
+    // into the galleon's sails, §269 — it must stay gone for good).
+    if (session.getState().flags[STORM_FRONT_CLEARED_FLAG] === true) {
+      ctx.notify('The thunderhead is already broken. Nothing up there now but clear, empty sky.')
+      return ctx.showMap()
+    }
     // The updrafts demand the fizzy lifting soda (a cauldron brew). Refuse entry without it,
     // pointing the player at the cauldron — the gate, like the mine gate, is a real prerequisite.
     if (session.getState().flags[FIZZY_LIFTING_SODA_FLAG] !== true) {
@@ -551,6 +563,12 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
   // --- the moon worm (Quest 4) — a horizontal boss in the tunnels under the jawbreaker moon -------
 
   function startMoonWorm(): void {
+    // Already broken: refuse re-entry (the moon screen also hides the fight post-defeat) so the one-off
+    // worm mold + the licorice drop can't be re-farmed.
+    if (session.getState().flags[MOON_WORM_DEFEATED_FLAG] === true) {
+      ctx.notify('The worm is already dead. The tunnels are quiet now.')
+      return ctx.showMap()
+    }
     runHorizontal({
       def: MOON_WORM_QUEST,
       backdrop: WORM_TUNNEL_BACKDROP,

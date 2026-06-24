@@ -71,3 +71,51 @@ test('the sky port: open it on the far side, fund the commission, name the galle
   expect(launched.flags['galleonCommissioned']).toBe(true)
   expect(launched.strings['galleonName']).toBe('the Sweet Tooth')
 })
+
+test("the shipwright's yard: fit the hull to the gate tier and the storm-silk sails", async ({ page }) => {
+  await page.goto('/')
+  await page.getByTestId('ack-opener').click()
+
+  // A captain with a commissioned galleon, the storm-silk keepsake in hand, and deep materials.
+  await page.evaluate(() => {
+    const full = (n: number) => ({ current: n, lifetimeAccumulated: n, historicalMax: n })
+    ;(window as any).__cb3.session.dispatch((state: any) => ({
+      ...state,
+      flags: {
+        ...state.flags,
+        mapUnlocked: true,
+        statusBarUnlocked: true,
+        celestialNavigationLearned: true,
+        fishbowlHelmForged: true,
+        galleonCommissioned: true,
+        stormSilkOwned: true,
+      },
+      ownedItems: { ...state.ownedItems, stormSilk: true },
+      strings: { ...state.strings, galleonName: 'the Sweet Tooth' },
+      candies: full(5_000_000),
+      rockCandy: full(5_000),
+      cottonCandy: full(5_000),
+    }))
+  })
+
+  await page.evaluate(() => (window as any).__cb3.showSkyPort())
+  await page.getByTestId('skyport-to-yard').click()
+  await expect(page.getByTestId('skyport-yard-screen')).toBeVisible()
+  await expect(page.getByTestId('skyport-galleon-art')).toBeVisible()
+
+  // Hull: hardtack -> ironbark -> jawbreaker-plated (the Act-2 gate tier).
+  await page.getByTestId('yard-upgrade-hull').click()
+  await page.getByTestId('yard-upgrade-hull').click()
+  // Sails: cotton candy -> storm-silk (consumes the keepsake).
+  await page.getByTestId('yard-upgrade-sails').click()
+
+  const fitted = await getState(page)
+  expect(fitted.numbers['galleonHull']).toBe(3)
+  expect(fitted.numbers['galleonSails']).toBe(2)
+  expect(fitted.flags['stormSilkOwned']).toBe(false) // the storm-silk became the sail
+  expect(fitted.ownedItems['stormSilk']).toBe(false)
+
+  // The hull track is now maxed; the sail track's next tier (solar) is deferred (no buy button).
+  await expect(page.getByTestId('yard-hull-max')).toBeVisible()
+  await expect(page.getByTestId('yard-sails-locked')).toBeVisible()
+})
