@@ -46,6 +46,7 @@ import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
 import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScreens'
 import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
 import { createCometScreens, type CometScreens } from '@/render/cometScreens'
+import { createSourbeardScreens, type SourbeardScreens } from '@/render/sourbeardScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -641,6 +642,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showReef: () => reef.showReef(),
     // The comet is its own screen, reached once the reef has been sailed (a thunk: comet is below).
     showComet: () => comet.showComet(),
+    // Sourbeard's duel is its own screen, likewise reached after the reef (a thunk: created below).
+    showSourbeard: () => sourbeard.showSourbeard(),
   })
 
   // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
@@ -662,6 +665,21 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   // thin-wiring contract; the chase sim + once-per-pass cooldown live in the tested engine
   // (engine/content/cometChase), routed back through showSkyPort / showMap.
   const comet: CometScreens = createCometScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showSkyPort: skyport.showSkyPort,
+  })
+
+  // The Sourbeard duel screen (Act 2 — quest 8: the broadside duel that reads the yard's hull/cannon/sail
+  // tiers). Same thin-wiring contract; the deterministic turn-based duel lives in the tested engine
+  // (engine/content/shipDuel), routed back through showSkyPort / showMap.
+  const sourbeard: SourbeardScreens = createSourbeardScreens({
     doc,
     screen,
     session,

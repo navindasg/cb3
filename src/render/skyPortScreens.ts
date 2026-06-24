@@ -14,6 +14,7 @@ import {
 import { GALLEON_COMMISSION, type CommissionLine } from '@/content/ship/galleon'
 import { trackTier, nextTier, canUpgrade, upgradeGalleon } from '@/engine/content/galleonUpgrade'
 import { reefReached } from '@/engine/content/reefVoyage'
+import { sourbeardRetired } from '@/engine/content/shipDuel'
 import {
   GALLEON_TRACKS,
   GALLEON_HULL_KEY,
@@ -63,6 +64,8 @@ export interface SkyPortContext {
   showReef(): void
   /** Chase the comet (Act 2 — "the comet passes") — wired by the bootstrap. */
   showComet(): void
+  /** Stand and fight Captain Sourbeard (Act 2 — quest 8) — wired by the bootstrap. */
+  showSourbeard(): void
 }
 
 export interface SkyPortScreens {
@@ -227,6 +230,14 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
       // Once the dark has been sailed once, a comet crosses your bearings (Act 2 — "the comet passes").
       if (reefReached(s)) {
         screen.appendChild(ctx.button('chase the comet', 'skyport-to-comet', () => ctx.showComet()))
+        // ...and black sails start shadowing you (Act 2 — Captain Sourbeard, quest 8).
+        screen.appendChild(
+          ctx.button(
+            sourbeardRetired(s) ? 'the dark where the Black Lollipop sank' : 'answer the Black Lollipop',
+            'skyport-to-sourbeard',
+            () => ctx.showSourbeard(),
+          ),
+        )
       }
       screen.appendChild(ctx.button("the shipwright's yard (fit out the galleon)", 'skyport-to-yard', () => showYard()))
       screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon()))
