@@ -27,6 +27,7 @@ import { CANDY_PRODUCERS } from '@/content/producers/candy'
 import { COTTON_CANDY_PRODUCERS } from '@/content/producers/cottonCandy'
 import { LICORICE_PRODUCERS } from '@/content/producers/licorice'
 import { ROCK_CANDY_PRODUCERS } from '@/content/producers/rockCandy'
+import { PEPPERMINT_PRODUCERS } from '@/content/producers/peppermint'
 import { ACT0_OVERWORLD } from '@/content/overworld'
 import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
 import { ACT0_SECRETS } from '@/content/secrets'
@@ -48,6 +49,7 @@ import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
 import { createCometScreens, type CometScreens } from '@/render/cometScreens'
 import { createSourbeardScreens, type SourbeardScreens } from '@/render/sourbeardScreens'
 import { createSourPlanetScreens, type SourPlanetScreens } from '@/render/sourPlanetScreens'
+import { createMintPlanetScreens, type MintPlanetScreens } from '@/render/mintPlanetScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -85,7 +87,13 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     // The tick sums producers by resource, so the registries simply concat: cotton candy is inert
     // until you own cloud sheep, licorice until the beanstalk thickens. Offline catch-up credits
     // every produced resource (engine/loop/catchup is resource-agnostic).
-    producers: [...CANDY_PRODUCERS, ...COTTON_CANDY_PRODUCERS, ...LICORICE_PRODUCERS, ...ROCK_CANDY_PRODUCERS],
+    producers: [
+      ...CANDY_PRODUCERS,
+      ...COTTON_CANDY_PRODUCERS,
+      ...LICORICE_PRODUCERS,
+      ...ROCK_CANDY_PRODUCERS,
+      ...PEPPERMINT_PRODUCERS,
+    ],
     onEvents: (events) => events.forEach((e) => log(e as GameTextKey)),
   })
 
@@ -647,6 +655,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showSourbeard: () => sourbeard.showSourbeard(),
     // The sour planet is its own screen, likewise reached after the reef (a thunk: created below).
     showSourPlanet: () => sourPlanet.showSourPlanet(),
+    // The mint planet is its own screen, likewise reached after the reef (a thunk: created below).
+    showMintPlanet: () => mintPlanet.showMintPlanet(),
   })
 
   // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
@@ -699,6 +709,22 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   // (engine/content/sourPlanet), and the fusing itself happens at the moon's gummy vat. Routed back
   // through showSkyPort / showMap.
   const sourPlanet: SourPlanetScreens = createSourPlanetScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showSkyPort: skyport.showSkyPort,
+  })
+
+  // The mint-planet screen (Act 2 — quest 10, the act capstone: the ice labyrinth, the frost wyrm, and
+  // peppermint mining toward the §184 gate). Same thin-wiring contract; the labyrinth / wyrm / condensers
+  // / act gate live in the tested engine (engine/content/mintPlanet + actGate). Routed back through
+  // showSkyPort / showMap.
+  const mintPlanet: MintPlanetScreens = createMintPlanetScreens({
     doc,
     screen,
     session,

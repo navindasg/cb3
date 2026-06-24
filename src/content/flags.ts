@@ -126,3 +126,13 @@ export const COMET_FIRST_CAUGHT_FLAG = 'cometFirstCaught'
  * value (ADR §3). The kraken, the other flavors/molds, and gummy combat/crew are later beats.
  */
 export const FLAVOR_FUSION_FLAG = 'flavorFusionLearned'
+
+/**
+ * Set when you reach the heart of the ice labyrinth and free the frost wyrm (Act 2 — the mint planet,
+ * quest 10, DESIGN §182/§285). The dragon that froze instead of igniting; breaking the peppermint-frost
+ * from around it opens the peppermint fields. engine/content/mintPlanet sets the SAME literal in
+ * lock-step (the moonStrata idiom); the planet screen reads it to flip from the labyrinth to the mining,
+ * and the peppermint condenser producer keys its output to it. The engine never imports this content
+ * value (ADR §3). The larval-star reveal is environmental, never stated (§285).
+ */
+export const FROST_WYRM_FREED_FLAG = 'frostWyrmFreed'

@@ -27,6 +27,7 @@ export default defineConfig({
         'src/render/cometScreens.ts',
         'src/render/sourbeardScreens.ts',
         'src/render/sourPlanetScreens.ts',
+        'src/render/mintPlanetScreens.ts',
         'src/render/questScreens.ts',
         'src/render/devPanel.ts',
         // Overworld.ts is the responsive DOM shell: it lives off getBoundingClientRect/innerHeight

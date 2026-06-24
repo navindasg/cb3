@@ -41,6 +41,8 @@ export const MIGRATIONS: Readonly<Record<number, StateMigration>> = {
   3: (s) => ({ popRocks: createResource(0), ...s }),
   // v4 → v5: Act 2 adds sour (the gummy folk's flavor essence). Same idiom.
   4: (s) => ({ sour: createResource(0), ...s }),
+  // v5 → v6: Act 2 adds peppermint (mined on the mint planet — the §184 act gate). Same idiom.
+  5: (s) => ({ peppermint: createResource(0), ...s }),
 }
 
 export interface MigrateOptions {
