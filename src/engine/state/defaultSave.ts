@@ -15,6 +15,7 @@ export function createDefaultSave(): GameState {
     rockCandy: createResource(0),
     cottonCandy: createResource(0),
     licorice: createResource(0),
+    popRocks: createResource(0),
 
     lifetimeCandiesEaten: 0,
     lifetimeCandiesThrown: 0,

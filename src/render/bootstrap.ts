@@ -45,6 +45,7 @@ import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
 import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
 import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScreens'
 import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
+import { createCometScreens, type CometScreens } from '@/render/cometScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -638,12 +639,29 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showMoon: moon.showMoon,
     // The reef is its own screen, reached by setting sail (a thunk: reef is created just below).
     showReef: () => reef.showReef(),
+    // The comet is its own screen, reached once the reef has been sailed (a thunk: comet is below).
+    showComet: () => comet.showComet(),
   })
 
   // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
   // its asteroids for rock candy). Same thin-wiring contract; the crossing + harvest live in the
   // tested engine (engine/content/reefVoyage + reef), routed back through showSkyPort / showMap.
   const reef: ReefScreens = createReefScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showSkyPort: skyport.showSkyPort,
+  })
+
+  // The comet screens (Act 2 — "the comet passes": the lead-the-target harpoon for pop rocks). Same
+  // thin-wiring contract; the chase sim + once-per-pass cooldown live in the tested engine
+  // (engine/content/cometChase), routed back through showSkyPort / showMap.
+  const comet: CometScreens = createCometScreens({
     doc,
     screen,
     session,

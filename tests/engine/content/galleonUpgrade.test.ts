@@ -123,10 +123,27 @@ describe('the galleon yard — sails consume the storm-silk keepsake', () => {
   })
 })
 
-describe('the galleon yard — deferred cannon upgrades', () => {
-  it('the gumball broadside is the base; pop rock guns are deferred (no material yet)', () => {
-    const s = stocked()
+describe('the galleon yard — cannon upgrades (pop rocks from the comet)', () => {
+  it('pop rock guns are unaffordable without pop rocks', () => {
+    const s = stocked() // deep candy, but no pop rocks
     expect(trackTier(s, GALLEON_CANNON_KEY)).toBe(1)
+    expect(nextTier(s, CANNON)!.deferred).toBeUndefined()
+    expect(canUpgrade(s, CANNON)).toBe(false)
+    expect(upgradeGalleon(s, CANNON).reason).toBe('unaffordable')
+  })
+
+  it('fits the pop rock guns once enough pop rocks are harvested, spending both lines', () => {
+    const s = stocked({ popRocks: createResource(200) })
+    expect(canUpgrade(s, CANNON)).toBe(true)
+    const result = upgradeGalleon(s, CANNON)
+    expect(result.ok).toBe(true)
+    expect(trackTier(result.state, GALLEON_CANNON_KEY)).toBe(2)
+    expect(result.state.popRocks.current).toBe(200 - 120)
+    expect(result.state.candies.current).toBe(5_000_000 - 500_000)
+  })
+
+  it('the nougat bombard (tier 3) is deferred until a late-Act-2 forge commission', () => {
+    const s = stocked({ popRocks: createResource(200), numbers: { [GALLEON_CANNON_KEY]: 2 } })
     expect(nextTier(s, CANNON)!.deferred).toBe(true)
     expect(canUpgrade(s, CANNON)).toBe(false)
     expect(upgradeGalleon(s, CANNON).reason).toBe('deferred')

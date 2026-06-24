@@ -13,6 +13,7 @@ import {
 } from '@/engine/content/galleonCommission'
 import { GALLEON_COMMISSION, type CommissionLine } from '@/content/ship/galleon'
 import { trackTier, nextTier, canUpgrade, upgradeGalleon } from '@/engine/content/galleonUpgrade'
+import { reefReached } from '@/engine/content/reefVoyage'
 import {
   GALLEON_TRACKS,
   GALLEON_HULL_KEY,
@@ -35,6 +36,7 @@ const RESOURCE_LABEL: Record<ResourceKey, string> = {
   rockCandy: 'rock candy',
   cottonCandy: 'cotton candy',
   licorice: 'licorice',
+  popRocks: 'pop rocks',
 }
 
 /** A tiny ASCII galleon that gains canvas (sails) and plating (hull) as she is fitted out. Pure ASCII. */
@@ -59,6 +61,8 @@ export interface SkyPortContext {
   showMoon(): void
   /** Set sail for the rock candy reef (Act 2 — the first voyage) — wired by the bootstrap. */
   showReef(): void
+  /** Chase the comet (Act 2 — "the comet passes") — wired by the bootstrap. */
+  showComet(): void
 }
 
 export interface SkyPortScreens {
@@ -220,6 +224,10 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         'skyport-launched',
       )
       screen.appendChild(ctx.button('set sail for the rock candy reef', 'skyport-set-sail', () => ctx.showReef(), 0))
+      // Once the dark has been sailed once, a comet crosses your bearings (Act 2 — "the comet passes").
+      if (reefReached(s)) {
+        screen.appendChild(ctx.button('chase the comet', 'skyport-to-comet', () => ctx.showComet()))
+      }
       screen.appendChild(ctx.button("the shipwright's yard (fit out the galleon)", 'skyport-to-yard', () => showYard()))
       screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon()))
       screen.appendChild(ctx.button('back to the map', 'skyport-to-map', () => ctx.showMap()))

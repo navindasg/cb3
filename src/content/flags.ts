@@ -107,3 +107,13 @@ export const REEF_REACHED_FLAG = 'reefReached'
  * this content value (ADR §3) — the screen owns the persistence.
  */
 export const REEF_DRIFT_CLEARED_FLAG = 'reefDriftCleared'
+
+/**
+ * Set the first time the comet is caught with the lead-the-target harpoon (Act 2 — "the comet passes",
+ * DESIGN §175/§180). The comet sim (engine/content/cometChase) is transient and never persists, so the
+ * comet screen sets this flag on the first catch; it grants a one-time pop-rock bonus and the lore beat
+ * that a later pass could be RIDDEN (the deferred fast-travel + stardust). The recurring pop-rock faucet
+ * is rate-limited by the once-per-pass cooldown (numbers.cometLastPass), not by this flag. The engine
+ * never imports this content value (ADR §3) — the screen owns the persistence.
+ */
+export const COMET_FIRST_CAUGHT_FLAG = 'cometFirstCaught'

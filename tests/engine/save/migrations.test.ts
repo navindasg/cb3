@@ -72,9 +72,22 @@ describe('the real migration ladder (MIGRATIONS)', () => {
     expect(out.state.licorice).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
   })
 
-  it('climbs a v1 save through every rung (cottonCandy AND licorice present)', () => {
+  it('v3 → v4 seeds a zeroed popRocks resource (Act 2 — the comet)', () => {
+    const out = migrateEnvelope(base(3, { candies: { current: 5 } }))
+    expect(out.v).toBe(CURRENT_SCHEMA_VERSION)
+    expect(out.state.popRocks).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
+  })
+
+  it('preserves a popRocks field a save already carries', () => {
+    const carried = { current: 17, lifetimeAccumulated: 30, historicalMax: 30 }
+    const out = migrateEnvelope(base(3, { popRocks: carried }))
+    expect(out.state.popRocks).toEqual(carried)
+  })
+
+  it('climbs a v1 save through every rung (cottonCandy, licorice AND popRocks present)', () => {
     const out = migrateEnvelope(base(1, { candies: { current: 5 } }))
     expect(out.state.cottonCandy).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
     expect(out.state.licorice).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
+    expect(out.state.popRocks).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
   })
 })

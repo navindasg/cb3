@@ -7,7 +7,9 @@ import type { ResourceState } from '@/engine/types/Resource'
 // Act 1 schema growth (the migration ladder in engine/save/migrations climbs old saves up):
 //   v2 adds cottonCandy (sheared from cloud sheep in the cumulus commons),
 //   v3 adds licorice (cut from the thickened beanstalk; later, moon-worm drops).
-export const CURRENT_SCHEMA_VERSION = 3
+// Act 2 schema growth:
+//   v4 adds popRocks (harvested from the comet — Act 2, the comet passes).
+export const CURRENT_SCHEMA_VERSION = 4
 
 export const RESOURCE_KEYS = [
   'candies',
@@ -17,6 +19,7 @@ export const RESOURCE_KEYS = [
   'rockCandy',
   'cottonCandy',
   'licorice',
+  'popRocks',
 ] as const
 export type ResourceKey = (typeof RESOURCE_KEYS)[number]
 
@@ -28,7 +31,7 @@ export interface GameState {
   totalPlaytimeSeconds: number
   nGPlusRun: number
 
-  // --- resources (later phases add popRocks/peppermint/stardust/… via migrations) ---
+  // --- resources (later phases add peppermint/stardust/… via migrations) ---
   candies: ResourceState
   lollipops: ResourceState
   chocolate: ResourceState
@@ -36,6 +39,7 @@ export interface GameState {
   rockCandy: ResourceState
   cottonCandy: ResourceState // Act 1: sheared from cloud sheep (the cumulus commons paddock)
   licorice: ResourceState // Act 1: cut from the thickened beanstalk (later, moon-worm drops)
+  popRocks: ResourceState // Act 2: harvested by catching the comet (the lead-the-target harpoon)
 
   // --- lifetime stats (never reset; survive NG+) ---
   lifetimeCandiesEaten: number // gates ending 3, scales "wrapper"

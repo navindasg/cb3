@@ -61,7 +61,11 @@ const SAIL_TIERS: readonly GalleonTier[] = [
 
 const CANNON_TIERS: readonly GalleonTier[] = [
   { tier: 1, name: 'gumball broadside' },
-  { tier: 2, name: 'pop rock guns', deferred: true, note: 'needs pop rocks from the comet' },
+  {
+    tier: 2,
+    name: 'pop rock guns',
+    price: [{ resource: 'popRocks', amount: 120 }, { resource: 'candies', amount: 500_000 }],
+  },
   { tier: 3, name: 'the nougat bombard', deferred: true, note: 'a late-Act-2 forge commission' },
 ]
 

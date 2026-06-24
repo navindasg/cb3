@@ -37,6 +37,8 @@ export const MIGRATIONS: Readonly<Record<number, StateMigration>> = {
   1: (s) => ({ cottonCandy: createResource(0), ...s }),
   // v2 → v3: Act 1 adds licorice (cut from the thickened beanstalk). Same idiom.
   2: (s) => ({ licorice: createResource(0), ...s }),
+  // v3 → v4: Act 2 adds popRocks (harvested from the comet). Same idiom.
+  3: (s) => ({ popRocks: createResource(0), ...s }),
 }
 
 export interface MigrateOptions {
