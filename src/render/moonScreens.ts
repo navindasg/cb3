@@ -36,6 +36,10 @@ import {
   gummyWormCount,
   gummyMiningRate,
   canGrowGummy,
+  fusionUnlocked,
+  gummyFusedCount,
+  canGrowFused,
+  growFusedGummy,
 } from '@/engine/content/gummyVat'
 import { skyPortOpen } from '@/engine/content/galleonCommission'
 import {
@@ -51,6 +55,9 @@ import {
   FLAVORS,
   GUMMY_CANDY_COST,
   GUMMY_LICORICE_COST,
+  GUMMY_FUSED_CANDY_COST,
+  GUMMY_FUSED_LICORICE_COST,
+  GUMMY_FUSED_SOUR_COST,
 } from '@/content/gummy/molds'
 import { SHED_SHELL, BRASS_SEXTANT } from '@/content/items/items'
 import { MOON_WORM_DEFEATED_FLAG } from '@/content/flags'
@@ -205,9 +212,10 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       paragraph(`flavors:  ${catalogLine(FLAVORS, (f) => `${f.name} (${f.stat})`)}`, 'blurb', 'moon-vat-flavors')
 
       const count = gummyWormCount(s)
+      const fused = gummyFusedCount(s)
       const noun = count === 1 ? 'gummy' : 'gummies'
       paragraph(
-        `your burrowers: ${count} licorice worm ${noun} — mining ${gummyMiningRate(s).toFixed(2)} rock candy/sec`,
+        `your burrowers: ${count} licorice worm ${noun}${fused > 0 ? ` + ${fused} sour-fused` : ''} — mining ${gummyMiningRate(s).toFixed(2)} rock candy/sec`,
         'blurb',
         'moon-vat-roster',
       )
@@ -223,6 +231,20 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
         grow.classList.add('shop-unaffordable')
       }
       screen.appendChild(grow)
+
+      // Flavor fusion (the gummy folk's gift, DESIGN §260) — a two-flavor burrower that mines harder.
+      if (fusionUnlocked(s)) {
+        const fuse = ctx.button(
+          `fuse a sour burrower (${GUMMY_FUSED_CANDY_COST} candies + ${GUMMY_FUSED_LICORICE_COST} licorice + ${GUMMY_FUSED_SOUR_COST} sour)`,
+          'moon-vat-fuse',
+          () => doGrowFused(),
+        )
+        if (!canGrowFused(s)) {
+          fuse.disabled = true
+          fuse.classList.add('shop-unaffordable')
+        }
+        screen.appendChild(fuse)
+      }
     }
 
     function doGrow(): void {
@@ -237,6 +259,21 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       }
       session.dispatch(() => result.state)
       ctx.logText('A licorice worm gummy wriggles free of the mold and burrows into the moon.')
+      render()
+    }
+
+    function doGrowFused(): void {
+      const result = growFusedGummy(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'You have not learned flavor fusion yet — the gummy folk teach it, out on the sour planet.'
+            : `You need ${GUMMY_FUSED_CANDY_COST} candies, ${GUMMY_FUSED_LICORICE_COST} licorice and ${GUMMY_FUSED_SOUR_COST} sour to fuse one.`,
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('Two flavors fold into one gummy — a sour-fused worm, all teeth. It burrows in hungry.')
       render()
     }
 

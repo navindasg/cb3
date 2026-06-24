@@ -39,6 +39,8 @@ export const MIGRATIONS: Readonly<Record<number, StateMigration>> = {
   2: (s) => ({ licorice: createResource(0), ...s }),
   // v3 → v4: Act 2 adds popRocks (harvested from the comet). Same idiom.
   3: (s) => ({ popRocks: createResource(0), ...s }),
+  // v4 → v5: Act 2 adds sour (the gummy folk's flavor essence). Same idiom.
+  4: (s) => ({ sour: createResource(0), ...s }),
 }
 
 export interface MigrateOptions {

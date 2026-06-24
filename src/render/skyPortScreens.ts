@@ -38,6 +38,7 @@ const RESOURCE_LABEL: Record<ResourceKey, string> = {
   cottonCandy: 'cotton candy',
   licorice: 'licorice',
   popRocks: 'pop rocks',
+  sour: 'sour essence',
 }
 
 /** A tiny ASCII galleon that gains canvas (sails) and plating (hull) as she is fitted out. Pure ASCII. */
@@ -66,6 +67,8 @@ export interface SkyPortContext {
   showComet(): void
   /** Stand and fight Captain Sourbeard (Act 2 — quest 8) — wired by the bootstrap. */
   showSourbeard(): void
+  /** Sail to the sour planet & the gummy folk (Act 2 — quest 9) — wired by the bootstrap. */
+  showSourPlanet(): void
 }
 
 export interface SkyPortScreens {
@@ -238,6 +241,8 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
             () => ctx.showSourbeard(),
           ),
         )
+        // ...and a sour, gas-wreathed world hangs off the far bearing (Act 2 — the sour planet, quest 9).
+        screen.appendChild(ctx.button('sail to the sour planet', 'skyport-to-sour', () => ctx.showSourPlanet()))
       }
       screen.appendChild(ctx.button("the shipwright's yard (fit out the galleon)", 'skyport-to-yard', () => showYard()))
       screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon()))

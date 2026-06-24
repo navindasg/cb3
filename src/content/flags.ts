@@ -117,3 +117,12 @@ export const REEF_DRIFT_CLEARED_FLAG = 'reefDriftCleared'
  * never imports this content value (ADR §3) — the screen owns the persistence.
  */
 export const COMET_FIRST_CAUGHT_FLAG = 'cometFirstCaught'
+
+/**
+ * Set when the gummy folk elder teaches you flavor fusion (Act 2 — the sour planet, DESIGN §181/§260).
+ * First alien contact; the friendly gummy folk show you how to work two flavor essences into one gummy.
+ * engine/content/sourPlanet sets the SAME literal in lock-step (the moonStrata idiom); the gummy vat
+ * reads it to unlock growing two-flavor (sour-fused) burrowers. The engine never imports this content
+ * value (ADR §3). The kraken, the other flavors/molds, and gummy combat/crew are later beats.
+ */
+export const FLAVOR_FUSION_FLAG = 'flavorFusionLearned'

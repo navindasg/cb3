@@ -9,7 +9,8 @@ import type { ResourceState } from '@/engine/types/Resource'
 //   v3 adds licorice (cut from the thickened beanstalk; later, moon-worm drops).
 // Act 2 schema growth:
 //   v4 adds popRocks (harvested from the comet — Act 2, the comet passes).
-export const CURRENT_SCHEMA_VERSION = 4
+//   v5 adds sour (the gummy folk's flavor essence — Act 2, the sour planet).
+export const CURRENT_SCHEMA_VERSION = 5
 
 export const RESOURCE_KEYS = [
   'candies',
@@ -20,6 +21,7 @@ export const RESOURCE_KEYS = [
   'cottonCandy',
   'licorice',
   'popRocks',
+  'sour',
 ] as const
 export type ResourceKey = (typeof RESOURCE_KEYS)[number]
 
@@ -40,6 +42,7 @@ export interface GameState {
   cottonCandy: ResourceState // Act 1: sheared from cloud sheep (the cumulus commons paddock)
   licorice: ResourceState // Act 1: cut from the thickened beanstalk (later, moon-worm drops)
   popRocks: ResourceState // Act 2: harvested by catching the comet (the lead-the-target harpoon)
+  sour: ResourceState // Act 2: the gummy folk's flavor essence, traded on the sour planet (fusion input)
 
   // --- lifetime stats (never reset; survive NG+) ---
   lifetimeCandiesEaten: number // gates ending 3, scales "wrapper"

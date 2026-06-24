@@ -47,6 +47,7 @@ import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScree
 import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
 import { createCometScreens, type CometScreens } from '@/render/cometScreens'
 import { createSourbeardScreens, type SourbeardScreens } from '@/render/sourbeardScreens'
+import { createSourPlanetScreens, type SourPlanetScreens } from '@/render/sourPlanetScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -644,6 +645,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showComet: () => comet.showComet(),
     // Sourbeard's duel is its own screen, likewise reached after the reef (a thunk: created below).
     showSourbeard: () => sourbeard.showSourbeard(),
+    // The sour planet is its own screen, likewise reached after the reef (a thunk: created below).
+    showSourPlanet: () => sourPlanet.showSourPlanet(),
   })
 
   // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
@@ -680,6 +683,22 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   // tiers). Same thin-wiring contract; the deterministic turn-based duel lives in the tested engine
   // (engine/content/shipDuel), routed back through showSkyPort / showMap.
   const sourbeard: SourbeardScreens = createSourbeardScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showSkyPort: skyport.showSkyPort,
+  })
+
+  // The sour-planet screen (Act 2 — quest 9: the gummy folk teach flavor fusion + trade sour essence).
+  // Same thin-wiring contract; the fusion-learning + trade live in the tested engine
+  // (engine/content/sourPlanet), and the fusing itself happens at the moon's gummy vat. Routed back
+  // through showSkyPort / showMap.
+  const sourPlanet: SourPlanetScreens = createSourPlanetScreens({
     doc,
     screen,
     session,

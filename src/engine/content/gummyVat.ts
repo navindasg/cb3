@@ -1,11 +1,17 @@
 import type { GameState } from '@/engine/types/GameState'
 import { spendResource } from '@/engine/types/Resource'
 import { setNumber } from '@/engine/state/reducers'
+import { flavorFusionLearned } from '@/engine/content/sourPlanet'
 import {
   GUMMY_WORM_COUNT_KEY,
+  GUMMY_FUSED_COUNT_KEY,
   GUMMY_CANDY_COST,
   GUMMY_LICORICE_COST,
+  GUMMY_FUSED_CANDY_COST,
+  GUMMY_FUSED_LICORICE_COST,
+  GUMMY_FUSED_SOUR_COST,
   ROCK_CANDY_PER_GUMMY_PER_SEC,
+  ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC,
 } from '@/content/gummy/molds'
 
 // The gummy vat (Act 1 — the gummy army v1, DESIGN §12). Pure & immutable, mirroring engine/shop/
@@ -24,22 +30,46 @@ export function gummyWormCount(state: GameState): number {
   return Math.max(0, Math.floor(state.numbers[GUMMY_WORM_COUNT_KEY] ?? 0))
 }
 
+/** The grown SOUR-FUSED worm-gummy count (Act 2 — flavor fusion). */
+export function gummyFusedCount(state: GameState): number {
+  return Math.max(0, Math.floor(state.numbers[GUMMY_FUSED_COUNT_KEY] ?? 0))
+}
+
 /** Whether the vat is available — you hold the worm mold (the Quest-4 drop) to press gummy into. */
 export function gummyVatOpen(state: GameState): boolean {
   return state.flags[WORM_MOLD_FLAG] === true
 }
 
-/** Passive rock candy the burrowers mine per second (the producer reads the same product). */
-export function gummyMiningRate(state: GameState): number {
-  return gummyWormCount(state) * ROCK_CANDY_PER_GUMMY_PER_SEC
+/** Whether the vat can grow two-flavor (sour-fused) burrowers — fusion learned from the gummy folk. */
+export function fusionUnlocked(state: GameState): boolean {
+  return gummyVatOpen(state) && flavorFusionLearned(state)
 }
 
-/** Whether a worm gummy can be grown now (vat open and both inputs affordable). */
+/** Passive rock candy ALL the burrowers mine per second — plain + sour-fused (the producers read the
+ * same products). The fused ones chew ~2.5× harder (sour = attack). */
+export function gummyMiningRate(state: GameState): number {
+  return (
+    gummyWormCount(state) * ROCK_CANDY_PER_GUMMY_PER_SEC +
+    gummyFusedCount(state) * ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC
+  )
+}
+
+/** Whether a plain worm gummy can be grown now (vat open and both inputs affordable). */
 export function canGrowGummy(state: GameState): boolean {
   return (
     gummyVatOpen(state) &&
     state.candies.current >= GUMMY_CANDY_COST &&
     state.licorice.current >= GUMMY_LICORICE_COST
+  )
+}
+
+/** Whether a sour-fused worm gummy can be grown now (fusion learned + all three inputs affordable). */
+export function canGrowFused(state: GameState): boolean {
+  return (
+    fusionUnlocked(state) &&
+    state.candies.current >= GUMMY_FUSED_CANDY_COST &&
+    state.licorice.current >= GUMMY_FUSED_LICORICE_COST &&
+    state.sour.current >= GUMMY_FUSED_SOUR_COST
   )
 }
 
@@ -64,4 +94,29 @@ export function growGummy(state: GameState): GrowResult {
 
   const paid: GameState = { ...state, candies, licorice }
   return { ok: true, state: setNumber(paid, GUMMY_WORM_COUNT_KEY, gummyWormCount(state) + 1) }
+}
+
+export interface GrowFusedResult {
+  readonly ok: boolean
+  readonly state: GameState
+  readonly reason?: 'locked' | 'unaffordable'
+}
+
+/**
+ * Grow one SOUR-FUSED worm gummy: the same mold worked through TWO flavors (licorice + sour), spending
+ * candies + a licorice essence + a sour essence and incrementing the fused count. Fails (SAME reference)
+ * until fusion is learned, or when any input is short. Immutable.
+ */
+export function growFusedGummy(state: GameState): GrowFusedResult {
+  if (!fusionUnlocked(state)) return { ok: false, state, reason: 'locked' }
+
+  const candies = spendResource(state.candies, GUMMY_FUSED_CANDY_COST)
+  if (!candies) return { ok: false, state, reason: 'unaffordable' }
+  const licorice = spendResource(state.licorice, GUMMY_FUSED_LICORICE_COST)
+  if (!licorice) return { ok: false, state, reason: 'unaffordable' }
+  const sour = spendResource(state.sour, GUMMY_FUSED_SOUR_COST)
+  if (!sour) return { ok: false, state, reason: 'unaffordable' }
+
+  const paid: GameState = { ...state, candies, licorice, sour }
+  return { ok: true, state: setNumber(paid, GUMMY_FUSED_COUNT_KEY, gummyFusedCount(state) + 1) }
 }

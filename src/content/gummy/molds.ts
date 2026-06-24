@@ -7,11 +7,19 @@
 
 /** numbers-namespace key for the grown worm-gummy count. */
 export const GUMMY_WORM_COUNT_KEY = 'gummyWormCount'
+/** numbers-namespace key for the grown SOUR-FUSED worm-gummy count (Act 2 — flavor fusion, §260). */
+export const GUMMY_FUSED_COUNT_KEY = 'gummyFusedCount'
 
 /** Cost to grow one gummy (DESIGN §256: 50 candies + 1 flavor essence; the licorice resource is the
  * flavor input in v1). §22-open tuning knobs. */
 export const GUMMY_CANDY_COST = 50
 export const GUMMY_LICORICE_COST = 1
+
+/** Cost to grow one SOUR-FUSED worm gummy (Act 2 — the gummy folk's flavor fusion, §260): the same
+ * mold worked through TWO flavors (licorice + sour). The sour (= attack, §259) makes it chew harder. */
+export const GUMMY_FUSED_CANDY_COST = 50
+export const GUMMY_FUSED_LICORICE_COST = 1
+export const GUMMY_FUSED_SOUR_COST = 1
 
 /**
  * Rock candy each worm gummy burrows up per second — the passive mining trickle. A generous, tunable
@@ -20,6 +28,9 @@ export const GUMMY_LICORICE_COST = 1
  * pick economy, and it keeps paying after the moon is mined clean.
  */
 export const ROCK_CANDY_PER_GUMMY_PER_SEC = 1 / 30
+/** A sour-fused burrower mines ~2.5× a plain one — sour is the attack flavor, so it chews harder. The
+ * payoff for learning fusion + trading for sour essence. §22-open tuning. */
+export const ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC = 1 / 12
 
 /** A mold in the catalog — shape (= role). `available` is true only for molds usable in v1. */
 export interface MoldDef {
@@ -52,7 +63,7 @@ export const MOLDS: readonly MoldDef[] = [
  * later acts (sour from the sour planet, etc.). */
 export const FLAVORS: readonly FlavorDef[] = [
   { id: 'licorice', name: 'licorice', stat: 'tank', available: true },
-  { id: 'sour', name: 'sour', stat: 'attack', available: false },
+  { id: 'sour', name: 'sour', stat: 'attack', available: true }, // Act 2: traded from the gummy folk
   { id: 'mint', name: 'mint', stat: 'regen', available: false },
   { id: 'cherry', name: 'cherry', stat: 'HP', available: false },
   { id: 'cola', name: 'cola', stat: 'speed', available: false },
