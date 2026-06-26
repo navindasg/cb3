@@ -40,6 +40,7 @@ const RESOURCE_LABEL: Record<ResourceKey, string> = {
   popRocks: 'pop rocks',
   sour: 'sour essence',
   peppermint: 'peppermint',
+  mint: 'mint essence',
 }
 
 /** A tiny ASCII galleon that gains canvas (sails) and plating (hull) as she is fitted out. Pure ASCII. */

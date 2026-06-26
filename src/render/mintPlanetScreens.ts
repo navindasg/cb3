@@ -12,15 +12,20 @@ import {
   peppermintRate,
   canBuildCondenser,
   buildCondenser,
+  canHarvestMint,
+  harvestMint,
   type LabyrinthState,
 } from '@/engine/content/mintPlanet'
 import { act2GateCleared } from '@/engine/content/actGate'
 import { hullAtGate } from '@/engine/content/galleonUpgrade'
+import { gummyPeppermintRate } from '@/engine/content/gummyVat'
 import {
   LABYRINTH_ROOMS,
   CONDENSER_ROCK_CANDY_COST,
   CONDENSER_CANDY_COST,
   PEPPERMINT_GATE_AMOUNT,
+  MINT_HARVEST_CANDY_COST,
+  MINT_HARVEST_BATCH,
   type LabyrinthRoom,
 } from '@/content/planet/mintPlanet'
 
@@ -163,8 +168,11 @@ export function createMintPlanetScreens(ctx: MintPlanetContext): MintPlanetScree
         'blurb',
         'mint-fields',
       )
+      const burrowerRate = gummyPeppermintRate(s)
       paragraph(
-        `condensers: ${condenserCount(s)} — sublimating ${peppermintRate(s).toFixed(2)} peppermint/sec    (peppermint on hand: ${formatCount(s.peppermint.current)})`,
+        `condensers: ${condenserCount(s)} — sublimating ${peppermintRate(s).toFixed(2)} peppermint/sec` +
+          `${burrowerRate > 0 ? ` (+ ${burrowerRate.toFixed(2)}/sec from your mint burrowers, off on the moon)` : ''}` +
+          `    (peppermint on hand: ${formatCount(s.peppermint.current)})`,
         'blurb',
         'mint-mining',
       )
@@ -181,7 +189,40 @@ export function createMintPlanetScreens(ctx: MintPlanetContext): MintPlanetScree
       }
       screen.appendChild(build)
 
+      renderMintHarvest(s)
       renderActGate(s)
+    }
+
+    // The wyrm's slow exhale — a second use for the frozen dragon (mint essence, the gummy-burrower flavor).
+    function renderMintHarvest(s: GameState): void {
+      paragraph(
+        'Close by the wyrm the air is colder, and faintly sweet. It still breathes — barely, a slow exhale of mint frost. Hold a vial to it and the mint crystallizes — the regen flavor, the gummy folk would call it. Folded into a worm gummy back at the vat, it makes a burrower that mines this very peppermint.',
+        'blurb',
+        'mint-harvest-blurb',
+      )
+      paragraph(`mint essence on hand: ${formatCount(s.mint.current)}`, 'blurb', 'mint-harvest-hud')
+
+      const harvest = ctx.button(
+        `hold a vial to the wyrm's breath (${formatCount(MINT_HARVEST_CANDY_COST)} candies) — ${MINT_HARVEST_BATCH} mint essence`,
+        'mint-harvest',
+        () => doHarvest(),
+      )
+      if (!canHarvestMint(s)) {
+        harvest.disabled = true
+        harvest.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(harvest)
+    }
+
+    function doHarvest(): void {
+      const result = harvestMint(session.getState())
+      if (!result.ok) {
+        ctx.notify(`You need ${formatCount(MINT_HARVEST_CANDY_COST)} candies to crystallize mint from the wyrm's breath.`)
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText(`Mint frost rimes the vial — ${MINT_HARVEST_BATCH} mint essence. The wyrm exhales again, slow and cold, and does not wake.`)
+      render()
     }
 
     function renderActGate(s: GameState): void {

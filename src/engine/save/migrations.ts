@@ -43,6 +43,8 @@ export const MIGRATIONS: Readonly<Record<number, StateMigration>> = {
   4: (s) => ({ sour: createResource(0), ...s }),
   // v5 → v6: Act 2 adds peppermint (mined on the mint planet — the §184 act gate). Same idiom.
   5: (s) => ({ peppermint: createResource(0), ...s }),
+  // v6 → v7: Act 2 adds mint (the frost wyrm's flavor essence — a fusion input). Same idiom.
+  6: (s) => ({ mint: createResource(0), ...s }),
 }
 
 export interface MigrateOptions {

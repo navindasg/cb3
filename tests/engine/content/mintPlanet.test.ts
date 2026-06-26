@@ -9,6 +9,8 @@ import {
   peppermintRate,
   canBuildCondenser,
   buildCondenser,
+  canHarvestMint,
+  harvestMint,
 } from '@/engine/content/mintPlanet'
 import { act2GateCleared } from '@/engine/content/actGate'
 import {
@@ -20,6 +22,8 @@ import {
   CONDENSER_CANDY_COST,
   PEPPERMINT_PER_CONDENSER_PER_SEC,
   PEPPERMINT_GATE_AMOUNT,
+  MINT_HARVEST_CANDY_COST,
+  MINT_HARVEST_BATCH,
 } from '@/content/planet/mintPlanet'
 import { FROST_WYRM_FREED_FLAG } from '@/content/flags'
 import { GALLEON_HULL_KEY } from '@/content/ship/galleonUpgrade'
@@ -150,6 +154,39 @@ describe('the peppermint condensers — the act-gate grind', () => {
     const producer = PEPPERMINT_PRODUCERS.find((p) => p.id === 'peppermintCondensers')!
     expect(producer.resource).toBe('peppermint')
     expect(producer.getRate(withWyrmFreed({ condensers: 8 }))).toBeCloseTo(8 * PEPPERMINT_PER_CONDENSER_PER_SEC)
+  })
+})
+
+describe('harvesting mint essence from the wyrm\'s breath', () => {
+  it('cannot harvest before the wyrm is freed (same reference)', () => {
+    const before = { ...createDefaultSave(), candies: createResource(100_000) }
+    const result = harvestMint(before)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('locked')
+    expect(result.state).toBe(before)
+  })
+
+  it('crystallizes a batch of mint, spending candies (a pure faucet — no peppermint touched)', () => {
+    const before = withWyrmFreed({ candies: 100_000 })
+    const result = harvestMint(before)
+    expect(result.ok).toBe(true)
+    expect(result.state.mint.current).toBe(MINT_HARVEST_BATCH)
+    expect(result.state.candies.current).toBe(100_000 - MINT_HARVEST_CANDY_COST)
+    expect(result.state.peppermint.current).toBe(before.peppermint.current) // never spends the gate resource
+  })
+
+  it('refuses when candies are short (same reference)', () => {
+    const before = withWyrmFreed({ candies: MINT_HARVEST_CANDY_COST - 1 })
+    const result = harvestMint(before)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('unaffordable')
+    expect(result.state).toBe(before)
+  })
+
+  it('canHarvestMint mirrors the wyrm gate + the candy cost', () => {
+    expect(canHarvestMint(withWyrmFreed({ candies: 100_000 }))).toBe(true)
+    expect(canHarvestMint(createDefaultSave())).toBe(false) // wyrm not freed
+    expect(canHarvestMint(withWyrmFreed({ candies: 0 }))).toBe(false)
   })
 })
 

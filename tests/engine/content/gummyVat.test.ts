@@ -9,19 +9,29 @@ import {
   gummyFusedCount,
   canGrowFused,
   growFusedGummy,
+  gummyMintFusedCount,
+  gummyPeppermintRate,
+  canGrowMintFused,
+  growMintFusedGummy,
 } from '@/engine/content/gummyVat'
 import {
   GUMMY_WORM_COUNT_KEY,
   GUMMY_FUSED_COUNT_KEY,
+  GUMMY_MINT_FUSED_COUNT_KEY,
   GUMMY_CANDY_COST,
   GUMMY_LICORICE_COST,
   GUMMY_FUSED_CANDY_COST,
   GUMMY_FUSED_LICORICE_COST,
   GUMMY_FUSED_SOUR_COST,
+  GUMMY_MINT_FUSED_CANDY_COST,
+  GUMMY_MINT_FUSED_LICORICE_COST,
+  GUMMY_MINT_FUSED_MINT_COST,
   ROCK_CANDY_PER_GUMMY_PER_SEC,
   ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC,
+  PEPPERMINT_PER_MINT_FUSED_GUMMY_PER_SEC,
 } from '@/content/gummy/molds'
 import { ROCK_CANDY_PRODUCERS } from '@/content/producers/rockCandy'
+import { PEPPERMINT_PRODUCERS } from '@/content/producers/peppermint'
 import { WORM_MOLD_OWNED_FLAG, FLAVOR_FUSION_FLAG } from '@/content/flags'
 import { createResource } from '@/engine/types/Resource'
 import type { GameState } from '@/engine/types/GameState'
@@ -185,5 +195,62 @@ describe('the gummy vat — flavor fusion (the sour planet payoff)', () => {
     const fused = ROCK_CANDY_PRODUCERS.find((p) => p.id === 'gummyFusedBurrowers')!
     expect(fused.resource).toBe('rockCandy')
     expect(fused.getRate(withFusion({ fused: 5 }))).toBeCloseTo(5 * ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC)
+  })
+})
+
+/** A fusion-learned vat state with mint essence + mint-fused-count overrides. */
+const withMint = (over: { candies?: number; licorice?: number; mint?: number; mintFused?: number } = {}): GameState => {
+  const s = withFusion({ candies: over.candies, licorice: over.licorice })
+  return {
+    ...s,
+    numbers: { ...s.numbers, [GUMMY_MINT_FUSED_COUNT_KEY]: over.mintFused ?? 0 },
+    mint: createResource(over.mint ?? 10),
+  }
+}
+
+describe('the gummy vat — the mint burrower (the frost wyrm payoff, mines peppermint)', () => {
+  it('grows a mint-fused burrower, spending candies + licorice + a mint essence', () => {
+    const before = withMint({ candies: 1000, licorice: 50, mint: 10 })
+    const result = growMintFusedGummy(before)
+    expect(result.ok).toBe(true)
+    expect(gummyMintFusedCount(result.state)).toBe(1)
+    expect(result.state.candies.current).toBe(1000 - GUMMY_MINT_FUSED_CANDY_COST)
+    expect(result.state.licorice.current).toBe(50 - GUMMY_MINT_FUSED_LICORICE_COST)
+    expect(result.state.mint.current).toBe(10 - GUMMY_MINT_FUSED_MINT_COST)
+  })
+
+  it('refuses before fusion is learned (same reference)', () => {
+    const before = { ...withVat({ candies: 1000, licorice: 50 }), mint: createResource(10) }
+    const result = growMintFusedGummy(before)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('locked')
+    expect(result.state).toBe(before)
+  })
+
+  it('refuses without mint essence (same reference, nothing spent)', () => {
+    const before = withMint({ candies: 1000, licorice: 50, mint: 0 })
+    const result = growMintFusedGummy(before)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('unaffordable')
+    expect(result.state).toBe(before)
+    expect(before.licorice.current).toBe(50) // licorice untouched on a failed grow
+  })
+
+  it('canGrowMintFused mirrors the fusion gate + all three input costs', () => {
+    expect(canGrowMintFused(withMint())).toBe(true)
+    expect(canGrowMintFused({ ...withVat(), mint: createResource(10) } as GameState)).toBe(false) // no fusion
+    expect(canGrowMintFused(withMint({ mint: 0 }))).toBe(false)
+    expect(canGrowMintFused(withMint({ candies: 0 }))).toBe(false)
+  })
+
+  it('mint burrowers mine PEPPERMINT (the §184 gate resource), scaling with the count', () => {
+    expect(gummyPeppermintRate(withMint({ mintFused: 0 }))).toBe(0)
+    expect(gummyPeppermintRate(withMint({ mintFused: 8 }))).toBeCloseTo(8 * PEPPERMINT_PER_MINT_FUSED_GUMMY_PER_SEC)
+  })
+
+  it('the mint-burrower producer feeds PEPPERMINT (a pure faucet toward the gate)', () => {
+    const prod = PEPPERMINT_PRODUCERS.find((p) => p.id === 'gummyMintBurrowers')!
+    expect(prod.resource).toBe('peppermint')
+    expect(prod.getRate(withMint({ mintFused: 5 }))).toBeCloseTo(5 * PEPPERMINT_PER_MINT_FUSED_GUMMY_PER_SEC)
   })
 })

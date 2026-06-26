@@ -9,6 +9,9 @@
 export const GUMMY_WORM_COUNT_KEY = 'gummyWormCount'
 /** numbers-namespace key for the grown SOUR-FUSED worm-gummy count (Act 2 — flavor fusion, §260). */
 export const GUMMY_FUSED_COUNT_KEY = 'gummyFusedCount'
+/** numbers-namespace key for the grown MINT-FUSED worm-gummy count (Act 2 — the frost wyrm's mint, §259).
+ * These burrowers mine PEPPERMINT, not rock candy — the gummy army farms the very §184 act-gate resource. */
+export const GUMMY_MINT_FUSED_COUNT_KEY = 'gummyMintFusedCount'
 
 /** Cost to grow one gummy (DESIGN §256: 50 candies + 1 flavor essence; the licorice resource is the
  * flavor input in v1). §22-open tuning knobs. */
@@ -21,6 +24,13 @@ export const GUMMY_FUSED_CANDY_COST = 50
 export const GUMMY_FUSED_LICORICE_COST = 1
 export const GUMMY_FUSED_SOUR_COST = 1
 
+/** Cost to grow one MINT-FUSED worm gummy (Act 2 — the frost wyrm's mint, §259): the worm mold worked
+ * through licorice + mint (= regen). It mines PEPPERMINT instead of rock candy — the elegant payoff is the
+ * gummy army quietly filling the §184 peppermint gate while you do everything else. */
+export const GUMMY_MINT_FUSED_CANDY_COST = 50
+export const GUMMY_MINT_FUSED_LICORICE_COST = 1
+export const GUMMY_MINT_FUSED_MINT_COST = 1
+
 /**
  * Rock candy each worm gummy burrows up per second — the passive mining trickle. A generous, tunable
  * placeholder (mirrors the paddock/licorice rates that read 10× the design target so the loop feels
@@ -31,6 +41,11 @@ export const ROCK_CANDY_PER_GUMMY_PER_SEC = 1 / 30
 /** A sour-fused burrower mines ~2.5× a plain one — sour is the attack flavor, so it chews harder. The
  * payoff for learning fusion + trading for sour essence. §22-open tuning. */
 export const ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC = 1 / 12
+
+/** PEPPERMINT each MINT-FUSED burrower sublimates per second (mint = regen, so it works the cold patiently).
+ * Modest next to a condenser (0.1/s): the burrowers are a passive SUPPLEMENT toward the 10k §184 gate, not
+ * a replacement for building condensers — but a standing gummy army meaningfully helps fill it. §22-open. */
+export const PEPPERMINT_PER_MINT_FUSED_GUMMY_PER_SEC = 1 / 20
 
 /** A mold in the catalog — shape (= role). `available` is true only for molds usable in v1. */
 export interface MoldDef {
@@ -64,7 +79,7 @@ export const MOLDS: readonly MoldDef[] = [
 export const FLAVORS: readonly FlavorDef[] = [
   { id: 'licorice', name: 'licorice', stat: 'tank', available: true },
   { id: 'sour', name: 'sour', stat: 'attack', available: true }, // Act 2: traded from the gummy folk
-  { id: 'mint', name: 'mint', stat: 'regen', available: false },
+  { id: 'mint', name: 'mint', stat: 'regen', available: true }, // Act 2: harvested from the frost wyrm's breath
   { id: 'cherry', name: 'cherry', stat: 'HP', available: false },
   { id: 'cola', name: 'cola', stat: 'speed', available: false },
   { id: 'grape', name: 'grape', stat: 'magic', available: false },

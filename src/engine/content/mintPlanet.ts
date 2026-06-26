@@ -1,5 +1,5 @@
 import type { GameState } from '@/engine/types/GameState'
-import { spendResource } from '@/engine/types/Resource'
+import { spendResource, addResource } from '@/engine/types/Resource'
 import { setNumber, setFlag } from '@/engine/state/reducers'
 import {
   LABYRINTH_ROOMS,
@@ -9,6 +9,8 @@ import {
   CONDENSER_ROCK_CANDY_COST,
   CONDENSER_CANDY_COST,
   PEPPERMINT_PER_CONDENSER_PER_SEC,
+  MINT_HARVEST_CANDY_COST,
+  MINT_HARVEST_BATCH,
   type LabyrinthRoom,
 } from '@/content/planet/mintPlanet'
 
@@ -127,4 +129,32 @@ export function buildCondenser(state: GameState): BuildResult {
 
   const paid: GameState = { ...state, rockCandy, candies }
   return { ok: true, state: setNumber(paid, PEPPERMINT_CONDENSER_KEY, condenserCount(state) + 1) }
+}
+
+// --- harvesting mint essence from the freed wyrm's breath (post-wyrm; the gummy-burrower fusion input) ---
+
+/** Whether you can harvest a batch of mint essence right now — the wyrm freed and candies affordable. */
+export function canHarvestMint(state: GameState): boolean {
+  return frostWyrmFreed(state) && state.candies.current >= MINT_HARVEST_CANDY_COST
+}
+
+export interface HarvestResult {
+  readonly ok: boolean
+  readonly state: GameState
+  readonly reason?: 'locked' | 'unaffordable'
+}
+
+/**
+ * Crystallize a batch of MINT essence from the sleeping frost wyrm's slow exhale, spending candies (the
+ * effort, mirroring the gummy folk's sour trade). Fails (SAME reference) until the wyrm is freed, or when
+ * candies are short (spendResource returns null rather than overdrafting). Immutable. The essence feeds the
+ * gummy vat's mint-fused burrowers — the regen flavor (§259).
+ */
+export function harvestMint(state: GameState): HarvestResult {
+  if (!frostWyrmFreed(state)) return { ok: false, state, reason: 'locked' }
+
+  const candies = spendResource(state.candies, MINT_HARVEST_CANDY_COST)
+  if (!candies) return { ok: false, state, reason: 'unaffordable' }
+
+  return { ok: true, state: { ...state, candies, mint: addResource(state.mint, MINT_HARVEST_BATCH) } }
 }

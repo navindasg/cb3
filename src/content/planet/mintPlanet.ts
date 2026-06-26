@@ -99,3 +99,12 @@ export const PEPPERMINT_PER_CONDENSER_PER_SEC = 0.1
 
 /** The §184 Act-2 gate: peppermint to bank alongside a tier-3 (jawbreaker-plated) hull. */
 export const PEPPERMINT_GATE_AMOUNT = 10_000
+
+// --- harvesting mint essence (post-wyrm; the mint-burrower fusion input, §259) -------------------------
+
+/** The freed wyrm's breath: this many candies crystallizes this much MINT essence. Mirrors the gummy
+ * folk's sour trade (a candy sink that feeds fusion). Candies are plentiful by now, so this is a sink,
+ * not a wall — the point is the gummy army it grows. Deliberately NOT priced in peppermint, so the
+ * mint-burrower loop is a pure peppermint FAUCET toward the §184 gate, never a drain on it. §22-open. */
+export const MINT_HARVEST_CANDY_COST = 2_000
+export const MINT_HARVEST_BATCH = 5

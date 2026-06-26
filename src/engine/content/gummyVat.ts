@@ -10,8 +10,13 @@ import {
   GUMMY_FUSED_CANDY_COST,
   GUMMY_FUSED_LICORICE_COST,
   GUMMY_FUSED_SOUR_COST,
+  GUMMY_MINT_FUSED_COUNT_KEY,
+  GUMMY_MINT_FUSED_CANDY_COST,
+  GUMMY_MINT_FUSED_LICORICE_COST,
+  GUMMY_MINT_FUSED_MINT_COST,
   ROCK_CANDY_PER_GUMMY_PER_SEC,
   ROCK_CANDY_PER_FUSED_GUMMY_PER_SEC,
+  PEPPERMINT_PER_MINT_FUSED_GUMMY_PER_SEC,
 } from '@/content/gummy/molds'
 
 // The gummy vat (Act 1 — the gummy army v1, DESIGN §12). Pure & immutable, mirroring engine/shop/
@@ -33,6 +38,11 @@ export function gummyWormCount(state: GameState): number {
 /** The grown SOUR-FUSED worm-gummy count (Act 2 — flavor fusion). */
 export function gummyFusedCount(state: GameState): number {
   return Math.max(0, Math.floor(state.numbers[GUMMY_FUSED_COUNT_KEY] ?? 0))
+}
+
+/** The grown MINT-FUSED worm-gummy count (Act 2 — the frost wyrm's mint). These mine PEPPERMINT. */
+export function gummyMintFusedCount(state: GameState): number {
+  return Math.max(0, Math.floor(state.numbers[GUMMY_MINT_FUSED_COUNT_KEY] ?? 0))
 }
 
 /** Whether the vat is available — you hold the worm mold (the Quest-4 drop) to press gummy into. */
@@ -70,6 +80,23 @@ export function canGrowFused(state: GameState): boolean {
     state.candies.current >= GUMMY_FUSED_CANDY_COST &&
     state.licorice.current >= GUMMY_FUSED_LICORICE_COST &&
     state.sour.current >= GUMMY_FUSED_SOUR_COST
+  )
+}
+
+/** Peppermint the mint-fused burrowers mine per second (the producer reads the same product) — the gummy
+ * army's contribution to the §184 gate. */
+export function gummyPeppermintRate(state: GameState): number {
+  return gummyMintFusedCount(state) * PEPPERMINT_PER_MINT_FUSED_GUMMY_PER_SEC
+}
+
+/** Whether a mint-fused worm gummy can be grown now (fusion learned + all three inputs affordable). The
+ * mint essence is only obtainable on the mint planet post-wyrm, so holding any implies you have been. */
+export function canGrowMintFused(state: GameState): boolean {
+  return (
+    fusionUnlocked(state) &&
+    state.candies.current >= GUMMY_MINT_FUSED_CANDY_COST &&
+    state.licorice.current >= GUMMY_MINT_FUSED_LICORICE_COST &&
+    state.mint.current >= GUMMY_MINT_FUSED_MINT_COST
   )
 }
 
@@ -119,4 +146,30 @@ export function growFusedGummy(state: GameState): GrowFusedResult {
 
   const paid: GameState = { ...state, candies, licorice, sour }
   return { ok: true, state: setNumber(paid, GUMMY_FUSED_COUNT_KEY, gummyFusedCount(state) + 1) }
+}
+
+export interface GrowMintFusedResult {
+  readonly ok: boolean
+  readonly state: GameState
+  readonly reason?: 'locked' | 'unaffordable'
+}
+
+/**
+ * Grow one MINT-FUSED worm gummy: the worm mold worked through licorice + mint, spending candies + a
+ * licorice essence + a mint essence and incrementing the mint-fused count. These burrowers mine PEPPERMINT
+ * (the §184 gate resource), not rock candy. Fails (SAME reference) until fusion is learned, or when any
+ * input is short. Immutable.
+ */
+export function growMintFusedGummy(state: GameState): GrowMintFusedResult {
+  if (!fusionUnlocked(state)) return { ok: false, state, reason: 'locked' }
+
+  const candies = spendResource(state.candies, GUMMY_MINT_FUSED_CANDY_COST)
+  if (!candies) return { ok: false, state, reason: 'unaffordable' }
+  const licorice = spendResource(state.licorice, GUMMY_MINT_FUSED_LICORICE_COST)
+  if (!licorice) return { ok: false, state, reason: 'unaffordable' }
+  const mint = spendResource(state.mint, GUMMY_MINT_FUSED_MINT_COST)
+  if (!mint) return { ok: false, state, reason: 'unaffordable' }
+
+  const paid: GameState = { ...state, candies, licorice, mint }
+  return { ok: true, state: setNumber(paid, GUMMY_MINT_FUSED_COUNT_KEY, gummyMintFusedCount(state) + 1) }
 }

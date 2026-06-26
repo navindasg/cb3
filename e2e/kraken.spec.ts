@@ -53,9 +53,10 @@ test('the bow intercepts every arm: grind the kraken down, take the crown', asyn
   await expect(page.getByTestId('kraken-blurb')).toBeVisible()
 
   // The bow reaches everything, so every strike intercepts the telegraphed arm — just keep striking.
-  for (let i = 0; i < 16; i++) {
+  // Clearing all 5 arms takes ~15 strikes; loop with ample headroom (a missed click under load is fine).
+  for (let i = 0; i < 40; i++) {
     if (await page.getByTestId('kraken-won').isVisible().catch(() => false)) break
-    await page.getByTestId('kraken-strike').click()
+    await page.getByTestId('kraken-strike').click().catch(() => {})
   }
   await expect(page.getByTestId('kraken-won')).toBeVisible()
 
@@ -82,9 +83,9 @@ test('the short-reach mace cannot intercept the far arms: naive all-strike loses
 
   // Mash strike (no bracing). The mace cannot reach the winding far arms, so it eats every blow and is
   // driven off the platform — the fight reads the equipped weapon, and this play loses.
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 40; i++) {
     if (await page.getByTestId('kraken-lost').isVisible().catch(() => false)) break
-    await page.getByTestId('kraken-strike').click()
+    await page.getByTestId('kraken-strike').click().catch(() => {})
   }
   await expect(page.getByTestId('kraken-lost')).toBeVisible()
   expect((await getState(page)).flags['krakenDefeated']).toBeFalsy() // no win, no loot

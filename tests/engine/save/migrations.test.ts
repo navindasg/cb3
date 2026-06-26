@@ -108,12 +108,25 @@ describe('the real migration ladder (MIGRATIONS)', () => {
     expect(out.state.peppermint).toEqual(carried)
   })
 
-  it('climbs a v1 save through every rung (cottonCandy, licorice, popRocks, sour AND peppermint)', () => {
+  it('v6 → v7 seeds a zeroed mint resource (Act 2 — the frost wyrm)', () => {
+    const out = migrateEnvelope(base(6, { candies: { current: 5 } }))
+    expect(out.v).toBe(CURRENT_SCHEMA_VERSION)
+    expect(out.state.mint).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
+  })
+
+  it('preserves a mint field a save already carries', () => {
+    const carried = { current: 7, lifetimeAccumulated: 7, historicalMax: 7 }
+    const out = migrateEnvelope(base(6, { mint: carried }))
+    expect(out.state.mint).toEqual(carried)
+  })
+
+  it('climbs a v1 save through every rung (cottonCandy, licorice, popRocks, sour, peppermint AND mint)', () => {
     const out = migrateEnvelope(base(1, { candies: { current: 5 } }))
     expect(out.state.cottonCandy).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
     expect(out.state.licorice).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
     expect(out.state.popRocks).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
     expect(out.state.sour).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
     expect(out.state.peppermint).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
+    expect(out.state.mint).toEqual({ current: 0, lifetimeAccumulated: 0, historicalMax: 0 })
   })
 })

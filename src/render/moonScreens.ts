@@ -40,6 +40,10 @@ import {
   gummyFusedCount,
   canGrowFused,
   growFusedGummy,
+  gummyMintFusedCount,
+  gummyPeppermintRate,
+  canGrowMintFused,
+  growMintFusedGummy,
 } from '@/engine/content/gummyVat'
 import { skyPortOpen } from '@/engine/content/galleonCommission'
 import {
@@ -58,6 +62,9 @@ import {
   GUMMY_FUSED_CANDY_COST,
   GUMMY_FUSED_LICORICE_COST,
   GUMMY_FUSED_SOUR_COST,
+  GUMMY_MINT_FUSED_CANDY_COST,
+  GUMMY_MINT_FUSED_LICORICE_COST,
+  GUMMY_MINT_FUSED_MINT_COST,
 } from '@/content/gummy/molds'
 import { SHED_SHELL, BRASS_SEXTANT } from '@/content/items/items'
 import { MOON_WORM_DEFEATED_FLAG } from '@/content/flags'
@@ -213,9 +220,10 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
 
       const count = gummyWormCount(s)
       const fused = gummyFusedCount(s)
+      const mintFused = gummyMintFusedCount(s)
       const noun = count === 1 ? 'gummy' : 'gummies'
       paragraph(
-        `your burrowers: ${count} licorice worm ${noun}${fused > 0 ? ` + ${fused} sour-fused` : ''} — mining ${gummyMiningRate(s).toFixed(2)} rock candy/sec`,
+        `your burrowers: ${count} licorice worm ${noun}${fused > 0 ? ` + ${fused} sour-fused` : ''}${mintFused > 0 ? ` + ${mintFused} mint-fused` : ''} — mining ${gummyMiningRate(s).toFixed(2)} rock candy/sec${mintFused > 0 ? ` + ${gummyPeppermintRate(s).toFixed(2)} peppermint/sec` : ''}`,
         'blurb',
         'moon-vat-roster',
       )
@@ -244,6 +252,21 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
           fuse.classList.add('shop-unaffordable')
         }
         screen.appendChild(fuse)
+
+        // The mint burrower (the frost wyrm's mint, §259) — appears once you have found mint out on the
+        // mint planet. It mines PEPPERMINT: the gummy army quietly helps fill the §184 gate.
+        if (s.mint.current > 0 || mintFused > 0) {
+          const fuseMint = ctx.button(
+            `fuse a mint burrower (${GUMMY_MINT_FUSED_CANDY_COST} candies + ${GUMMY_MINT_FUSED_LICORICE_COST} licorice + ${GUMMY_MINT_FUSED_MINT_COST} mint) — mines peppermint`,
+            'moon-vat-fuse-mint',
+            () => doGrowMintFused(),
+          )
+          if (!canGrowMintFused(s)) {
+            fuseMint.disabled = true
+            fuseMint.classList.add('shop-unaffordable')
+          }
+          screen.appendChild(fuseMint)
+        }
       }
     }
 
@@ -274,6 +297,21 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       }
       session.dispatch(() => result.state)
       ctx.logText('Two flavors fold into one gummy — a sour-fused worm, all teeth. It burrows in hungry.')
+      render()
+    }
+
+    function doGrowMintFused(): void {
+      const result = growMintFusedGummy(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'You have not learned flavor fusion yet — the gummy folk teach it, out on the sour planet.'
+            : `You need ${GUMMY_MINT_FUSED_CANDY_COST} candies, ${GUMMY_MINT_FUSED_LICORICE_COST} licorice and ${GUMMY_MINT_FUSED_MINT_COST} mint to fuse one.`,
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('A mint-fused worm uncurls, cold to the touch, and tunnels off toward the peppermint. It will keep at it.')
       render()
     }
 
