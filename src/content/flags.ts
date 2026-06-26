@@ -136,3 +136,13 @@ export const FLAVOR_FUSION_FLAG = 'flavorFusionLearned'
  * value (ADR §3). The larval-star reveal is environmental, never stated (§285).
  */
 export const FROST_WYRM_FREED_FLAG = 'frostWyrmFreed'
+
+/**
+ * Set when the sour kraken is beaten deep in the sour planet's gas (Act 2 — an optional tail, DESIGN
+ * §10/§181). The telegraph-and-sever fight (engine/content/krakenFight) is TRANSIENT and never persists,
+ * so the kraken screen sets this flag when the last arm is severed; it reads it forever after to grant the
+ * kraken crown exactly once (farm-proof, like the squirrel's acorn) and to show the deep as calm. The
+ * engine never imports this content value (ADR §3) — the screen owns the persistence. Gated behind first
+ * contact (flavorFusionLearned), so you cannot stumble onto the boss before meeting the gummy folk.
+ */
+export const KRAKEN_DEFEATED_FLAG = 'krakenDefeated'

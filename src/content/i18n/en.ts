@@ -40,6 +40,8 @@ export const en: GameText = {
   'item.brassSextant.desc': 'A brass arc and a sighting-glass, its use taught to your hands by the lighthouse cyclops. You can read a course in the stars now — enough to point a ship, once you have one.',
   'item.acornOfKnowledge.name': 'the acorn of knowledge',
   'item.acornOfKnowledge.desc': 'A small, very ordinary acorn, pressed into your hand by a squirrel who clearly expected more of you. It is said to know where things are hidden. It has not said anything yet.',
+  'item.krakenCrown.name': 'the kraken crown',
+  'item.krakenCrown.desc': 'A circlet of cold coral and rock candy, prised from the brow of the thing in the gas. It is far too large and very slightly damp, and wearing it you feel obscurely that something in the deep now considers you family. They say it can be enchanted two ways. It declines, for now, to say which.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 

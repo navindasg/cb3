@@ -8,6 +8,7 @@ import {
   tradeSour,
 } from '@/engine/content/sourPlanet'
 import { SOUR_TRADE_CANDY_COST, SOUR_TRADE_BATCH } from '@/content/planet/sourPlanet'
+import { KRAKEN_DEFEATED_FLAG } from '@/content/flags'
 
 // The sour planet & the gummy folk (Act 2 — quest 9, DESIGN §181/§260). A wiring sub-module of the DOM
 // bootstrap, sibling to cometScreens/sourbeardScreens: it owns NO game logic. Learning flavor fusion and
@@ -28,6 +29,8 @@ export interface SourPlanetContext {
   showMap(): void
   /** Return to the sky port (the galleon's home berth). */
   showSkyPort(): void
+  /** Descend into the gas to face the sour kraken (its own screen; unlocked after first contact). */
+  showKraken(): void
 }
 
 export interface SourPlanetScreens {
@@ -100,6 +103,23 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
         trade.classList.add('shop-unaffordable')
       }
       screen.appendChild(trade)
+
+      // First contact made, you can now go looking for trouble: the thing in the gas (the sour kraken).
+      // Optional — it gates no progression; the elder plainly thinks you should not.
+      paragraph(
+        s.flags[KRAKEN_DEFEATED_FLAG] === true
+          ? 'The elder watches you finger the cold coral circlet and sighs. "You went DOWN there. And came back. And it let you." She shakes her head. "Family now, I suppose. Mind it does not visit."'
+          : 'The elder catches you eyeing the haze below and her bafflement, for once, sharpens. "There is something down in the deep gas. Old. Many-armed. We do not go down. You — you have that LOOK." She does not actually say no.',
+        'blurb',
+        'sour-kraken-signpost',
+      )
+      screen.appendChild(
+        ctx.button(
+          s.flags[KRAKEN_DEFEATED_FLAG] === true ? 'descend to the calm deep' : 'descend into the gas (the kraken)',
+          'sour-to-kraken',
+          () => ctx.showKraken(),
+        ),
+      )
     }
 
     function doLearn(): void {

@@ -194,6 +194,19 @@ export const ACORN_OF_KNOWLEDGE: ItemDef = {
   saveFlag: 'acornOfKnowledgeOwned',
 }
 
+/** The kraken crown (Act 2, the sour kraken's drop, DESIGN §10/§235) — a coral-and-rock-candy circlet
+ * prised from the beast's brow, an homage to CB2's octopus king. A hat-slot piece (auto-equips, over the
+ * fishbowl helm — you can re-don the helm at your inventory). Its TWO enchantments (§235) are deferred: no
+ * enchant system exists yet, so it is held as a trophy, like the acorn / sextant / storm-silk keepsakes. */
+export const KRAKEN_CROWN: ItemDef = {
+  id: 'krakenCrown',
+  displayKey: 'item.krakenCrown.name',
+  descKey: 'item.krakenCrown.desc',
+  ascii: 'mm',
+  saveFlag: 'krakenCrownOwned',
+  slot: 'hat',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -227,6 +240,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   SHED_SHELL,
   BRASS_SEXTANT,
   ACORN_OF_KNOWLEDGE,
+  KRAKEN_CROWN,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

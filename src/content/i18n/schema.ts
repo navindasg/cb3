@@ -40,6 +40,8 @@ export interface GameText {
   'item.brassSextant.desc': string
   'item.acornOfKnowledge.name': string
   'item.acornOfKnowledge.desc': string
+  'item.krakenCrown.name': string
+  'item.krakenCrown.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 

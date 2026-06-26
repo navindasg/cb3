@@ -49,6 +49,7 @@ import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
 import { createCometScreens, type CometScreens } from '@/render/cometScreens'
 import { createSourbeardScreens, type SourbeardScreens } from '@/render/sourbeardScreens'
 import { createSourPlanetScreens, type SourPlanetScreens } from '@/render/sourPlanetScreens'
+import { createKrakenScreens, type KrakenScreens } from '@/render/krakenScreens'
 import { createMintPlanetScreens, type MintPlanetScreens } from '@/render/mintPlanetScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
@@ -718,6 +719,22 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showSkyPort: skyport.showSkyPort,
+    // The kraken is its own screen, descended into from the sour planet (a thunk: created just below).
+    showKraken: () => kraken.showKraken(),
+  })
+
+  // The sour-kraken screen (Act 2 — an optional tail: the telegraph-and-sever fight that reads the equipped
+  // hand weapon, deep in the sour gas). Same thin-wiring contract; the deterministic turn fight lives in the
+  // tested engine (engine/content/krakenFight). Routed back up to the sour planet you descended from.
+  const kraken: KrakenScreens = createKrakenScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showSourPlanet: sourPlanet.showSourPlanet,
   })
 
   // The mint-planet screen (Act 2 — quest 10, the act capstone: the ice labyrinth, the frost wyrm, and
