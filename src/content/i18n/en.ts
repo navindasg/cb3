@@ -42,6 +42,10 @@ export const en: GameText = {
   'item.acornOfKnowledge.desc': 'A small, very ordinary acorn, pressed into your hand by a squirrel who clearly expected more of you. It is said to know where things are hidden. It has not said anything yet.',
   'item.krakenCrown.name': 'the kraken crown',
   'item.krakenCrown.desc': 'A circlet of cold coral and rock candy, prised from the brow of the thing in the gas. It is far too large and very slightly damp, and wearing it you feel obscurely that something in the deep now considers you family. They say it can be enchanted two ways. It declines, for now, to say which.',
+  'item.sourbeardTricorn.name': "Sourbeard's tricorn",
+  'item.sourbeardTricorn.desc': "Captain Sourbeard's hat, swept off his head in the moment you bested him and never reclaimed. It is enormous, faintly salt-stained, and smells of gunpowder and aniseed. A crew would follow this hat. You do not have a crew. Yet.",
+  'item.gummyParrot.name': 'the gummy parrot',
+  'item.gummyParrot.desc': "Sourbeard's parrot, a translucent gummy bird of dubious loyalty. It transferred its allegiance to you the instant the duel turned, which tells you everything about its allegiance. It says nothing useful. It mostly vibes.",
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 

@@ -42,6 +42,10 @@ export interface GameText {
   'item.acornOfKnowledge.desc': string
   'item.krakenCrown.name': string
   'item.krakenCrown.desc': string
+  'item.sourbeardTricorn.name': string
+  'item.sourbeardTricorn.desc': string
+  'item.gummyParrot.name': string
+  'item.gummyParrot.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 

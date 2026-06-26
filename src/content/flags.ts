@@ -146,3 +146,14 @@ export const FROST_WYRM_FREED_FLAG = 'frostWyrmFreed'
  * contact (flavorFusionLearned), so you cannot stumble onto the boss before meeting the gummy folk.
  */
 export const KRAKEN_DEFEATED_FLAG = 'krakenDefeated'
+
+/**
+ * Set when Captain Sourbeard is bested in the ON-FOOT boarding melee (Act 2 — quest 8's climax, DESIGN
+ * §127/§179) — the third broadside no longer just sends him running; he grapples across and you fight him
+ * man to man, and winning THAT retires the rival for good (the §17 three-defeats consequence). The boarding
+ * sim (engine/content/boardingDuel) is TRANSIENT and never persists, so the Sourbeard screen sets this flag
+ * when he goes down on deck; it reads it forever after to grant his tricorn + the gummy parrot exactly once
+ * (farm-proof) and to show the Black Lollipop gone. The engine never imports this content value (ADR §3).
+ * Gated behind the broadside arc (sourbeardDefeats >= 3), so the melee only opens at the third encounter.
+ */
+export const SOURBEARD_BOARDED_FLAG = 'sourbeardBoarded'

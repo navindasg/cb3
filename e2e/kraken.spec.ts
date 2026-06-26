@@ -72,7 +72,9 @@ test('the bow intercepts every arm: grind the kraken down, take the crown', asyn
   await expect(page.getByTestId('sour-screen')).toBeVisible()
   await page.getByTestId('sour-to-kraken').click()
   await expect(page.getByTestId('kraken-calm')).toBeVisible()
-  expect((await getState(page)).candies.current).toBe(before)
+  // No second hoard (candies only drift by the field's live trickle, never the 2M jump). Don't assert
+  // exact equality — candies tick every frame.
+  expect((await getState(page)).candies.current).toBeLessThan(before + 1_000)
 })
 
 test('the short-reach mace cannot intercept the far arms: naive all-strike loses', async ({ page }) => {

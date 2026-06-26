@@ -207,6 +207,29 @@ export const KRAKEN_CROWN: ItemDef = {
   slot: 'hat',
 }
 
+/** Captain Sourbeard's tricorn (Act 2, the boarding-melee drop, DESIGN §179/§235) — swept off his head
+ * when you finally best him on the deck. A hat-slot piece (auto-equips). Its +crew morale (§272) is
+ * deferred — no crew system yet — so it is worn as a trophy, like the kraken crown. */
+export const SOURBEARD_TRICORN: ItemDef = {
+  id: 'sourbeardTricorn',
+  displayKey: 'item.sourbeardTricorn.name',
+  descKey: 'item.sourbeardTricorn.desc',
+  ascii: 'mP',
+  saveFlag: 'sourbeardTricornOwned',
+  slot: 'hat',
+}
+
+/** The gummy parrot (Act 2, pickpocketed off Sourbeard as he is dragged away, DESIGN §179 / secret §18.10)
+ * — it defects to you without much ceremony. Not equippable; held as a keepsake (its +crew morale, §272,
+ * lands with the crew system; for now it just vibes). */
+export const GUMMY_PARROT: ItemDef = {
+  id: 'gummyParrot',
+  displayKey: 'item.gummyParrot.name',
+  descKey: 'item.gummyParrot.desc',
+  ascii: '~q',
+  saveFlag: 'gummyParrotOwned',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -241,6 +264,8 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   BRASS_SEXTANT,
   ACORN_OF_KNOWLEDGE,
   KRAKEN_CROWN,
+  SOURBEARD_TRICORN,
+  GUMMY_PARROT,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

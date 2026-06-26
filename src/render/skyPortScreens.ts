@@ -14,7 +14,7 @@ import {
 import { GALLEON_COMMISSION, type CommissionLine } from '@/content/ship/galleon'
 import { trackTier, nextTier, canUpgrade, upgradeGalleon } from '@/engine/content/galleonUpgrade'
 import { reefReached } from '@/engine/content/reefVoyage'
-import { sourbeardRetired } from '@/engine/content/shipDuel'
+import { sourbeardBoarded } from '@/engine/content/boardingDuel'
 import {
   GALLEON_TRACKS,
   GALLEON_HULL_KEY,
@@ -240,7 +240,7 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         // ...and black sails start shadowing you (Act 2 — Captain Sourbeard, quest 8).
         screen.appendChild(
           ctx.button(
-            sourbeardRetired(s) ? 'the dark where the Black Lollipop sank' : 'answer the Black Lollipop',
+            sourbeardBoarded(s) ? 'the dark where the Black Lollipop sank' : 'answer the Black Lollipop',
             'skyport-to-sourbeard',
             () => ctx.showSourbeard(),
           ),
