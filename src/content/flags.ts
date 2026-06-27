@@ -256,3 +256,25 @@ export const CARAMEL_CORE_REACHED_FLAG = 'caramelCoreReached'
  * engine/content/caramelCore sets the SAME literal in lock-step (the moonStrata idiom, ADR §3).
  */
 export const SOLAR_DRAGON_MET_FLAG = 'solarDragonMet'
+
+/**
+ * Set when the star-eater is driven off in the three-phase finale (Act 4 — quest 13, DESIGN §198/§286). The
+ * §198 climax that reuses all three fight engines: the broadside (maxed galleon tiers), the on-foot melee
+ * (the equipped weapon), and the core defense (defending the egg). Each phase is TRANSIENT (an abandoned or
+ * lost fight is forfeit, never persisted mid-fight — the shipDuel/boardingDuel idiom); this flag is the only
+ * thing that persists, set commit-once in the SAME dispatch as the phase-3 clear (the witnessStarDie idiom —
+ * a re-entry shows the aftermath / the choice, never a re-fightable loot source). engine/content/starEater
+ * sets the SAME literal in lock-step (the moonStrata idiom — the engine never imports this content value,
+ * ADR §3). It is the hook the choice screen (the ending, the next slice) opens on. No schema bump: a flag
+ * rides the flags z.record.
+ */
+export const STAR_EATER_DEFEATED_FLAG = 'starEaterDefeated'
+
+/**
+ * Set the first time the eater's candy counter is surfaced — the §3/§286 reveal made EXACTLY once, at the
+ * phase-2 -> phase-3 boundary of the finale ("You have 8,101 stars."). A one-shot PRESENTATION flag, never a
+ * gate: the orchestrator reads it to know the reveal has been shown and never shows it twice (the eater
+ * speaks in UI). engine/content/starEater sets the SAME literal in lock-step (the moonStrata idiom, ADR §3).
+ * No schema bump: a flag rides the flags z.record.
+ */
+export const EATER_COUNTER_SHOWN_FLAG = 'eaterCounterShown'

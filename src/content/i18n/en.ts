@@ -190,6 +190,9 @@ export const en: GameText = {
   'moon.pick.ironPick': 'iron pick',
   'moon.pick.rockCandyDrill': 'rock candy drill',
 
+  // the star-eater speaks in UI (§3/§286) — its candy counter, shown exactly once at the fight's heart.
+  'ui.eaterCounter': 'You have 8,101 stars.',
+
   // misc UI
   'ui.starCounter': 'stars in the sky',
   'ui.candyCounter': 'candies',

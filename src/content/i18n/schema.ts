@@ -189,6 +189,9 @@ export interface GameText {
   'moon.pick.ironPick': string
   'moon.pick.rockCandyDrill': string
 
+  // --- the star-eater (Act 4 — the finale; the eater speaks in UI, §3/§286 — made exactly once) ---
+  'ui.eaterCounter': string
+
   // --- misc UI flavor ---
   'ui.starCounter': string
   'ui.candyCounter': string

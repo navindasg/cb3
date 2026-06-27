@@ -41,6 +41,58 @@ import {
   approachCore,
 } from '@/engine/content/caramelCore'
 import {
+  starEaterAvailable,
+  starEaterDefeated,
+  createStarEater,
+  createBroadside,
+  createOnFoot,
+  createCore,
+  advancePhase,
+  forfeit,
+  shouldShowEaterCounter,
+  markEaterCounterShown,
+  winStarEater,
+  type StarEaterProgress,
+} from '@/engine/content/starEater'
+import {
+  resolveManeuver,
+  duelOutcome,
+  type DuelState,
+  type Maneuver,
+} from '@/engine/content/shipDuel'
+import { RANGE_NAMES } from '@/content/ship/shipDuel'
+import {
+  resolveExchange,
+  boardingOutcome,
+  cutFor,
+  type BoardingState,
+  type BoardingAction,
+} from '@/engine/content/boardingDuel'
+import {
+  resolveCoreTurn,
+  coreOutcome,
+  clawFor,
+  type CoreDefenseState,
+  type CoreAction,
+} from '@/engine/content/coreDefense'
+import {
+  STAR_EATER_HEADING,
+  STAR_EATER_INTRO_BLURB,
+  PHASE_BROADSIDE_BLURB,
+  PHASE_ONFOOT_BLURB,
+  PHASE_CORE_BLURB,
+  STAR_EATER_WON_BLURB,
+  STAR_EATER_LOST_BLURB,
+  STAR_EATER_RETRY_LABEL,
+  STAR_EATER_TO_CHOICE_LABEL,
+  STAR_EATER_ART,
+  CORE_EGG_ART,
+  EATER_COUNTER_KEY,
+  EATER_ONFOOT_HP,
+  CORE_EATER_HP,
+  EGG_HP,
+} from '@/content/sun/starEater'
+import {
   CORE_STAGES,
   CORE_ART,
   CORE_BLURB,
@@ -83,8 +135,12 @@ export interface FinaleContext {
   showMap(): void
   /** Return to the dyson scaffold (the descent port is reached from the scaffold). */
   showScaffold(): void
-  /** The star-eater's arrival (the next slice, 4.4); the caramel-core reveal routes here off the dragon. */
-  showStarEater(): void
+  /**
+   * The choice / ending screen (the next slice, 4.5). The star-eater win routes here. Until that screen
+   * exists the bootstrap thunk lands the player back at the scaffold — the win has already committed
+   * starEaterDefeated, so re-entry shows the aftermath, ready for 4.5 to wire the real choice in.
+   */
+  showChoice(): void
 }
 
 export interface FinaleScreens {
@@ -96,6 +152,14 @@ export interface FinaleScreens {
    * the star-eater's arrival.
    */
   showCaramelCore(): void
+  /**
+   * The star-eater finale (Quest 13) — the three-phase climax: the broadside (maxed galleon), on foot (the
+   * equipped weapon), and the core defense (the egg). One screen phase-routes the three sub-fights on the
+   * engine cursor (the sourbeardScreens idiom). The §286 candy-counter reveal flickers in exactly once at the
+   * phase-2 -> phase-3 boundary. Reached from the caramel-core reveal off the dragon; routes onward to the
+   * choice on a win.
+   */
+  showStarEater(): void
   /**
    * The finale flow's entry. This slice routes it straight to the descent port; later slices add the
    * star-eater fight and the choice screen behind it.
@@ -351,8 +415,8 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
         // It has more to say. A small word at a time.
         screen.appendChild(ctx.button('wait', 'core-listen', () => listenMore()))
       } else {
-        // It has said all it can. The sky has noticed you came down — onward to the star-eater (4.4).
-        screen.appendChild(ctx.button(LEAVE_CORE_LABEL, 'core-to-star-eater', () => ctx.showStarEater()))
+        // It has said all it can. The sky has noticed you came down — onward to the star-eater (Quest 13).
+        screen.appendChild(ctx.button(LEAVE_CORE_LABEL, 'core-to-star-eater', () => showStarEater()))
       }
     }
 
@@ -374,9 +438,307 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     render()
   }
 
+  /**
+   * The star-eater finale (Quest 13, §198/§286) — the three-phase climax. ONE screen phase-routes the three
+   * sub-fights on the engine cursor (the sourbeardScreens idiom — no new screen per phase): phase 1 reuses
+   * the broadside sim (maxed galleon tiers), phase 2 the boarding melee (the equipped weapon), phase 3 the
+   * new core-defense sim (the egg). The pure orchestrator (engine/content/starEater) builds each phase's
+   * fresh state, advances the cursor on a win, forfeits on a loss; the fight states themselves are TRANSIENT
+   * to this visit. The §286 candy-counter reveal flickers in EXACTLY once at the phase-2 -> phase-3 boundary
+   * (the eater speaks in UI). winStarEater commits the defeated flag once on the phase-3 clear; it routes on
+   * to the choice. Coverage-excluded, Playwright-verified — the same thin-wiring contract as the descent.
+   */
+  function showStarEater(): void {
+    // The phase cursor + the live sub-fight states are transient to this visit (the shipDuel/boardingDuel
+    // idiom — an abandoned or lost fight is forfeit and the whole thing restarts). committed latches the
+    // one-time win dispatch.
+    let progress: StarEaterProgress = createStarEater()
+    let duel: DuelState | null = null
+    let boarding: BoardingState | null = null
+    let core: CoreDefenseState | null = null
+    let committed = false
+
+    function reset(): void {
+      progress = createStarEater()
+      duel = null
+      boarding = null
+      core = null
+      committed = false
+    }
+
+    function render(): void {
+      ctx.clearScreen()
+      const s = session.getState()
+
+      heading(STAR_EATER_HEADING, 'star-eater-screen')
+
+      // Already driven off: the calm aftermath (the hook into the choice).
+      if (starEaterDefeated(s)) {
+        renderAftermath()
+        return
+      }
+      // Defensive: a stray route here before the dragon is met answers in voice, not a blank screen.
+      if (!starEaterAvailable(s)) {
+        paragraph(
+          'There is nothing here yet. The sky is still bright. Whatever is coming has not arrived.',
+          'blurb',
+          'star-eater-shut',
+        )
+        screen.appendChild(ctx.button('back to the core', 'star-eater-to-core', () => showCaramelCore(), 0))
+        return
+      }
+
+      if (progress.lost) {
+        renderLost()
+        return
+      }
+      if (progress.won) {
+        renderWon()
+        return
+      }
+
+      // Route to the live phase (lazily seeding its transient state on first entry).
+      if (progress.phase === 'broadside') renderBroadside()
+      else if (progress.phase === 'onFoot') renderOnFoot()
+      else renderCore()
+    }
+
+    function silhouette(): void {
+      const pre = doc.createElement('pre')
+      pre.className = 'arena glow-sun'
+      pre.setAttribute('data-testid', 'star-eater-art')
+      pre.textContent = STAR_EATER_ART
+      screen.appendChild(pre)
+    }
+
+    // --- phase 1: the broadside (the shipDuel sim, maxed galleon) ---
+    function renderBroadside(): void {
+      if (!duel) duel = createBroadside(session.getState())
+      const d = duel
+      const outcome = duelOutcome(d)
+      if (outcome === 'won') {
+        advance()
+        return
+      }
+      if (outcome === 'lost') {
+        progress = forfeit(progress)
+        render()
+        return
+      }
+
+      silhouette()
+      paragraph(PHASE_BROADSIDE_BLURB, 'blurb', 'phase-broadside-blurb')
+
+      const pre = doc.createElement('pre')
+      pre.className = 'arena'
+      pre.setAttribute('data-testid', 'broadside-gauges')
+      pre.setAttribute('data-range', String(d.range))
+      pre.setAttribute('data-your-hp', String(Math.max(0, Math.ceil(d.yourHp))))
+      pre.setAttribute('data-foe-hp', String(Math.max(0, Math.ceil(d.foeHp))))
+      pre.textContent = [
+        `range: ${RANGE_NAMES[d.range] ?? 'mid'}`,
+        `your hull  ${gauge(d.yourHp, d.yourMaxHp)} ${Math.max(0, Math.ceil(d.yourHp))}`,
+        `the eater  ${gauge(d.foeHp, d.foeMaxHp)} ${Math.max(0, Math.ceil(d.foeHp))}`,
+      ].join('\n')
+      screen.appendChild(pre)
+
+      screen.appendChild(ctx.button('press in (close the range)', 'broadside-press', () => maneuver('press')))
+      screen.appendChild(ctx.button('hold range (trade)', 'broadside-hold', () => maneuver('hold')))
+      screen.appendChild(ctx.button('veer off (slip the shot)', 'broadside-veer', () => maneuver('veer')))
+    }
+
+    function maneuver(m: Maneuver): void {
+      if (!duel) return
+      duel = resolveManeuver(duel, m)
+      render()
+    }
+
+    // --- phase 2: on foot, on the creature (the boarding melee, the equipped weapon) ---
+    function renderOnFoot(): void {
+      if (!boarding) boarding = createOnFoot(session.getState())
+      // The §286 reveal flickers in EXACTLY once at the phase-2 -> phase-3 boundary — surfaced when we
+      // ENTER the core phase below. Here we are still on foot.
+      const b = boarding
+      const outcome = boardingOutcome(b)
+      if (outcome === 'won') {
+        advance()
+        return
+      }
+      if (outcome === 'lost') {
+        progress = forfeit(progress)
+        render()
+        return
+      }
+
+      silhouette()
+      paragraph(PHASE_ONFOOT_BLURB, 'blurb', 'phase-onfoot-blurb')
+
+      const cut = cutFor(b.turn)
+      const pre = doc.createElement('pre')
+      pre.className = 'arena'
+      pre.setAttribute('data-testid', 'onfoot-gauges')
+      pre.setAttribute('data-tell', cut.tell)
+      pre.setAttribute('data-line', cut.line) // the true line — the e2e reads it; the player learns by dying
+      pre.setAttribute('data-your-hp', String(Math.max(0, Math.ceil(b.yourHp))))
+      pre.setAttribute('data-foe-hp', String(Math.max(0, Math.ceil(b.foeHp))))
+      pre.textContent = [
+        `you   ${gauge(b.yourHp, b.yourMaxHp)} ${Math.max(0, Math.ceil(b.yourHp))}`,
+        `eater ${gauge(b.foeHp, EATER_ONFOOT_HP)} ${Math.max(0, Math.ceil(b.foeHp))}`,
+        '',
+        cut.tell === 'high'
+          ? 'it rears HIGH -- a cut is coming from above (it may feint)'
+          : 'it drops LOW -- a cut is coming from below (it may feint)',
+      ].join('\n')
+      screen.appendChild(pre)
+
+      screen.appendChild(ctx.button('guard high', 'onfoot-guard-high', () => exchange('guard-high')))
+      screen.appendChild(ctx.button('guard low', 'onfoot-guard-low', () => exchange('guard-low')))
+      screen.appendChild(ctx.button('lunge', 'onfoot-lunge', () => exchange('lunge')))
+    }
+
+    function exchange(action: BoardingAction): void {
+      if (!boarding) return
+      boarding = resolveExchange(boarding, action)
+      render()
+    }
+
+    // --- phase 3: the core defense (the new coreDefense sim, the egg) ---
+    function renderCore(): void {
+      if (!core) core = createCore(session.getState())
+      const c = core
+      const outcome = coreOutcome(c)
+      if (outcome === 'won') {
+        advance()
+        return
+      }
+      if (outcome === 'lost') {
+        progress = forfeit(progress)
+        render()
+        return
+      }
+
+      // The egg with its glow.
+      const egg = doc.createElement('pre')
+      egg.className = 'arena glow-egg'
+      egg.setAttribute('data-testid', 'core-egg-art')
+      egg.textContent = CORE_EGG_ART
+      screen.appendChild(egg)
+      paragraph(PHASE_CORE_BLURB, 'blurb', 'phase-core-blurb')
+
+      const claw = clawFor(c.turn)
+      const pre = doc.createElement('pre')
+      pre.className = 'arena'
+      pre.setAttribute('data-testid', 'core-gauges')
+      pre.setAttribute('data-tell', claw.tell)
+      pre.setAttribute('data-line', claw.line)
+      pre.setAttribute('data-egg-hp', String(Math.max(0, Math.ceil(c.eggHp))))
+      pre.setAttribute('data-your-hp', String(Math.max(0, Math.ceil(c.yourHp))))
+      pre.setAttribute('data-foe-hp', String(Math.max(0, Math.ceil(c.eaterHp))))
+      pre.textContent = [
+        `the egg ${gauge(c.eggHp, EGG_HP)} ${Math.max(0, Math.ceil(c.eggHp))}`,
+        `you     ${gauge(c.yourHp, c.yourMaxHp)} ${Math.max(0, Math.ceil(c.yourHp))}`,
+        `eater   ${gauge(c.eaterHp, CORE_EATER_HP)} ${Math.max(0, Math.ceil(c.eaterHp))}`,
+        '',
+        claw.tell === 'high'
+          ? 'it rakes HIGH at the shell over your shoulder (it may feint)'
+          : 'it rakes LOW at the shell over your shoulder (it may feint)',
+      ].join('\n')
+      screen.appendChild(pre)
+
+      screen.appendChild(ctx.button('guard high', 'core-guard-high', () => coreTurn('guard-high')))
+      screen.appendChild(ctx.button('guard low', 'core-guard-low', () => coreTurn('guard-low')))
+      screen.appendChild(ctx.button('strike (let the claw through)', 'core-strike', () => coreTurn('strike')))
+    }
+
+    function coreTurn(action: CoreAction): void {
+      if (!core) return
+      core = resolveCoreTurn(core, action)
+      render()
+    }
+
+    // --- the cursor + the mid-fight reveal ---
+    function advance(): void {
+      const before = progress.phase
+      progress = advancePhase(progress)
+      // The §286 reveal: surfaced EXACTLY once at the phase-2 -> phase-3 boundary (we just entered core).
+      if (before === 'onFoot' && shouldShowEaterCounter(progress, session.getState())) {
+        renderCounterReveal()
+        return
+      }
+      render()
+    }
+
+    /**
+     * The mid-fight HUD flicker (§3/§286): the eater's candy counter, shown EXACTLY once. It eats stars the
+     * way you eat candies. The figure is content data; the line is the one i18n string; the one-shot latch is
+     * dispatched here so it never shows twice. A short interstitial, then onward into the core phase.
+     */
+    function renderCounterReveal(): void {
+      session.dispatch((st) => markEaterCounterShown(st))
+      ctx.clearScreen()
+      heading(STAR_EATER_HEADING, 'star-eater-screen')
+      silhouette()
+      const hud = doc.createElement('pre')
+      hud.className = 'arena glow-sun'
+      hud.setAttribute('data-testid', 'eater-counter')
+      // The eater's own UI, flickering into yours — its candy counter, exactly as the §286 beat reads it.
+      hud.textContent = ['', `    ${t(EATER_COUNTER_KEY)}`, ''].join('\n')
+      screen.appendChild(hud)
+      paragraph(
+        'For a moment its UI flickers into yours. It has a counter, the way you have a counter. It is not counting candies.',
+        'blurb',
+        'eater-counter-blurb',
+      )
+      ctx.logText('The star-eater has a candy counter. It says: ' + t(EATER_COUNTER_KEY))
+      screen.appendChild(ctx.button('hold the egg', 'eater-counter-continue', () => render()))
+    }
+
+    function renderWon(): void {
+      if (!committed) {
+        committed = true
+        session.dispatch((st) => winStarEater(st))
+        ctx.logText('The star-eater pulls back off the egg, and goes still, and waits. The light holds.')
+      }
+      silhouette()
+      paragraph(STAR_EATER_WON_BLURB, 'blurb', 'star-eater-won')
+      screen.appendChild(ctx.button(STAR_EATER_TO_CHOICE_LABEL, 'star-eater-to-choice', () => ctx.showChoice()))
+    }
+
+    function renderAftermath(): void {
+      // Re-entry after the win: the calm aftermath, the hook into the choice (farm-proof — no re-fight, no loot).
+      silhouette()
+      paragraph(STAR_EATER_WON_BLURB, 'blurb', 'star-eater-aftermath')
+      screen.appendChild(ctx.button(STAR_EATER_TO_CHOICE_LABEL, 'star-eater-to-choice', () => ctx.showChoice()))
+      screen.appendChild(ctx.button('back to the core', 'star-eater-to-core', () => showCaramelCore(), 0))
+    }
+
+    function renderLost(): void {
+      silhouette()
+      paragraph(STAR_EATER_LOST_BLURB, 'blurb', 'star-eater-lost')
+      screen.appendChild(ctx.button(STAR_EATER_RETRY_LABEL, 'star-eater-retry', () => { reset(); render() }))
+      screen.appendChild(ctx.button('back to the core', 'star-eater-to-core', () => showCaramelCore(), 0))
+    }
+
+    // Open on the intro the first time (a fresh, un-defeated arrival), then into the broadside.
+    function openOrFight(): void {
+      const s = session.getState()
+      if (starEaterDefeated(s) || !starEaterAvailable(s)) {
+        render()
+        return
+      }
+      ctx.clearScreen()
+      heading(STAR_EATER_HEADING, 'star-eater-screen')
+      silhouette()
+      paragraph(STAR_EATER_INTRO_BLURB, 'blurb', 'star-eater-intro')
+      screen.appendChild(ctx.button('bring her about', 'star-eater-begin', () => render()))
+    }
+
+    openOrFight()
+  }
+
   function showFinale(): void {
     showDescentPort()
   }
 
-  return { showDescentPort, showCaramelCore, showFinale }
+  return { showDescentPort, showCaramelCore, showStarEater, showFinale }
 }

@@ -814,11 +814,10 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showScaffold: scaffold.showScaffold,
-    // The star-eater's arrival is the next slice's screen (4.4); the caramel-core reveal's onward hook
-    // routes here off the dragon. Until that screen exists, the hook lands the player back at the scaffold —
-    // the reveal has already committed caramelCoreReached + solarDragonMet, so re-entry shows the dragon,
-    // ready for 4.4 to wire the real arrival in.
-    showStarEater: () => scaffold.showScaffold(),
+    // The choice / ending screen is the next slice (4.5); the star-eater win's onward hook routes there.
+    // Until that screen exists, the hook lands the player back at the scaffold — the win has already
+    // committed starEaterDefeated, so re-entry shows the aftermath, ready for 4.5 to wire the real choice in.
+    showChoice: () => scaffold.showScaffold(),
   })
 
   // --- driver + lifecycle wiring ------------------------------------------
@@ -885,6 +884,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showScaffold: scaffold.showScaffold,
     showDescentPort: finale.showDescentPort,
     showCaramelCore: finale.showCaramelCore,
+    showStarEater: finale.showStarEater,
     showFinale: finale.showFinale,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
