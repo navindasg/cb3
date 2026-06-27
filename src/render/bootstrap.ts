@@ -106,6 +106,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   const candy = signal(initial.candies.current)
   const cottonCandy = signal(initial.cottonCandy.current)
   const licorice = signal(initial.licorice.current)
+  const caramel = signal(initial.caramel.current)
   const hp = signal(initial.playerHpCurrent)
   const maxHp = signal(maxHpOf(initial))
   const statusBarUnlocked = signal(initial.flags[STATUS_BAR_UNLOCKED_FLAG] === true)
@@ -115,11 +116,14 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   const cloudCommonsReached = signal(initial.flags[CLOUD_COMMONS_REACHED_FLAG] === true)
   // Licorice surfaces the moment you've ever produced any (the beanstalk thickened), not before.
   const licoriceSeen = signal(initial.licorice.historicalMax > 0)
+  // Caramel surfaces the moment you've ever boiled any (the cauldron's first industry, §111), not before.
+  const caramelSeen = signal(initial.caramel.historicalMax > 0)
 
   const bar: StatusBar = createStatusBar(statusRoot, [
     { id: 'candy', label: 'candies: ', source: candy, visible: statusBarUnlocked },
     { id: 'cottonCandy', label: 'cotton candy: ', source: cottonCandy, visible: cloudCommonsReached },
     { id: 'licorice', label: 'licorice: ', source: licorice, visible: licoriceSeen },
+    { id: 'caramel', label: 'caramel: ', source: caramel, visible: caramelSeen },
   ])
   // The HP readout is a graphical health bar (green→orange→red), gated on the health-bar unlock.
   const healthBar: HealthBar = createHealthBar(statusRoot, {
@@ -139,12 +143,14 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     candy.set(s.candies.current)
     cottonCandy.set(s.cottonCandy.current)
     licorice.set(s.licorice.current)
+    caramel.set(s.caramel.current)
     hp.set(s.playerHpCurrent)
     maxHp.set(maxHpOf(s))
     statusBarUnlocked.set(s.flags[STATUS_BAR_UNLOCKED_FLAG] === true)
     healthBarUnlocked.set(s.flags[HEALTH_BAR_UNLOCKED_FLAG] === true)
     cloudCommonsReached.set(s.flags[CLOUD_COMMONS_REACHED_FLAG] === true)
     licoriceSeen.set(s.licorice.historicalMax > 0)
+    caramelSeen.set(s.caramel.historicalMax > 0)
   })
 
   // --- the event log (capped + fading; never the old uncapped clutter) ---------------------

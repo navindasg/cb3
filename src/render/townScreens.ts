@@ -9,6 +9,8 @@ import { purchase, type PurchaseResult } from '@/engine/shop/purchase'
 import { visibleShopRows } from '@/engine/shop/shopView'
 import { buyTelescope } from '@/engine/content/observatory'
 import { brew } from '@/engine/cauldron/brew'
+import { canBoilCaramel, boilCaramel } from '@/engine/content/caramelCauldron'
+import { BOIL_CANDY_COST, CARAMEL_PER_BOIL } from '@/content/recipes/caramelBoil'
 import { fireAny } from '@/engine/content/secrets'
 import { tellRumor, rumorAvailable } from '@/engine/content/tavern'
 import { act1GateCleared } from '@/engine/content/actGate'
@@ -294,7 +296,39 @@ export function createTownScreens(ctx: TownContext): TownScreens {
 
       screen.appendChild(ctx.button('brew', 'cauldron-brew', () => doBrew(), 0))
       screen.appendChild(ctx.button('empty the cauldron', 'cauldron-empty', () => { log = []; render() }))
+
+      // The boil: the kingdom's first real industry (§111). Strictly converts candies already paid for
+      // into caramel — a chore, no fanfare. The candy goes in sweet and comes out slow and dark.
+      const s = session.getState()
+      paragraph(
+        'Off to one side, a second pot boils low and constant. The candy goes in sweet and comes out slow and dark.',
+        'blurb',
+        'cauldron-boil-blurb',
+      )
+      const caramelReadout = doc.createElement('p')
+      caramelReadout.className = 'cauldron-log'
+      caramelReadout.setAttribute('data-testid', 'cauldron-caramel-readout')
+      caramelReadout.textContent = `caramel: ${formatCount(s.caramel.current)}`
+      screen.appendChild(caramelReadout)
+      const boil = ctx.button(
+        `boil candies into caramel (${formatCount(BOIL_CANDY_COST)} candies → ${CARAMEL_PER_BOIL} caramel)`,
+        'cauldron-boil',
+        () => doBoil(),
+      )
+      if (!canBoilCaramel(s)) boil.disabled = true
+      screen.appendChild(boil)
+
       screen.appendChild(ctx.button('back upstairs', 'cauldron-back', () => showObservatory(), 5))
+    }
+
+    function doBoil(): void {
+      const result = boilCaramel(session.getState())
+      if (!result.ok) {
+        ctx.notify("you haven't enough candy to boil down.")
+        return
+      }
+      session.dispatch(() => result.state)
+      render()
     }
 
     function addAction(action: string): void {
