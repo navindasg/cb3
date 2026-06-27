@@ -1,6 +1,7 @@
 import type { GameState } from '@/engine/types/GameState'
 import { hullAtGate } from '@/engine/content/galleonUpgrade'
 import { PEPPERMINT_GATE_AMOUNT } from '@/content/planet/mintPlanet'
+import { bathysphereBuilt } from '@/engine/content/bathysphere'
 
 // Act-gate predicates (DESIGN §171/§184) — pure derivations the act transitions read to know the player
 // is ready. Kept tiny; the engine reads flag literals in lock-step with content/flags (the moonStrata
@@ -12,6 +13,9 @@ const CELESTIAL_NAVIGATION_FLAG = 'celestialNavigationLearned'
 
 /** content/flags.FISHBOWL_HELM_FORGED_FLAG — first vacuum gear, the blacksmith's capstone. */
 const FISHBOWL_HELM_FORGED_FLAG = 'fishbowlHelmForged'
+
+/** content/flags.DYSON_STAGE_DONE_FLAGS[4] — the descent port raised (the final dyson stage). */
+const DYSON_STAGE5_DONE_FLAG = 'dysonStage5Done'
 
 /**
  * Whether the Act-1 gate is cleared: celestial navigation learned AND the fishbowl helm forged
@@ -32,4 +36,16 @@ export function act1GateCleared(state: GameState): boolean {
  */
 export function act2GateCleared(state: GameState): boolean {
   return hullAtGate(state) && state.peppermint.current >= PEPPERMINT_GATE_AMOUNT
+}
+
+/**
+ * Whether the Act-3 gate is cleared (DESIGN §5/§190): the dyson scaffold's final stage raised (the descent
+ * port — dysonStage5Done, read as a flag literal in lock-step with content/flags) AND the peppermint
+ * bathysphere built (reuses bathysphere.bathysphereBuilt, a sibling engine predicate). Both halves are
+ * required; the bathysphere's build is itself gated on the descent port being open, so in practice the
+ * build flag implies the stage flag — but this reads both for clarity (mirroring act2GateCleared) and as
+ * the Act-4 descent hook. The §194 audio cue is the Act-4 payoff; this predicate does not fire it.
+ */
+export function act3GateCleared(state: GameState): boolean {
+  return state.flags[DYSON_STAGE5_DONE_FLAG] === true && bathysphereBuilt(state)
 }

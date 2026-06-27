@@ -48,6 +48,8 @@ export const en: GameText = {
   'item.sourbeardTricorn.desc': "Captain Sourbeard's hat, swept off his head in the moment you bested him and never reclaimed. It is enormous, faintly salt-stained, and smells of gunpowder and aniseed. A crew would follow this hat. You do not have a crew. Yet.",
   'item.gummyParrot.name': 'the gummy parrot',
   'item.gummyParrot.desc': "Sourbeard's parrot, a translucent gummy bird of dubious loyalty. It transferred its allegiance to you the instant the duel turned, which tells you everything about its allegiance. It says nothing useful. It mostly vibes.",
+  'item.peppermintBathysphere.name': 'the peppermint bathysphere',
+  'item.peppermintBathysphere.desc': 'A cold dark bead of a vessel: peppermint plates lashed over a mint core, every seam run with caramel until it is one sealed thing. It is built to be lowered into a star. It is sealed, and it is cold inside, which is the point; the sun is warm, which is the problem. The hatch is ready. You are not, quite.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
 

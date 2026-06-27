@@ -196,3 +196,14 @@ export const DYSON_STAGE_DONE_FLAGS = [
  * this — he is changed for good once the gantry is up.
  */
 export const STAR_EATER_SIGHTED_FLAG = 'starEaterSighted'
+
+/**
+ * Set when the peppermint bathysphere is built at the descent port (Act 3 — the stage-5 reward, DESIGN
+ * §5/§190/§196). The descent port opens with dysonStage5Done; building the bathysphere consumes peppermint
+ * plating + mint coolant + a caramel hull-seal (all existing keys with live sources by now) and sets this
+ * flag + the owned item, exactly once (a one-off craft — the build refuses to re-fire, SAME reference).
+ * engine/content/bathysphere sets the SAME literal in lock-step (the moonStrata idiom — the engine never
+ * imports this content value, ADR §3). engine/content/actGate reads it to derive act3GateCleared
+ * (dysonStage5Done && this), the Act-4 descent hook; the §194 audio cue is the Act-4 payoff, not fired here.
+ */
+export const BATHYSPHERE_BUILT_FLAG = 'bathysphereBuilt'

@@ -248,6 +248,18 @@ export const GUMMY_PARROT: ItemDef = {
   saveFlag: 'gummyParrotOwned',
 }
 
+/** The peppermint bathysphere (Act 3, the descent-port craft, DESIGN §5/§190/§196) — a mint-cold,
+ * peppermint-armored vessel sealed with caramel, built to ride the dyson scaffold DOWN into the sun. Not
+ * equippable; held as the Act-4 descent vehicle (the §194 audio cue is the Act-4 payoff, not fired here).
+ * Its saveFlag is the BATHYSPHERE_BUILT_FLAG that, with dysonStage5Done, derives act3GateCleared. */
+export const PEPPERMINT_BATHYSPHERE: ItemDef = {
+  id: 'peppermintBathysphere',
+  displayKey: 'item.peppermintBathysphere.name',
+  descKey: 'item.peppermintBathysphere.desc',
+  ascii: '(o)',
+  saveFlag: 'bathysphereBuilt',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -285,6 +297,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   KRAKEN_CROWN,
   SOURBEARD_TRICORN,
   GUMMY_PARROT,
+  PEPPERMINT_BATHYSPHERE,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
 ]

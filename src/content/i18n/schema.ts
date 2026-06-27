@@ -48,6 +48,8 @@ export interface GameText {
   'item.sourbeardTricorn.desc': string
   'item.gummyParrot.name': string
   'item.gummyParrot.desc': string
+  'item.peppermintBathysphere.name': string
+  'item.peppermintBathysphere.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
 

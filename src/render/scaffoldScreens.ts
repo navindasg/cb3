@@ -39,6 +39,13 @@ import {
   starEaterSighted,
   witnessStarDie,
 } from '@/engine/content/observationDeck'
+import {
+  descentPortOpen,
+  bathysphereBuilt,
+  canBuildBathysphere,
+  buildBathysphere,
+} from '@/engine/content/bathysphere'
+import { act3GateCleared } from '@/engine/content/actGate'
 import { projectedStars, starDescentMultiplier } from '@/engine/content/starCounter'
 import {
   STAR_DEATH_FRAMES,
@@ -57,6 +64,15 @@ import {
   CARAMEL_COLLECTOR_CANDY_COST,
 } from '@/content/sun/solarWorks'
 import { STAR_TRAWLER_CANDY_COST, STAR_TRAWLER_CARAMEL_COST } from '@/content/sun/starSea'
+import {
+  BATHYSPHERE_PEPPERMINT_COST,
+  BATHYSPHERE_MINT_COST,
+  BATHYSPHERE_CARAMEL_COST,
+  DESCENT_PORT_BLURB,
+  BATHYSPHERE_BLURB,
+  ACT3_COMPLETE_BLURB,
+  DESCENT_HATCH_ART,
+} from '@/content/sun/bathysphere'
 import {
   WORK_CREW_CANDY_COST,
   WORK_CREW_LICORICE_COST,
@@ -174,6 +190,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       renderWorkCrews(s)
       renderStarSea(s)
       renderDeckEntry(s)
+      renderDescentPort(s)
 
       screen.appendChild(ctx.button('back to the sky port', 'scaffold-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'scaffold-to-map', () => ctx.showMap()))
@@ -389,6 +406,53 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
     }
 
     /**
+     * The descent port (the stage-5 reward, §5/§190/§196) — the final section. Shown only once the descent
+     * port is raised (descentPortOpen). The cage is closed; the works turns to the one-off peppermint
+     * bathysphere (peppermint plating + mint coolant + a caramel hull-seal, all live-sourced by now). Before
+     * it is built, a priced build button (canBuildBathysphere); after, the Act-3-complete beat — the Act-4
+     * descent hook (act3GateCleared), a ready hatch and a racing counter. The build machine lives in the
+     * tested engine (engine/content/bathysphere); this only draws it. The §194 audio cue is NOT fired here.
+     */
+    function renderDescentPort(s: GameState): void {
+      if (!descentPortOpen(s)) return
+
+      heading('the descent port', 'scaffold-descent-port')
+      paragraph(DESCENT_PORT_BLURB, 'blurb', 'scaffold-descent-blurb')
+
+      const hatch = doc.createElement('pre')
+      hatch.className = 'arena glow-sun'
+      hatch.setAttribute('data-testid', 'scaffold-hatch')
+      hatch.textContent = DESCENT_HATCH_ART.join('\n')
+      screen.appendChild(hatch)
+
+      if (!bathysphereBuilt(s)) {
+        paragraph(BATHYSPHERE_BLURB, 'blurb', 'scaffold-bathysphere-blurb')
+        const price =
+          `${formatCount(BATHYSPHERE_PEPPERMINT_COST)} peppermint plating + ` +
+          `${formatCount(BATHYSPHERE_MINT_COST)} mint coolant + ` +
+          `${formatCount(BATHYSPHERE_CARAMEL_COST)} caramel hull-seal`
+        const build = ctx.button(
+          `build the peppermint bathysphere (${price})`,
+          'scaffold-build-bathysphere',
+          () => doBuildBathysphere(),
+        )
+        if (!canBuildBathysphere(s)) {
+          build.disabled = true
+          build.classList.add('shop-unaffordable')
+        }
+        screen.appendChild(build)
+        return
+      }
+
+      // Built. The Act-3-complete beat — quiet triumph undercut by the racing counter and the thing below.
+      paragraph(BATHYSPHERE_BLURB, 'blurb', 'scaffold-bathysphere-built-blurb')
+      if (act3GateCleared(s)) {
+        heading('Act 3 complete — the descent waits', 'scaffold-act3-complete')
+        paragraph(ACT3_COMPLETE_BLURB, 'blurb', 'scaffold-act3-complete-blurb')
+      }
+    }
+
+    /**
      * The observation deck sub-view (§15/§189 — THE emotional core). The live star counter (projectedStars,
      * which now falls faster — the dyson acceleration made visible). The FIRST time the player looks, the
      * scripted star-death plays and witnessStarDie commits ONE star + the sighted flag (commit-once,
@@ -543,6 +607,25 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       }
       session.dispatch(() => result.state)
       ctx.logText('A caramel collector catches the star and renders it slow and dark. A thin stream of caramel begins.')
+      render()
+    }
+
+    function doBuildBathysphere(): void {
+      const result = buildBathysphere(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'the descent port is not open yet — close the cage first.'
+            : result.reason === 'alreadyBuilt'
+              ? 'the bathysphere is already sealed and waiting.'
+              : "you can't seal the bathysphere yet — you are short on plating, coolant, or hull-seal.",
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText(
+        'The bathysphere is sealed: cold, dark, and ready over the open hatch. The scaffold is finished. The descent waits.',
+      )
       render()
     }
 

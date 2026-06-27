@@ -111,16 +111,16 @@ describe('the dyson scaffold — canBuildStage', () => {
     expect(canBuildStage(funded({ rockCandy: createResource(STAGE1_ROCK - 1) }))).toBe(false)
   })
 
-  it('is false on a deferred next stage even when nominally affordable', () => {
-    // After stage 4, the next stage (5, the descent port) is deferred — its build-out slice has not landed.
+  it('is true on stage 5 (the descent port) once stage 4 is done and it is affordable (Inc-6 un-deferred)', () => {
+    // After stage 4, the next stage (5, the descent port) is now buildable — its build-out slice has landed.
     const s = atStage(4, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
       caramel: createResource(1e9),
       stardust: createResource(1e9),
     })
-    expect(nextStage(s)!.deferred).toBe(true)
-    expect(canBuildStage(s)).toBe(false)
+    expect(nextStage(s)!.deferred).toBeFalsy()
+    expect(canBuildStage(s)).toBe(true)
   })
 
   it('is false once the whole scaffold is complete', () => {
@@ -207,17 +207,18 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
     expect(result.state.candies.current).toBe(candiesBefore)
   })
 
-  it('returns the SAME reference + deferred on a deferred next stage', () => {
-    // After stage 4, the next stage (5, the descent port) is still deferred.
+  it('raises stage 5 (the descent port) once stage 4 is done — every stage is now buildable (Inc-6)', () => {
+    // After stage 4, the next stage (5, the descent port) is buildable; raising it bumps to the top.
     const before = atStage(4, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
       caramel: createResource(1e9),
     })
     const result = buildStage(before)
-    expect(result.ok).toBe(false)
-    expect(result.reason).toBe('deferred')
-    expect(result.state).toBe(before)
+    expect(result.ok).toBe(true)
+    expect(result.state.flags['dysonStage5Done']).toBe(true)
+    expect(currentStage(result.state)).toBe(DYSON_STAGE_COUNT)
+    expect(scaffoldComplete(result.state)).toBe(true)
   })
 
   it('returns the SAME reference + maxStage once the scaffold is complete', () => {
@@ -230,12 +231,11 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
 })
 
 describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
-  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 5+ are deferred)', () => {
-    // From stage 0, the only buildable stage is 1; stages 2-4 are buildable once their predecessor is done;
-    // stage 5 is deferred (its reward, the descent port build-out, has not landed).
+  it('raises the whole ladder 1->5 in sequence; once complete the next build is maxStage (Inc-6)', () => {
+    // From stage 0, the only buildable stage is 1; stages 2-5 are each buildable once their predecessor is
+    // done. As of Increment 6 EVERY stage is un-deferred, so the ladder runs all the way to a closed cage.
     const s = funded()
     expect(nextStage(s)!.stage).toBe(1)
-    // even with infinite resources, you cannot skip past the sequential ladder to a deferred stage
     const rich = funded({
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
@@ -256,10 +256,15 @@ describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
     const fourth = buildStage(third.state)
     expect(fourth.ok).toBe(true)
     expect(currentStage(fourth.state)).toBe(4)
-    // now stage 5 is next, but it is deferred — a re-build is refused
+    // stage 5 is next AND now buildable (Increment 6 un-deferred it — the descent port has landed)
     const fifth = buildStage(fourth.state)
-    expect(fifth.ok).toBe(false)
-    expect(fifth.reason).toBe('deferred')
+    expect(fifth.ok).toBe(true)
+    expect(currentStage(fifth.state)).toBe(DYSON_STAGE_COUNT)
+    expect(scaffoldComplete(fifth.state)).toBe(true)
+    // the cage is closed — there is nothing left to raise
+    const sixth = buildStage(fifth.state)
+    expect(sixth.ok).toBe(false)
+    expect(sixth.reason).toBe('maxStage')
   })
 
   it('raising stage 1 a second time is a no-op once done (the ledger has moved past it)', () => {
@@ -333,16 +338,11 @@ describe('the dyson stages config — sanity', () => {
     expect(STAGE1_CANDIES).toBeGreaterThan(STAGE1_ROCK)
   })
 
-  it('stages 2-4 are buildable (Inc-3/4/5 un-deferred them); stage 5 stays deferred', () => {
-    // stage 2 (the lower ring, the gummy work-crews), stage 3 (the outer bracing, the star sea) and stage 4
-    // (the observation gantry, the observation deck) are now buildable — no deferred flag.
-    expect(DYSON_STAGES[1]!.deferred).toBeFalsy()
-    expect(DYSON_STAGES[2]!.deferred).toBeFalsy()
-    expect(DYSON_STAGES[3]!.deferred).toBeFalsy()
-    // stage 5 (the descent port) remains deferred until its build-out slice lands, with a note saying why.
-    for (const stage of DYSON_STAGES.slice(4)) {
-      expect(stage.deferred).toBe(true)
-      expect(stage.note).toBeTruthy()
+  it('every stage 1-5 is buildable (Inc-6 un-deferred the last) — the whole ladder is open, none deferred', () => {
+    // stages 2 (the gummy work-crews), 3 (the star sea), 4 (the observation deck) and 5 (the descent port /
+    // the bathysphere — Inc-6) have all landed their reward slices, so no stage carries a deferred flag.
+    for (const stage of DYSON_STAGES) {
+      expect(stage.deferred).toBeFalsy()
     }
   })
 
@@ -358,6 +358,38 @@ describe('the dyson stages config — sanity', () => {
       const prev = DYSON_STAGES[i - 1]!.price.find((l) => l.resource === 'candies')!.amount
       const curr = DYSON_STAGES[i]!.price.find((l) => l.resource === 'candies')!.amount
       expect(curr).toBeGreaterThan(prev)
+    }
+  })
+
+  it('no stage price draws a resource before its source exists (the anti-soft-lock rule)', () => {
+    // The earliest stage at which each resource has a LIVE faucet (its reward slice landed):
+    //   candies / rock candy — always (Act-2 income + the gummy army); caramel — sourced before stage 2
+    //   (Inc-0 cauldron boil + Inc-2 solar-caramel collector); stardust — first passive faucet at stage 3
+    //   (the star sea, Inc-4). A stage may NOT charge a resource whose source lands at a LATER stage, or the
+    //   ladder soft-locks. (The bathysphere's own peppermint/mint/caramel are guarded in its own test.)
+    const sourcedFromStage: Record<string, number> = {
+      candies: 1,
+      rockCandy: 1,
+      caramel: 2,
+      stardust: 3,
+    }
+    for (const stage of DYSON_STAGES) {
+      for (const line of stage.price) {
+        const sourcedAt = sourcedFromStage[line.resource]
+        expect(sourcedAt, `stage ${stage.stage} charges ${line.resource}, which has no source list`).toBeDefined()
+        expect(
+          stage.stage,
+          `stage ${stage.stage} draws ${line.resource} before its source (stage ${sourcedAt}) exists`,
+        ).toBeGreaterThanOrEqual(sourcedAt!)
+      }
+    }
+  })
+
+  it('the final stage (5, the descent port) draws only abundant candies + rock candy (never soft-locks)', () => {
+    const stage5 = DYSON_STAGES[DYSON_STAGE_COUNT - 1]!
+    expect(stage5.stage).toBe(DYSON_STAGE_COUNT)
+    for (const line of stage5.price) {
+      expect(['candies', 'rockCandy']).toContain(line.resource)
     }
   })
 })

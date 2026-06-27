@@ -8,10 +8,10 @@ import type { PriceLine } from '@/engine/types/defs'
 // the reward — the first strut on the star — is the only payoff this slice.
 //
 // Stages whose reward slices have not yet landed stay `deferred:true` (shown locked so the wall ahead is
-// legible). As of Increment 5, stages 1 (the solar collectors), 2 (the gummy work-crews), 3 (the star sea)
-// and 4 (the observation deck) are all buildable; stage 5 (the descent port) remains deferred until its
-// slice lands. Their escalating prices (~x10/stage to ~1e12, folding in caramel/stardust in their own
-// slices) are real. The numbers key holding the highest completed stage is `dysonStage` (default 0).
+// legible). As of Increment 6 ALL FIVE stages are buildable: 1 (the solar collectors), 2 (the gummy
+// work-crews), 3 (the star sea), 4 (the observation deck) and 5 (the descent port / the peppermint
+// bathysphere — the Act-3 gate). Their escalating prices (~x10/stage to ~1e12, folding in caramel in their
+// own slices) are real. The numbers key holding the highest completed stage is `dysonStage` (default 0).
 // §22-open tuning. Whoever runs the scaffold is terse and tired; the shipwright's bravado is gone.
 
 /** numbers-namespace key holding the highest dyson stage completed (default 0 — nothing raised). */
@@ -106,7 +106,7 @@ export const SCAFFOLD_OVERLAY: readonly (readonly string[])[] = [
     '        (               )        ',
     '                                 ',
   ],
-  // stage 4 — the observation gantry (deferred; the observation deck, §189).
+  // stage 4 — the observation gantry (the observation deck, §189).
   [
     '                                 ',
     '                                 ',
@@ -120,7 +120,7 @@ export const SCAFFOLD_OVERLAY: readonly (readonly string[])[] = [
     '                                 ',
     '                                 ',
   ],
-  // stage 5 — the descent port, the cage all but closed (deferred; the bathysphere / the Act-3 gate).
+  // stage 5 — the descent port, the cage closed (the bathysphere / the Act-3 gate).
   [
     '            #########            ',
     '       (## =========== ##)       ',
@@ -198,8 +198,10 @@ export const DYSON_STAGES: readonly DysonStage[] = [
       { resource: 'rockCandy', amount: 10_000_000 },
     ],
     doneFlag: 'dysonStage5Done',
-    deferred: true,
-    // the §184-style Act-3 gate lands with this final build-out slice.
-    note: 'needs the descent port build-out',
+    // Increment 6 — un-deferred: the descent port build-out (this stage's reward) has landed, so the final
+    // ring is buildable. Raising it closes the cage and opens the descent port, where the peppermint
+    // bathysphere is built (peppermint plating + mint coolant + a caramel hull-seal — all live-sourced by
+    // now) and the §184-style Act-3 gate (act3GateCleared) lands. Draws only candies + rock candy (both
+    // abundant from the collectors / the gummy army), so the final raise can never soft-lock.
   },
 ]
