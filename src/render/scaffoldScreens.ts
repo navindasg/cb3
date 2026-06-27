@@ -10,7 +10,23 @@ import {
   buildStage,
   sunArt,
 } from '@/engine/content/dysonScaffold'
+import {
+  solarWorksOpen,
+  collectorCount,
+  caramelCollectorCount,
+  solarCandyRate,
+  solarCaramelRate,
+  canBuildCollector,
+  canBuildCaramelCollector,
+  buildCollector,
+  buildCaramelCollector,
+} from '@/engine/content/solarWorks'
 import { DYSON_STAGES, DYSON_STAGE_COUNT } from '@/content/sun/dysonScaffold'
+import {
+  SOLAR_COLLECTOR_CANDY_COST,
+  SOLAR_COLLECTOR_ROCK_CANDY_COST,
+  CARAMEL_COLLECTOR_CANDY_COST,
+} from '@/content/sun/solarWorks'
 import { SUN_REACHED_FLAG } from '@/content/flags'
 
 // The dyson scaffold (Act 3 — reach the sun, DESIGN §186/§188). A wiring sub-module of the DOM bootstrap,
@@ -102,6 +118,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       renderSun(s)
       renderLedger(s)
       renderNextStage(s)
+      renderSolarWorks(s)
 
       screen.appendChild(ctx.button('back to the sky port', 'scaffold-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'scaffold-to-map', () => ctx.showMap()))
@@ -160,6 +177,89 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
         raise.classList.add('shop-unaffordable')
       }
       screen.appendChild(raise)
+    }
+
+    /**
+     * The solar works (the stage-1 reward): two count-scaled collectors hung on the scaffold once the first
+     * strut is raised. Shown only when solarWorksOpen — before that, nothing here. Surfaces each collector's
+     * count and the LIVE candy/s and caramel/s the fleet pours, so the §5 ~x100 jump is legible. The whole
+     * machine (counts, rates, affordability, the atomic spend) lives in engine/content/solarWorks.
+     */
+    function renderSolarWorks(s: GameState): void {
+      if (!solarWorksOpen(s)) return
+
+      heading('the solar works', 'scaffold-works')
+      paragraph(
+        'The first strut holds, and the works-master finally cracks something like a smile. "Now we make it pay. Hang the collectors. Each one drinks a little of the star." A crucible the size of a county. It boils.',
+        'blurb',
+        'scaffold-works-blurb',
+      )
+
+      // --- solar candy collectors (the income jump) ---
+      paragraph(
+        `solar candy collectors: ${formatCount(collectorCount(s))}  (+${formatCount(solarCandyRate(s))} candies/s)`,
+        'blurb',
+        'scaffold-collectors',
+      )
+      const collectorPrice = `${formatCount(SOLAR_COLLECTOR_CANDY_COST)} candies + ${formatCount(SOLAR_COLLECTOR_ROCK_CANDY_COST)} rock candy`
+      const buyCollector = ctx.button(
+        `hang a solar candy collector (${collectorPrice})`,
+        'scaffold-buy-collector',
+        () => doBuildCollector(),
+      )
+      if (!canBuildCollector(s)) {
+        buyCollector.disabled = true
+        buyCollector.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(buyCollector)
+
+      // --- the solar-caramel collector (the scaling faucet) ---
+      paragraph(
+        `solar-caramel collectors: ${formatCount(caramelCollectorCount(s))}  (+${solarCaramelRate(s).toFixed(2)} caramel/s)`,
+        'blurb',
+        'scaffold-caramel-collectors',
+      )
+      const caramelPrice = `${formatCount(CARAMEL_COLLECTOR_CANDY_COST)} candies`
+      const buyCaramel = ctx.button(
+        `hang a solar-caramel collector (${caramelPrice})`,
+        'scaffold-buy-caramel-collector',
+        () => doBuildCaramelCollector(),
+      )
+      if (!canBuildCaramelCollector(s)) {
+        buyCaramel.disabled = true
+        buyCaramel.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(buyCaramel)
+    }
+
+    function doBuildCollector(): void {
+      const result = buildCollector(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'the works are not open yet — raise the first strut.'
+            : "you can't afford another collector yet.",
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('Another collector unfolds against the sun and begins to drink. The candy comes faster now.')
+      render()
+    }
+
+    function doBuildCaramelCollector(): void {
+      const result = buildCaramelCollector(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'the works are not open yet — raise the first strut.'
+            : "you can't afford a caramel collector yet.",
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('A caramel collector catches the star and renders it slow and dark. A thin stream of caramel begins.')
+      render()
     }
 
     function doRaise(): void {

@@ -28,6 +28,8 @@ import { COTTON_CANDY_PRODUCERS } from '@/content/producers/cottonCandy'
 import { LICORICE_PRODUCERS } from '@/content/producers/licorice'
 import { ROCK_CANDY_PRODUCERS } from '@/content/producers/rockCandy'
 import { PEPPERMINT_PRODUCERS } from '@/content/producers/peppermint'
+import { SOLAR_COLLECTOR_PRODUCERS } from '@/content/producers/solarCollector'
+import { CARAMEL_PRODUCERS } from '@/content/producers/caramel'
 import { ACT0_OVERWORLD } from '@/content/overworld'
 import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
 import { ACT0_SECRETS } from '@/content/secrets'
@@ -95,6 +97,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       ...LICORICE_PRODUCERS,
       ...ROCK_CANDY_PRODUCERS,
       ...PEPPERMINT_PRODUCERS,
+      ...SOLAR_COLLECTOR_PRODUCERS,
+      ...CARAMEL_PRODUCERS,
     ],
     onEvents: (events) => events.forEach((e) => log(e as GameTextKey)),
   })
