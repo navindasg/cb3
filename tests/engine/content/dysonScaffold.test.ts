@@ -112,10 +112,12 @@ describe('the dyson scaffold — canBuildStage', () => {
   })
 
   it('is false on a deferred next stage even when nominally affordable', () => {
-    // After stage 1, the next stage (2) is deferred — its reward economy has not landed.
-    const s = atStage(1, {
+    // After stage 2, the next stage (3) is deferred — its reward economy (the star sea) has not landed.
+    const s = atStage(2, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
+      caramel: createResource(1e9),
+      stardust: createResource(1e9),
     })
     expect(nextStage(s)!.deferred).toBe(true)
     expect(canBuildStage(s)).toBe(false)
@@ -148,6 +150,41 @@ describe('the dyson scaffold — buildStage (stage 1)', () => {
     expect(before.numbers[DYSON_STAGE_KEY]).toBeUndefined()
     expect(before.flags['dysonStage1Done']).toBeUndefined()
   })
+
+  it('raises stage 2 once stage 1 is done: spends candies + rock candy + caramel, sets dysonStage2Done', () => {
+    const stage2 = DYSON_STAGES[1]!
+    const c2 = stage2.price.find((l) => l.resource === 'candies')!.amount
+    const r2 = stage2.price.find((l) => l.resource === 'rockCandy')!.amount
+    const k2 = stage2.price.find((l) => l.resource === 'caramel')!.amount
+    const before = atStage(1, {
+      candies: createResource(c2 * 2),
+      rockCandy: createResource(r2 * 2),
+      caramel: createResource(k2 * 2),
+    })
+    const result = buildStage(before)
+    expect(result.ok).toBe(true)
+    expect(result.state.candies.current).toBe(c2 * 2 - c2)
+    expect(result.state.rockCandy.current).toBe(r2 * 2 - r2)
+    expect(result.state.caramel.current).toBe(k2 * 2 - k2)
+    expect(result.state.flags['dysonStage2Done']).toBe(true)
+    expect(currentStage(result.state)).toBe(2)
+  })
+
+  it('refuses stage 2 when caramel is short, touching nothing (the new caramel line)', () => {
+    const stage2 = DYSON_STAGES[1]!
+    const c2 = stage2.price.find((l) => l.resource === 'candies')!.amount
+    const r2 = stage2.price.find((l) => l.resource === 'rockCandy')!.amount
+    const k2 = stage2.price.find((l) => l.resource === 'caramel')!.amount
+    const before = atStage(1, {
+      candies: createResource(c2 * 2),
+      rockCandy: createResource(r2 * 2),
+      caramel: createResource(k2 - 1),
+    })
+    const result = buildStage(before)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('unaffordable')
+    expect(result.state).toBe(before)
+  })
 })
 
 describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)', () => {
@@ -171,7 +208,12 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
   })
 
   it('returns the SAME reference + deferred on a deferred next stage', () => {
-    const before = atStage(1, { candies: createResource(1e15), rockCandy: createResource(1e12) })
+    // After stage 2, the next stage (3, the star sea) is still deferred.
+    const before = atStage(2, {
+      candies: createResource(1e15),
+      rockCandy: createResource(1e12),
+      caramel: createResource(1e9),
+    })
     const result = buildStage(before)
     expect(result.ok).toBe(false)
     expect(result.reason).toBe('deferred')
@@ -188,28 +230,36 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
 })
 
 describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
-  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 2+ are deferred)', () => {
-    // From stage 0, the only buildable stage is 1; stage 2 is deferred and unreachable until 1 is done.
+  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 3+ are deferred)', () => {
+    // From stage 0, the only buildable stage is 1; stage 2 is buildable once 1 is done; stage 3 is deferred.
     const s = funded()
     expect(nextStage(s)!.stage).toBe(1)
-    // even with infinite resources, you cannot skip to a deferred stage
-    const rich = funded({ candies: createResource(1e15), rockCandy: createResource(1e12) })
+    // even with infinite resources, you cannot skip past the sequential ladder to a deferred stage
+    const rich = funded({
+      candies: createResource(1e15),
+      rockCandy: createResource(1e12),
+      caramel: createResource(1e9),
+    })
     const first = buildStage(rich)
     expect(first.ok).toBe(true)
     expect(currentStage(first.state)).toBe(1)
-    // now stage 2 is next, but it is deferred — a re-build is refused
+    // stage 2 is next AND now buildable (Increment 3 un-deferred it)
     const second = buildStage(first.state)
-    expect(second.ok).toBe(false)
-    expect(second.reason).toBe('deferred')
+    expect(second.ok).toBe(true)
+    expect(currentStage(second.state)).toBe(2)
+    // now stage 3 is next, but it is deferred — a re-build is refused
+    const third = buildStage(second.state)
+    expect(third.ok).toBe(false)
+    expect(third.reason).toBe('deferred')
   })
 
   it('raising stage 1 a second time is a no-op once done (the ledger has moved past it)', () => {
     const done = buildStage(funded()).state
-    // the next stage is now 2 (deferred), so re-calling buildStage never re-raises stage 1
+    // the next stage is now 2, so re-calling buildStage targets stage 2 (never re-raises stage 1); stage 1
+    // stays done and the ledger stays at 1 unless stage 2 is actually affordable.
     const again = buildStage(done)
-    expect(again.ok).toBe(false)
     expect(again.state.flags['dysonStage1Done']).toBe(true)
-    expect(currentStage(again.state)).toBe(1)
+    expect(currentStage(again.state)).toBeGreaterThanOrEqual(1)
   })
 })
 
@@ -274,11 +324,21 @@ describe('the dyson stages config — sanity', () => {
     expect(STAGE1_CANDIES).toBeGreaterThan(STAGE1_ROCK)
   })
 
-  it('stages 2-5 are deferred (their reward economy has not landed)', () => {
-    for (const stage of DYSON_STAGES.slice(1)) {
+  it('stage 2 is buildable (Increment 3 un-deferred it); stages 3-5 stay deferred', () => {
+    // stage 2 (the lower ring, the gummy work-crews reward) is now buildable — no deferred flag.
+    expect(DYSON_STAGES[1]!.deferred).toBeFalsy()
+    // stages 3-5 remain deferred until their reward slices land, each with a note saying why.
+    for (const stage of DYSON_STAGES.slice(2)) {
       expect(stage.deferred).toBe(true)
       expect(stage.note).toBeTruthy()
     }
+  })
+
+  it('stage 2 seals with caramel — which now has live faucets (Inc-0 boil + Inc-2 collector)', () => {
+    // The lower ring is the first strut to draw caramel; it never soft-locks because caramel is sourced
+    // before this slice (the cauldron boil floor + the solar-caramel collector faucet).
+    const stage2 = DYSON_STAGES[1]!
+    expect(stage2.price.some((l) => l.resource === 'caramel')).toBe(true)
   })
 
   it('prices escalate stage over stage', () => {

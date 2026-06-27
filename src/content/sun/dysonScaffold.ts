@@ -7,11 +7,12 @@ import type { PriceLine } from '@/engine/types/defs'
 // to be caged). This is the §186 "idle wall, with dread": stage 1's ~1e9 price is a deliberate wall, and
 // the reward — the first strut on the star — is the only payoff this slice.
 //
-// Stages 2-5 are `deferred:true` until their reward slices land (the collectors / work-crews / star sea /
-// observation deck / the descent port). Their escalating prices (~x10/stage to ~1e12, folding in
-// caramel/stardust in their own slices) are real but unbuyable for now — shown locked so the wall ahead
-// is legible. The numbers key holding the highest completed stage is `dysonStage` (default 0). §22-open
-// tuning. Whoever runs the scaffold is terse and tired; the shipwright's bravado is gone.
+// Stages whose reward slices have not yet landed stay `deferred:true` (shown locked so the wall ahead is
+// legible). As of Increment 3, stage 1 (the solar collectors) and stage 2 (the gummy work-crews) are both
+// buildable; stages 3-5 (the star sea / observation deck / the descent port) remain deferred until their
+// slices land. Their escalating prices (~x10/stage to ~1e12, folding in caramel/stardust in their own
+// slices) are real. The numbers key holding the highest completed stage is `dysonStage` (default 0).
+// §22-open tuning. Whoever runs the scaffold is terse and tired; the shipwright's bravado is gone.
 
 /** numbers-namespace key holding the highest dyson stage completed (default 0 — nothing raised). */
 export const DYSON_STAGE_KEY = 'dysonStage'
@@ -77,7 +78,7 @@ export const SCAFFOLD_OVERLAY: readonly (readonly string[])[] = [
     '                                 ',
     '                                 ',
   ],
-  // stage 2 — a ring closes top and bottom (deferred; the gummy work-crews, §261).
+  // stage 2 — a ring closes top and bottom (the gummy work-crews, §261).
   [
     '       (=================)       ',
     '                                 ',
@@ -157,12 +158,13 @@ export const DYSON_STAGES: readonly DysonStage[] = [
     price: [
       { resource: 'candies', amount: 10_000_000_000 },
       { resource: 'rockCandy', amount: 200_000 },
+      // caramel now has live faucets (Inc-0 cauldron boil floor + Inc-2 solar-caramel collector), so the
+      // lower ring is the first strut to be sealed with it — the §111 caramel-industry step folded in.
+      { resource: 'caramel', amount: 250 },
     ],
     doneFlag: 'dysonStage2Done',
-    deferred: true,
-    // surfaced verbatim on the works-master's screen — keep it diegetic; the dev rationale
-    // (this lands with the stage-2 reward slice) stays here, not in the player-facing string.
-    note: 'needs the gummy work-crews',
+    // Increment 3 — un-deferred: the gummy work-crews (this stage's reward) have landed, so the lower ring
+    // is buildable. The candy economy is ~x100 from the stage-1 collectors, and caramel flows from Inc-0/2.
   },
   {
     stage: 3,

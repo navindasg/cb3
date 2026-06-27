@@ -21,12 +21,26 @@ import {
   buildCollector,
   buildCaramelCollector,
 } from '@/engine/content/solarWorks'
+import {
+  workCrewsUnlocked,
+  workCrewCount,
+  canHireCrew,
+  hireCrew,
+} from '@/engine/content/gummyWorkCrew'
 import { DYSON_STAGES, DYSON_STAGE_COUNT } from '@/content/sun/dysonScaffold'
 import {
   SOLAR_COLLECTOR_CANDY_COST,
   SOLAR_COLLECTOR_ROCK_CANDY_COST,
   CARAMEL_COLLECTOR_CANDY_COST,
 } from '@/content/sun/solarWorks'
+import {
+  WORK_CREW_CANDY_COST,
+  WORK_CREW_LICORICE_COST,
+  WORK_CREW_BOOST,
+} from '@/content/gummy/molds'
+import { ROCK_CANDY_PRODUCERS } from '@/content/producers/rockCandy'
+import { PEPPERMINT_PRODUCERS } from '@/content/producers/peppermint'
+import { productionRate } from '@/engine/loop/production'
 import { SUN_REACHED_FLAG } from '@/content/flags'
 
 // The dyson scaffold (Act 3 — reach the sun, DESIGN §186/§188). A wiring sub-module of the DOM bootstrap,
@@ -119,6 +133,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       renderLedger(s)
       renderNextStage(s)
       renderSolarWorks(s)
+      renderWorkCrews(s)
 
       screen.appendChild(ctx.button('back to the sky port', 'scaffold-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'scaffold-to-map', () => ctx.showMap()))
@@ -230,6 +245,61 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
         buyCaramel.classList.add('shop-unaffordable')
       }
       screen.appendChild(buyCaramel)
+    }
+
+    /**
+     * The gummy work-crews (the stage-2 reward, §188/§261): a count-driven multiplier on the WHOLE gummy
+     * army's mining output, hired once the lower ring is raised. Shown only when workCrewsUnlocked — before
+     * that, nothing here. Surfaces the crew count + the LIVE boosted rock-candy/s and peppermint/s, so the
+     * automation is legible. The whole machine (count, affordability, the atomic spend, the multiplier) lives
+     * in engine/content/gummyWorkCrew + content/gummy/molds; this only draws it. The gummy folk send the
+     * crews; they do not speak.
+     */
+    function renderWorkCrews(s: GameState): void {
+      if (!workCrewsUnlocked(s)) return
+
+      heading('the gummy work-crews', 'scaffold-crews')
+      paragraph(
+        'A column of gummy folk files up from the galleon and sets to work on the struts without a word. The works-master watches them go. "The gummies have unionized. They are very efficient. They do not complain. They cannot." The army that was a war machine now just moves candy.',
+        'blurb',
+        'scaffold-crews-blurb',
+      )
+
+      const rockRate = productionRate(s, ROCK_CANDY_PRODUCERS, 'rockCandy')
+      const peppermintRate = productionRate(s, PEPPERMINT_PRODUCERS, 'peppermint')
+      paragraph(
+        `gummy work-crews: ${formatCount(workCrewCount(s))}  (+${Math.round(WORK_CREW_BOOST * 100)}% army mining each)`,
+        'blurb',
+        'scaffold-crew-count',
+      )
+      paragraph(
+        `the army now mines +${formatCount(rockRate)} rock candy/s and +${formatCount(peppermintRate)} peppermint/s`,
+        'blurb',
+        'scaffold-crew-rates',
+      )
+
+      const crewPrice = `${formatCount(WORK_CREW_CANDY_COST)} candies + ${formatCount(WORK_CREW_LICORICE_COST)} licorice`
+      const hire = ctx.button(`hire a gummy work-crew (${crewPrice})`, 'scaffold-hire-crew', () => doHireCrew())
+      if (!canHireCrew(s)) {
+        hire.disabled = true
+        hire.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(hire)
+    }
+
+    function doHireCrew(): void {
+      const result = hireCrew(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'the work-crews are not here yet — raise the lower ring.'
+            : "you can't afford another work-crew yet.",
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('Another work-crew files up and joins the burrowers. The mining quickens. They do not look up.')
+      render()
     }
 
     function doBuildCollector(): void {

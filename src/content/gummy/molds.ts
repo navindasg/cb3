@@ -1,9 +1,18 @@
+import type { GameState } from '@/engine/types/GameState'
+
 // The gummy army — molds × flavors (DESIGN §12), v1. Units are grown: a MOLD (shape = role) worked
 // through a FLAVOR essence (= stats), at 50 candies + 1 flavor essence each. v1 is the first rung:
 // the worm mold (the Quest-4 drop) × the licorice flavor (the tank flavor — and a resource you
 // already produce). The grown burrowers passively mine rock candy (§12 "burrower, mining boost";
 // §261 "mining automation"). Pure data the engine (engine/content/gummyVat) reads; the rest of the
 // catalog is shown locked, to teach the molds×flavors shape before Act 2 fills it in.
+//
+// Act 3 (Increment 3 — the §188/§261 mining-automation payoff): the gummy folk you met on the sour
+// planet send WORK-CREWS once the second dyson strut is raised. They do not change what a burrower IS —
+// they multiply the WHOLE standing army's output (rock candy AND peppermint) by a count-driven factor.
+// The crew count is a one-way numbers ledger; gummyWorkCrewMultiplier is a pure read of it (× the
+// stage-2 flag), and BOTH producers (rockCandy + peppermint) fold it into their getRate. A small warm
+// beat in a cold act: the army that was a war machine now just moves candy. Type-only engine import.
 
 /** numbers-namespace key for the grown worm-gummy count. */
 export const GUMMY_WORM_COUNT_KEY = 'gummyWormCount'
@@ -84,3 +93,52 @@ export const FLAVORS: readonly FlavorDef[] = [
   { id: 'cola', name: 'cola', stat: 'speed', available: false },
   { id: 'grape', name: 'grape', stat: 'magic', available: false },
 ]
+
+// --- gummy work-crews (Act 3 — stage-2 reward, the §188/§261 mining automation) -----------------------
+// The gummy folk send work-crews once the second dyson strut is raised (dysonStage2Done). A hired crew
+// does not add a new producer or a new resource — it multiplies EVERY existing gummy burrower's output
+// (rock candy AND peppermint) by a single factor: 1 + count * WORK_CREW_BOOST. At count 0 (and pre-stage-2,
+// where the count can never have risen) the multiplier is EXACTLY 1, so existing burrower rates are
+// unchanged — no regression. The count is a one-way numbers ledger (the engine helper only ever ++s it);
+// this is a pure read, so there is no re-triggerable income (NOT a farm). §22-open tuning.
+
+/** numbers-namespace key for the hired gummy work-crew count (default 0 — none hired). */
+export const GUMMY_WORK_CREW_COUNT_KEY = 'gummyWorkCrewCount'
+
+/**
+ * Kept in lock-step with content/flags.DYSON_STAGE_DONE_FLAGS[1] — the helper is content, so it MAY name
+ * the content flag literal directly; it is re-declared here (not imported from flags) only to keep the
+ * gate a local constant alongside the rest of the work-crew config. The stage-2 flag also makes the
+ * multiplier honestly 1 if a stray count ever slipped into save data before the works were earned.
+ */
+export const GUMMY_WORK_CREW_STAGE_FLAG = 'dysonStage2Done'
+
+/** Each hired work-crew lifts the WHOLE army's mining output by this fraction (additive in count). A crew
+ * is a meaningful but not explosive boost — the army is large by Act 3, so a few crews ~double output and
+ * the scaling tapers. §22-open tuning. */
+export const WORK_CREW_BOOST = 0.25
+
+/** Cost to hire one gummy work-crew: candies + a licorice essence (the same flavor input the burrowers
+ * are grown through — you are paying the army to bring in more hands, in their own currency). Caramel and
+ * the heavier costs stay on the dyson struts; the crews themselves are cheap, scaling automation. §22-open. */
+export const WORK_CREW_CANDY_COST = 5_000_000
+export const WORK_CREW_LICORICE_COST = 10
+
+/** How many work-crews have been hired (clamped to a non-negative integer; defaults to 0). A pure read of
+ * the one-way ledger — shared by the engine helpers and the multiplier so they never drift. */
+export function workCrewCount(state: GameState): number {
+  return Math.max(0, Math.floor(state.numbers[GUMMY_WORK_CREW_COUNT_KEY] ?? 0))
+}
+
+/**
+ * The multiplier the hired work-crews apply to EVERY gummy burrower's mining output (rock candy AND
+ * peppermint). EXACTLY 1 when no crews are hired OR before the stage-2 strut is raised (the count cannot
+ * have risen pre-gate, but the flag guard keeps a stray save value from leaking a boost) — so base burrower
+ * rates are unchanged until the crews are earned. Otherwise 1 + count * WORK_CREW_BOOST. A pure read over a
+ * one-way count + a flag; both producers fold it into their getRate (producers stay content-only, ADR §3 —
+ * they read this content helper, never engine logic).
+ */
+export function gummyWorkCrewMultiplier(state: GameState): number {
+  if (state.flags[GUMMY_WORK_CREW_STAGE_FLAG] !== true) return 1
+  return 1 + workCrewCount(state) * WORK_CREW_BOOST
+}
