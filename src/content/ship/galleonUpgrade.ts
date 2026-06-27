@@ -17,8 +17,9 @@ export const GALLEON_CANNON_KEY = 'galleonCannon'
 export const GALLEON_HULL_GATE_TIER = 3
 
 /** One tier in an upgrade track. Tier 1 is the base (no price). A tier may consume a one-off item
- * (the storm-silk keepsake -> the sail), or be `deferred` (shown locked until a later slice supplies
- * its material). */
+ * (the storm-silk keepsake -> the sail), be `deferred` (shown locked until a later slice supplies its
+ * material), or be gated behind an `unlockFlag` (priced + buildable, but only once a later milestone is
+ * reached — e.g. the solar sails, gated on the stage-3 dyson reward). */
 export interface GalleonTier {
   readonly tier: number
   readonly name: string
@@ -26,6 +27,10 @@ export interface GalleonTier {
   readonly price?: readonly PriceLine[]
   /** A one-off item this tier consumes — gated on its saveFlag, cleared (flag + ownedItems) on buy. */
   readonly consumes?: { readonly flag: string; readonly itemId: string }
+  /** A flag that must be set before this (priced) tier is buildable; absent ⇒ no flag gate. The flag is a
+   * content-owned milestone (e.g. the stage-3 dyson reward) — the engine compares the same literal it is
+   * given here (data, not an engine value), so layering holds (ADR §3). The `note` says what unlocks it. */
+  readonly unlockFlag?: string
   /** Shown but not yet buildable (its material lands in a later slice); `note` says why. */
   readonly deferred?: boolean
   readonly note?: string
@@ -56,7 +61,16 @@ const SAIL_TIERS: readonly GalleonTier[] = [
     price: [{ resource: 'cottonCandy', amount: 250 }],
     consumes: { flag: 'stormSilkOwned', itemId: 'stormSilk' }, // the thunderhead djinn's drop, become a sail
   },
-  { tier: 3, name: 'solar sails', deferred: true, note: 'woven from a stage-3 dyson-scaffold reward (Act 3)' },
+  {
+    tier: 3,
+    name: 'solar sails',
+    // Act 3 — Increment 4: un-deferred. Woven from the stage-3 dyson reward (the star sea), so the price
+    // draws the stardust the trawlers now sweep, plus candies. Gated on dysonStage3Done (the outer bracing
+    // raised), so the sails surface in the yard only once the star sea is open. §22-open.
+    price: [{ resource: 'stardust', amount: 200 }, { resource: 'candies', amount: 50_000_000 }],
+    unlockFlag: 'dysonStage3Done',
+    note: 'woven from the star sea — raise the dyson scaffold to stage 3 first',
+  },
 ]
 
 const CANNON_TIERS: readonly GalleonTier[] = [

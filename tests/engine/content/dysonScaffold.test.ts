@@ -112,8 +112,8 @@ describe('the dyson scaffold — canBuildStage', () => {
   })
 
   it('is false on a deferred next stage even when nominally affordable', () => {
-    // After stage 2, the next stage (3) is deferred — its reward economy (the star sea) has not landed.
-    const s = atStage(2, {
+    // After stage 3, the next stage (4) is deferred — its reward economy (the observation deck) has not landed.
+    const s = atStage(3, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
       caramel: createResource(1e9),
@@ -208,8 +208,8 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
   })
 
   it('returns the SAME reference + deferred on a deferred next stage', () => {
-    // After stage 2, the next stage (3, the star sea) is still deferred.
-    const before = atStage(2, {
+    // After stage 3, the next stage (4, the observation deck) is still deferred.
+    const before = atStage(3, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
       caramel: createResource(1e9),
@@ -230,8 +230,9 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
 })
 
 describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
-  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 3+ are deferred)', () => {
-    // From stage 0, the only buildable stage is 1; stage 2 is buildable once 1 is done; stage 3 is deferred.
+  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 4+ are deferred)', () => {
+    // From stage 0, the only buildable stage is 1; stages 2 and 3 are buildable once their predecessor is
+    // done; stage 4 is deferred (its reward, the observation deck, has not landed).
     const s = funded()
     expect(nextStage(s)!.stage).toBe(1)
     // even with infinite resources, you cannot skip past the sequential ladder to a deferred stage
@@ -247,10 +248,14 @@ describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
     const second = buildStage(first.state)
     expect(second.ok).toBe(true)
     expect(currentStage(second.state)).toBe(2)
-    // now stage 3 is next, but it is deferred — a re-build is refused
+    // stage 3 is next AND now buildable (Increment 4 un-deferred it — the star sea has landed)
     const third = buildStage(second.state)
-    expect(third.ok).toBe(false)
-    expect(third.reason).toBe('deferred')
+    expect(third.ok).toBe(true)
+    expect(currentStage(third.state)).toBe(3)
+    // now stage 4 is next, but it is deferred — a re-build is refused
+    const fourth = buildStage(third.state)
+    expect(fourth.ok).toBe(false)
+    expect(fourth.reason).toBe('deferred')
   })
 
   it('raising stage 1 a second time is a no-op once done (the ledger has moved past it)', () => {
@@ -324,11 +329,13 @@ describe('the dyson stages config — sanity', () => {
     expect(STAGE1_CANDIES).toBeGreaterThan(STAGE1_ROCK)
   })
 
-  it('stage 2 is buildable (Increment 3 un-deferred it); stages 3-5 stay deferred', () => {
-    // stage 2 (the lower ring, the gummy work-crews reward) is now buildable — no deferred flag.
+  it('stages 2 and 3 are buildable (Inc-3 + Inc-4 un-deferred them); stages 4-5 stay deferred', () => {
+    // stage 2 (the lower ring, the gummy work-crews) and stage 3 (the outer bracing, the star sea) are now
+    // buildable — no deferred flag.
     expect(DYSON_STAGES[1]!.deferred).toBeFalsy()
-    // stages 3-5 remain deferred until their reward slices land, each with a note saying why.
-    for (const stage of DYSON_STAGES.slice(2)) {
+    expect(DYSON_STAGES[2]!.deferred).toBeFalsy()
+    // stages 4-5 remain deferred until their reward slices land, each with a note saying why.
+    for (const stage of DYSON_STAGES.slice(3)) {
       expect(stage.deferred).toBe(true)
       expect(stage.note).toBeTruthy()
     }

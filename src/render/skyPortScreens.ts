@@ -299,7 +299,10 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         paragraph('  fully fitted.', 'blurb', `yard-${track.label}-max`)
         return
       }
-      if (next.deferred) {
+      // Deferred tiers, and tiers gated behind an unlock milestone not yet reached, show their note and no
+      // buy button (the wall ahead, legible). Once the milestone lands the priced fit button surfaces.
+      const lockedByFlag = next.unlockFlag !== undefined && s.flags[next.unlockFlag] !== true
+      if (next.deferred || lockedByFlag) {
         paragraph(`  next: ${next.name} — not yet (${next.note}).`, 'blurb', `yard-${track.label}-locked`)
         return
       }
@@ -324,7 +327,9 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
             ? 'You do not have what that fitting needs yet.'
             : result.reason === 'unaffordable'
               ? "you can't afford that fitting yet."
-              : 'not available yet.',
+              : result.reason === 'locked'
+                ? 'that fitting needs a milestone you have not reached yet.'
+                : 'not available yet.',
         )
         return
       }

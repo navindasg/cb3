@@ -25,13 +25,20 @@ function hasRequiredItem(state: GameState, tier: GalleonTier): boolean {
   return tier.consumes ? state.flags[tier.consumes.flag] === true : true
 }
 
-/** Whether the next tier exists, is buildable (not deferred), its item (if any) is in hand, and every
- * price line is affordable. */
+/** Whether a tier's unlock milestone is reached (true when the tier has no flag gate). The flag string is
+ * supplied by content (data, not an engine value) — the engine just reads it, so layering holds (ADR §3). */
+function unlockFlagSet(state: GameState, tier: GalleonTier): boolean {
+  return tier.unlockFlag ? state.flags[tier.unlockFlag] === true : true
+}
+
+/** Whether the next tier exists, is buildable (not deferred), its unlock milestone is reached, its item (if
+ * any) is in hand, and every price line is affordable. */
 export function canUpgrade(state: GameState, track: GalleonTrack): boolean {
   const tier = nextTier(state, track)
   return (
     tier !== null &&
     !tier.deferred &&
+    unlockFlagSet(state, tier) &&
     hasRequiredItem(state, tier) &&
     (tier.price ?? []).every((line) => state[line.resource].current >= line.amount)
   )
@@ -45,19 +52,20 @@ export function hullAtGate(state: GameState): boolean {
 export interface UpgradeResult {
   readonly ok: boolean
   readonly state: GameState
-  readonly reason?: 'maxTier' | 'deferred' | 'missingItem' | 'unaffordable'
+  readonly reason?: 'maxTier' | 'deferred' | 'locked' | 'missingItem' | 'unaffordable'
 }
 
 /**
  * Raise a track one tier: pay its price lines and consume its one-off item (clearing both the saveFlag
  * and the ownedItems entry — the keepsake becomes the fitting). No-op (SAME reference) at the top of
- * the track, on a deferred tier, without the required item, or when any price line is unaffordable
- * (spendResource returns null rather than overdraft). Immutable.
+ * the track, on a deferred tier, before its unlock milestone (`locked`), without the required item, or
+ * when any price line is unaffordable (spendResource returns null rather than overdraft). Immutable.
  */
 export function upgradeGalleon(state: GameState, track: GalleonTrack): UpgradeResult {
   const tier = nextTier(state, track)
   if (!tier) return { ok: false, state, reason: 'maxTier' }
   if (tier.deferred) return { ok: false, state, reason: 'deferred' }
+  if (!unlockFlagSet(state, tier)) return { ok: false, state, reason: 'locked' }
   if (!hasRequiredItem(state, tier)) return { ok: false, state, reason: 'missingItem' }
 
   let paid: GameState = state

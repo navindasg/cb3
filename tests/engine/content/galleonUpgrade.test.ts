@@ -13,11 +13,13 @@ import {
   GALLEON_CANNON_KEY,
 } from '@/content/ship/galleonUpgrade'
 import { createResource } from '@/engine/types/Resource'
+import { DYSON_STAGE_DONE_FLAGS } from '@/content/flags'
 import type { GameState } from '@/engine/types/GameState'
 
 const HULL = GALLEON_TRACKS.find((t) => t.key === GALLEON_HULL_KEY)!
 const SAILS = GALLEON_TRACKS.find((t) => t.key === GALLEON_SAILS_KEY)!
 const CANNON = GALLEON_TRACKS.find((t) => t.key === GALLEON_CANNON_KEY)!
+const STAGE3 = DYSON_STAGE_DONE_FLAGS[2]
 
 /** A state with a deep candy/rock-candy/cotton-candy stock (enough for any single upgrade). */
 const stocked = (over: Partial<GameState> = {}): GameState => ({
@@ -113,13 +115,60 @@ describe('the galleon yard — sails consume the storm-silk keepsake', () => {
     expect(result.state.cottonCandy.current).toBe(5_000 - 250)
   })
 
-  it('cannot reach solar sails (tier 3 is deferred)', () => {
+})
+
+describe('the galleon yard — solar sails (the stage-3 dyson reward)', () => {
+  const withStormSilk = (): GameState => stocked({ flags: { stormSilkOwned: true }, ownedItems: { stormSilk: true } })
+
+  /** Sail tier 2 raised (storm-silk consumed), deep candy + stardust, optionally stage-3 unlocked. */
+  const atSailTier2 = (over: { stardust?: number; candies?: number; stage3?: boolean } = {}): GameState => {
     const atTwo = upgradeGalleon(withStormSilk(), SAILS).state
-    expect(nextTier(atTwo, SAILS)!.tier).toBe(3)
-    expect(nextTier(atTwo, SAILS)!.deferred).toBe(true)
-    const result = upgradeGalleon(atTwo, SAILS)
+    return {
+      ...atTwo,
+      flags: over.stage3 ? { ...atTwo.flags, [STAGE3]: true } : atTwo.flags,
+      candies: createResource(over.candies ?? 1_000_000_000),
+      stardust: createResource(over.stardust ?? 10_000),
+    }
+  }
+
+  it('solar sails (tier 3) are no longer deferred — they are flag-gated, not material-deferred', () => {
+    const next = nextTier(atSailTier2(), SAILS)!
+    expect(next.tier).toBe(3)
+    expect(next.deferred).toBeUndefined()
+    expect(next.unlockFlag).toBe('dysonStage3Done')
+    expect(next.price).toBeDefined()
+  })
+
+  it('cannot fit solar sails before stage 3 — locked (SAME reference), even with the materials in hand', () => {
+    const before = atSailTier2({ stage3: false, stardust: 10_000, candies: 1e9 })
+    expect(canUpgrade(before, SAILS)).toBe(false)
+    const result = upgradeGalleon(before, SAILS)
     expect(result.ok).toBe(false)
-    expect(result.reason).toBe('deferred')
+    expect(result.reason).toBe('locked')
+    expect(result.state).toBe(before)
+  })
+
+  it('fits solar sails once stage 3 is reached, spending stardust + candies', () => {
+    const before = atSailTier2({ stage3: true, stardust: 10_000, candies: 1_000_000_000 })
+    const price = nextTier(before, SAILS)!.price!
+    const stardustCost = price.find((l) => l.resource === 'stardust')!.amount
+    const candyCost = price.find((l) => l.resource === 'candies')!.amount
+    expect(canUpgrade(before, SAILS)).toBe(true)
+    const result = upgradeGalleon(before, SAILS)
+    expect(result.ok).toBe(true)
+    expect(trackTier(result.state, GALLEON_SAILS_KEY)).toBe(3)
+    expect(result.state.stardust.current).toBe(10_000 - stardustCost)
+    expect(result.state.candies.current).toBe(1_000_000_000 - candyCost)
+    expect(nextTier(result.state, SAILS)).toBeNull() // top of the sail track
+  })
+
+  it('refuses solar sails when stardust is short, even past stage 3 (SAME reference, unaffordable)', () => {
+    const before = atSailTier2({ stage3: true, stardust: 0, candies: 1e9 })
+    expect(canUpgrade(before, SAILS)).toBe(false)
+    const result = upgradeGalleon(before, SAILS)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('unaffordable')
+    expect(result.state).toBe(before)
   })
 })
 

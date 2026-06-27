@@ -8,8 +8,8 @@ import type { PriceLine } from '@/engine/types/defs'
 // the reward — the first strut on the star — is the only payoff this slice.
 //
 // Stages whose reward slices have not yet landed stay `deferred:true` (shown locked so the wall ahead is
-// legible). As of Increment 3, stage 1 (the solar collectors) and stage 2 (the gummy work-crews) are both
-// buildable; stages 3-5 (the star sea / observation deck / the descent port) remain deferred until their
+// legible). As of Increment 4, stages 1 (the solar collectors), 2 (the gummy work-crews) and 3 (the star
+// sea) are all buildable; stages 4-5 (the observation deck / the descent port) remain deferred until their
 // slices land. Their escalating prices (~x10/stage to ~1e12, folding in caramel/stardust in their own
 // slices) are real. The numbers key holding the highest completed stage is `dysonStage` (default 0).
 // §22-open tuning. Whoever runs the scaffold is terse and tired; the shipwright's bravado is gone.
@@ -92,7 +92,7 @@ export const SCAFFOLD_OVERLAY: readonly (readonly string[])[] = [
     '                                 ',
     '       (=================)       ',
   ],
-  // stage 3 — outer cross-bracing (deferred; the star sea / solar sails).
+  // stage 3 — outer cross-bracing (the star sea / solar sails).
   [
     '                                 ',
     '        (               )        ',
@@ -174,8 +174,9 @@ export const DYSON_STAGES: readonly DysonStage[] = [
       { resource: 'rockCandy', amount: 800_000 },
     ],
     doneFlag: 'dysonStage3Done',
-    deferred: true,
-    note: 'needs the star sea',
+    // Increment 4 — un-deferred: the star sea (this stage's reward) has landed, so the outer bracing is
+    // buildable. Raising it opens the star sea (the first passive stardust faucet) and flips the galleon's
+    // long-deferred solar sails to buildable. The candy economy is ~x100 from the stage-1 collectors.
   },
   {
     stage: 4,

@@ -27,12 +27,20 @@ import {
   canHireCrew,
   hireCrew,
 } from '@/engine/content/gummyWorkCrew'
+import {
+  starSeaOpen,
+  trawlerCount,
+  stardustRate,
+  canBuildTrawler,
+  buildTrawler,
+} from '@/engine/content/starSea'
 import { DYSON_STAGES, DYSON_STAGE_COUNT } from '@/content/sun/dysonScaffold'
 import {
   SOLAR_COLLECTOR_CANDY_COST,
   SOLAR_COLLECTOR_ROCK_CANDY_COST,
   CARAMEL_COLLECTOR_CANDY_COST,
 } from '@/content/sun/solarWorks'
+import { STAR_TRAWLER_CANDY_COST, STAR_TRAWLER_CARAMEL_COST } from '@/content/sun/starSea'
 import {
   WORK_CREW_CANDY_COST,
   WORK_CREW_LICORICE_COST,
@@ -134,6 +142,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       renderNextStage(s)
       renderSolarWorks(s)
       renderWorkCrews(s)
+      renderStarSea(s)
 
       screen.appendChild(ctx.button('back to the sky port', 'scaffold-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'scaffold-to-map', () => ctx.showMap()))
@@ -285,6 +294,57 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
         hire.classList.add('shop-unaffordable')
       }
       screen.appendChild(hire)
+    }
+
+    /**
+     * The star sea (the stage-3 reward, §3/§188): the comet's wake made into a harvest. Once the outer
+     * bracing is raised (starSeaOpen) you launch count-scaled STAR-TRAWLERS that sweep the field for STARDUST
+     * — stardust's first passive source (it came only from catching the comet until now). Shown only when
+     * starSeaOpen — before that, nothing here. Surfaces the trawler count + the LIVE stardust/s the fleet
+     * sweeps, so the new faucet is legible. The whole machine (count, rate, affordability, the atomic spend)
+     * lives in engine/content/starSea + content/sun/starSea; this only draws it.
+     */
+    function renderStarSea(s: GameState): void {
+      if (!starSeaOpen(s)) return
+
+      heading('the star sea', 'scaffold-star-sea')
+      paragraph(
+        'Out past the bracing the dark is not empty after all. It shimmers — a vast, still field of star-stuff, the wake of the comet you once chased, spread thin across half the sky. Nothing moves in it. The works-master watches it a while. "We sweep it up. It does not seem to mind." You are gathering the last of something dead, to plate the thing you mean to dive in.',
+        'blurb',
+        'scaffold-star-sea-blurb',
+      )
+
+      paragraph(
+        `star-trawlers: ${formatCount(trawlerCount(s))}  (+${stardustRate(s).toFixed(2)} stardust/s)`,
+        'blurb',
+        'scaffold-trawlers',
+      )
+      const trawlerPrice = `${formatCount(STAR_TRAWLER_CANDY_COST)} candies + ${formatCount(STAR_TRAWLER_CARAMEL_COST)} caramel`
+      const buyTrawler = ctx.button(
+        `launch a star-sea trawler (${trawlerPrice})`,
+        'scaffold-buy-trawler',
+        () => doBuildTrawler(),
+      )
+      if (!canBuildTrawler(s)) {
+        buyTrawler.disabled = true
+        buyTrawler.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(buyTrawler)
+    }
+
+    function doBuildTrawler(): void {
+      const result = buildTrawler(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'locked'
+            ? 'the star sea is not open yet — raise the outer bracing.'
+            : "you can't afford another trawler yet.",
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('Another trawler drifts out into the shimmer and begins to sweep. A thin glitter of stardust comes home.')
+      render()
     }
 
     function doHireCrew(): void {
