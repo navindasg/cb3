@@ -69,6 +69,7 @@ import {
   BATHYSPHERE_MINT_COST,
   BATHYSPHERE_CARAMEL_COST,
   DESCENT_PORT_BLURB,
+  BATHYSPHERE_PLAN_BLURB,
   BATHYSPHERE_BLURB,
   ACT3_COMPLETE_BLURB,
   DESCENT_HATCH_ART,
@@ -426,7 +427,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       screen.appendChild(hatch)
 
       if (!bathysphereBuilt(s)) {
-        paragraph(BATHYSPHERE_BLURB, 'blurb', 'scaffold-bathysphere-blurb')
+        paragraph(BATHYSPHERE_PLAN_BLURB, 'blurb', 'scaffold-bathysphere-blurb')
         const price =
           `${formatCount(BATHYSPHERE_PEPPERMINT_COST)} peppermint plating + ` +
           `${formatCount(BATHYSPHERE_MINT_COST)} mint coolant + ` +

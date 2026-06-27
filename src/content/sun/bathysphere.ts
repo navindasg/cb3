@@ -49,7 +49,11 @@ export const BATHYSPHERE_PRICE: readonly PriceLine[] = [
 export const DESCENT_PORT_BLURB =
   'The last ring closes and the sun goes quiet behind a lattice of struts — a dying star wrapped in a candy cage, burning on as if it has not noticed. The works-master walks you out along the final gantry to a hatch that opens onto nothing but light. "This is as far as the scaffold goes. The rest is down." Below the photosphere, something keeps the light on. You are going to go and look at it.'
 
-/** The bathysphere build blurb — what it is, and the deadpan joke that is also the whole design. */
+/** The bathysphere PLAN blurb — the pre-build state. The parts staged, the intent, the joke as a plan. Forward-looking. */
+export const BATHYSPHERE_PLAN_BLURB =
+  'The parts wait on the gantry: peppermint plates, a mint-cold core to seal them around, a vat of caramel to run the seams. The works-master walks the plan with you. "It will be cold inside, which is the point. The sun is warm, which is the problem." Far out past the staging, the shape in the dark is closer than it was. Nobody mentions it.'
+
+/** The bathysphere BUILT blurb — the post-build payoff. The seal lands here, not before. Past tense, sealed, done. */
 export const BATHYSPHERE_BLURB =
   'They sink the vessel together on the gantry: peppermint plates lashed over a mint-cold core, every seam run with caramel until it is one cold dark bead of a thing. The works-master raps it once with a knuckle. "It is sealed. It is cold inside, which is the point. The sun is warm, which is the problem." Far out past the glass, the shape in the dark is closer than it was. Nobody mentions it.'
 
