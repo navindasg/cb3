@@ -814,6 +814,11 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showScaffold: scaffold.showScaffold,
+    // The caramel-core reveal is the next slice's screen (4.3); the descent's clean hook routes here once it
+    // reaches the core. Until that screen exists, the hook lands the player back at the scaffold — the
+    // descent has already committed photosphereCleared, so re-entry shows the calm "go down to the core"
+    // landing, ready for 4.3 to wire the real reveal in.
+    showCaramelCore: () => scaffold.showScaffold(),
   })
 
   // --- driver + lifecycle wiring ------------------------------------------

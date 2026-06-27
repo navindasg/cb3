@@ -227,3 +227,12 @@ export const PHOTOSPHERE_DESCENT_STARTED_FLAG = 'photosphereDescentStarted'
  * — the engine never imports this content value, ADR §3). The SOUND lives in coverage-excluded render glue.
  */
 export const DESCENT_CUE_PLAYED_FLAG = 'descentCuePlayed'
+
+/**
+ * Set once the photosphere descent reaches the caramel core (Act 4 — quest 11, DESIGN §5/§194/§196). The
+ * commit-once "cleared" flag: it blocks re-descent for value (the descent sim is transient and pays no
+ * resources, but the flag is the clean hook the caramel-core reveal opens on), and canDescend is false once
+ * it is set. engine/content/photosphere sets the SAME literal in lock-step (the moonStrata idiom — the
+ * engine never imports this content value, ADR §3). No schema bump: a flag rides the flags z.record.
+ */
+export const PHOTOSPHERE_CLEARED_FLAG = 'photosphereCleared'
