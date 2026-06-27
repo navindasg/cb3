@@ -50,6 +50,19 @@ export const FORGE_ENTRIES: readonly ShopEntry[] = [
     speechKey: 'forge.jawbreakerMace.thanks',
   },
   {
+    // Act 2 — forged from the comet's own pop rocks (DESIGN §175). Gated on having caught the comet
+    // (cometFirstCaught), so the recipe only appears once you have pop rocks to spend. A distinct archetype:
+    // the longest melee reach in the arsenal (see items.ts POP_ROCK_PIKE) — a positioning weapon, not a
+    // damage spike. Priced as a real haul of pop rocks (a handful of comet passes) plus a candy fee.
+    itemId: 'popRockPike',
+    price: [
+      { resource: 'candies', amount: 2_000 },
+      { resource: 'popRocks', amount: 150 },
+    ],
+    unlock: (s) => s.flags['cometFirstCaught'] === true,
+    speechKey: 'forge.popRockPike.thanks',
+  },
+  {
     // The Act-1 capstone: first vacuum gear (DESIGN §171/§233). Gated on celestial navigation
     // (the lighthouse) — once you can sail into the dark, the blacksmith seals you a helm. A real
     // capstone haul of candies + the moon's rock candy. Forging it closes the Act-1 gate.

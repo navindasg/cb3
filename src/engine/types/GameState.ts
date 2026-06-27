@@ -12,7 +12,9 @@ import type { ResourceState } from '@/engine/types/Resource'
 //   v5 adds sour (the gummy folk's flavor essence — Act 2, the sour planet).
 //   v6 adds peppermint (mined on the mint planet — the Act-2 gate, §184).
 //   v7 adds mint (the frost wyrm's flavor essence — Act 2, a fusion input for mint burrowers).
-export const CURRENT_SCHEMA_VERSION = 7
+//   v8 adds stardust (harvested alongside pop rocks when you catch the comet — Act 2, "the comet
+//      passes"; fuel for riding the comet between strata, and the star-sea craft material, §175/§230).
+export const CURRENT_SCHEMA_VERSION = 8
 
 export const RESOURCE_KEYS = [
   'candies',
@@ -26,6 +28,7 @@ export const RESOURCE_KEYS = [
   'sour',
   'peppermint',
   'mint',
+  'stardust',
 ] as const
 export type ResourceKey = (typeof RESOURCE_KEYS)[number]
 
@@ -49,6 +52,7 @@ export interface GameState {
   sour: ResourceState // Act 2: the gummy folk's flavor essence, traded on the sour planet (fusion input)
   peppermint: ResourceState // Act 2: mined on the mint planet (the §184 act gate; the Act-4 sun gate)
   mint: ResourceState // Act 2: the frost wyrm's flavor essence, harvested on the mint planet (fusion input)
+  stardust: ResourceState // Act 2: harvested with pop rocks at the comet; rode-the-comet fuel + star-sea craft
 
   // --- lifetime stats (never reset; survive NG+) ---
   lifetimeCandiesEaten: number // gates ending 3, scales "wrapper"

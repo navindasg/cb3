@@ -57,6 +57,7 @@ const stateSchema = z.object({
   sour: resource(D.sour),
   peppermint: resource(D.peppermint),
   mint: resource(D.mint),
+  stardust: resource(D.stardust),
 
   lifetimeCandiesEaten: nonNegative(D.lifetimeCandiesEaten),
   lifetimeCandiesThrown: nonNegative(D.lifetimeCandiesThrown),

@@ -74,6 +74,24 @@ export const JAWBREAKER_MACE: ItemDef = {
   weapon: { damage: 8, range: 1.5, cooldownMs: 850 },
 }
 
+/** The pop rock pike (Act 2 — forged from the comet's pop rocks, DESIGN §175). A DISTINCT archetype again:
+ * the LONGEST melee reach in the arsenal (range 4 — only the ranged bow out-reaches it), a slow, heavy
+ * thrust. It trades the mace's raw punch for reach and the bow's ranged safety for solid melee bite — a
+ * positioning weapon, deadly at the rail (it shines against the sour kraken's reaching arms). Its damage is
+ * held at the iron sword's (5): a heavier hit would let pure aggression brute past the boarding melee that
+ * is tuned to demand the read (see the boarding balance test), so the pike's premium is REACH, not power.
+ * DEFERRED (DESIGN §228): the pike's "explosive crits" flavor awaits a crit system; this slice ships the reach
+ * archetype, and the desc's "crackles the whole way in" only gestures at the explosive idea for now. */
+export const POP_ROCK_PIKE: ItemDef = {
+  id: 'popRockPike',
+  displayKey: 'item.popRockPike.name',
+  descKey: 'item.popRockPike.desc',
+  ascii: '=>',
+  saveFlag: 'popRockPikeOwned',
+  slot: 'weapon',
+  weapon: { damage: 5, range: 4, cooldownMs: 750 },
+}
+
 export const LEATHER_HAT: ItemDef = {
   id: 'leatherHat',
   displayKey: 'item.leatherHat.name',
@@ -253,6 +271,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   CANDY_CANE_BOW,
   LICORICE_WHIP,
   JAWBREAKER_MACE,
+  POP_ROCK_PIKE,
   LEATHER_HAT,
   BEGINNER_GRIMOIRE,
   TELESCOPE,

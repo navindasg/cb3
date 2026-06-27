@@ -19,6 +19,7 @@ export function createDefaultSave(): GameState {
     sour: createResource(0),
     peppermint: createResource(0),
     mint: createResource(0),
+    stardust: createResource(0),
 
     lifetimeCandiesEaten: 0,
     lifetimeCandiesThrown: 0,

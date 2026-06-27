@@ -18,6 +18,8 @@ export interface GameText {
   'item.licoriceWhip.desc': string
   'item.jawbreakerMace.name': string
   'item.jawbreakerMace.desc': string
+  'item.popRockPike.name': string
+  'item.popRockPike.desc': string
   'item.leatherHat.name': string
   'item.leatherHat.desc': string
   'item.fishbowlHelm.name': string
@@ -57,6 +59,7 @@ export interface GameText {
   'forge.candyCaneBow.thanks': string
   'forge.licoriceWhip.thanks': string
   'forge.jawbreakerMace.thanks': string
+  'forge.popRockPike.thanks': string
   'forge.fishbowlHelm.thanks': string
   'obs.beginnerGrimoire.thanks': string
   'obs.telescope.thanks': string

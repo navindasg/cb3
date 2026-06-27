@@ -1,5 +1,6 @@
 import { Vec2 } from '@/engine/quest/Vec2'
 import type { GameState } from '@/engine/types/GameState'
+import { canAfford, spendResource } from '@/engine/types/Resource'
 import type { Coord } from '@/content/comet/cometChase'
 import {
   LAUNCH,
@@ -18,6 +19,7 @@ import {
   HARPOONS_PER_PASS,
   COMET_LAST_PASS_KEY,
   COMET_PERIOD_MS,
+  RIDE_STARDUST_COST,
 } from '@/content/comet/cometChase'
 
 // The comet's lead-the-target harpoon sim (Act 2 — "the comet passes", DESIGN §175/§180). A pure,
@@ -182,4 +184,29 @@ export function msUntilNextPass(state: GameState): number {
   if (cometCatchable(state)) return 0
   const elapsedInPass = Math.max(0, state.accumulatedGameTimeMs) % COMET_PERIOD_MS
   return COMET_PERIOD_MS - elapsedInPass
+}
+
+// --- riding the comet: the §175 fast-travel between strata, fuelled by stardust -----------------------
+
+/** Whether you can afford a ride right now (a ride burns RIDE_STARDUST_COST stardust). The screen also
+ * gates the option on having ever caught the comet — that flag is the screen's to own (the comet sim never
+ * persists), so this helper stays a pure affordability check. */
+export function canRide(state: GameState): boolean {
+  return canAfford(state.stardust, RIDE_STARDUST_COST)
+}
+
+export interface RideResult {
+  readonly ok: boolean
+  /** The state after the ride's fare (a new object on success, the SAME reference otherwise). */
+  readonly state: GameState
+  readonly reason?: 'unaffordable'
+}
+
+/** Pay a ride's fare: burn RIDE_STARDUST_COST stardust. Pure — returns a new state on success, the SAME
+ * reference (no overdraft) when there is not enough stardust. The destination itself is the screen's to
+ * navigate to; this only spends the fuel. */
+export function rideComet(state: GameState): RideResult {
+  const spent = spendResource(state.stardust, RIDE_STARDUST_COST)
+  if (!spent) return { ok: false, state, reason: 'unaffordable' }
+  return { ok: true, state: { ...state, stardust: spent } }
 }

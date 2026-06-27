@@ -14,6 +14,8 @@ import {
   cometCatchable,
   currentPass,
   msUntilNextPass,
+  canRide,
+  rideComet,
   type ChaseState,
 } from '@/engine/content/cometChase'
 import {
@@ -25,6 +27,8 @@ import {
   FLIGHT_DT,
   POP_ROCKS_PER_CATCH,
   POP_ROCKS_FIRST_CATCH_BONUS,
+  STARDUST_PER_CATCH,
+  RIDE_STARDUST_COST,
   COMET_LAST_PASS_KEY,
 } from '@/content/comet/cometChase'
 import { COMET_FIRST_CAUGHT_FLAG } from '@/content/flags'
@@ -59,6 +63,12 @@ export interface CometContext {
   showMap(): void
   /** Return to the sky port (the galleon's home berth). */
   showSkyPort(): void
+  /** Ride the comet out to the rock candy reef (the §175 fast-travel) — wired by the bootstrap. */
+  showReef(): void
+  /** Ride the comet out to the sour planet — wired by the bootstrap. */
+  showSourPlanet(): void
+  /** Ride the comet out to the mint planet — wired by the bootstrap. */
+  showMintPlanet(): void
 }
 
 export interface CometScreens {
@@ -117,6 +127,10 @@ export function createCometScreens(ctx: CometContext): CometScreens {
       if (!cometCatchable(s)) {
         chase = null
         renderCooldown(s)
+        // Once you have ridden the comet down even once, you know how to leap aboard the guttering comet and
+        // steer it: spend its own stardust to ride it to another stratum (the §175 fast-travel). Only offered
+        // when it is NOT a fresh chase — you ride the comet you have caught, not one you are still harpooning.
+        if (firstCaught(s)) renderRideIt(s)
       } else {
         if (!chase) chase = createChase()
         renderChase(s, chase)
@@ -124,6 +138,50 @@ export function createCometScreens(ctx: CometContext): CometScreens {
 
       screen.appendChild(ctx.button('back to the sky port', 'comet-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'comet-to-map', () => ctx.showMap()))
+    }
+
+    // --- riding the comet: the §175 fast-travel between strata, fuelled by stardust -----------------
+
+    function renderRideIt(s: GameState): void {
+      heading('ride the comet', 'comet-ride')
+      const afford = canRide(s)
+      paragraph(
+        afford
+          ? `Leap aboard and steer it by its own light, out across the dark to wherever it falls. The fare is ${RIDE_STARDUST_COST} stardust.`
+          : `Not enough stardust to steer it — a ride costs ${RIDE_STARDUST_COST}, and you hold ${formatCount(s.stardust.current)}. Catch the comet for more.`,
+        'blurb',
+        'comet-ride-blurb',
+      )
+      // The far strata, all reachable once the dark has been sailed (which it has — you arrived here from the
+      // sky port). Riding burns the fare, then drops you at the destination. A short hop the sky port already
+      // offers for free is left off — riding is for crossing straight to the far worlds.
+      addRide('the rock candy reef', 'comet-ride-reef', () => ctx.showReef())
+      addRide('the sour planet', 'comet-ride-sour', () => ctx.showSourPlanet())
+      addRide('the mint planet', 'comet-ride-mint', () => ctx.showMintPlanet())
+
+      function addRide(place: string, testid: string, arrive: () => void): void {
+        const b = ctx.button(`ride to ${place} (${RIDE_STARDUST_COST} stardust)`, testid, () => doRide(place, arrive))
+        if (!afford) {
+          b.disabled = true
+          b.classList.add('shop-unaffordable')
+        }
+        screen.appendChild(b)
+      }
+    }
+
+    function doRide(place: string, arrive: () => void): void {
+      if (!canRide(session.getState())) {
+        ctx.notify('Not enough stardust to ride the comet. Catch it for more.')
+        return
+      }
+      // Spend the fare INSIDE the dispatch so the affordability guard and the deduction are atomic (the
+      // doFire idiom) — a future concurrent stardust sink can never race a free hop through.
+      session.dispatch((st) => {
+        const result = rideComet(st)
+        return result.ok ? result.state : st
+      })
+      ctx.logText(`You ride the comet down through the dark to ${place} — ${RIDE_STARDUST_COST} stardust spent steering.`)
+      arrive()
     }
 
     // --- the cooldown: the comet has already been stripped this pass --------------------------------
@@ -134,7 +192,11 @@ export function createCometScreens(ctx: CometContext): CometScreens {
         'blurb',
         'comet-cooldown',
       )
-      paragraph(`pop rocks in the hold: ${formatCount(s.popRocks.current)}`, 'blurb', 'comet-hud')
+      paragraph(
+        `pop rocks in the hold: ${formatCount(s.popRocks.current)}    stardust: ${formatCount(s.stardust.current)}`,
+        'blurb',
+        'comet-hud',
+      )
     }
 
     // --- the chase: the lead-the-target harpoon ----------------------------------------------------
@@ -162,7 +224,7 @@ export function createCometScreens(ctx: CometContext): CometScreens {
       }
 
       paragraph(
-        `harpoons: ${c.harpoonsLeft}    pop rocks in the hold: ${formatCount(s.popRocks.current)}`,
+        `harpoons: ${c.harpoonsLeft}    pop rocks in the hold: ${formatCount(s.popRocks.current)}    stardust: ${formatCount(s.stardust.current)}`,
         'blurb',
         'comet-hud',
       )
@@ -207,25 +269,33 @@ export function createCometScreens(ctx: CometContext): CometScreens {
       if (result.caught) {
         const wasFirstCatch = !firstCaught(session.getState())
         const heldBefore = session.getState().popRocks.current
+        const stardustBefore = session.getState().stardust.current
         // Commit the haul, guarded on catchable at dispatch time, and stamp this pass as harvested so it
-        // cannot be farmed by re-entry. The first-ever catch pays a one-time bonus + the ride-it lore.
+        // cannot be farmed by re-entry. A catch frees pop rocks AND stardust (DESIGN §180); the first-ever
+        // catch pays a one-time pop-rock bonus + the ride-it lore.
         session.dispatch((st) => {
           if (!cometCatchable(st)) return st
           const bonus = firstCaught(st) ? 0 : POP_ROCKS_FIRST_CATCH_BONUS
           const harvested = setNumber(
-            { ...st, popRocks: addResource(st.popRocks, POP_ROCKS_PER_CATCH + bonus) },
+            {
+              ...st,
+              popRocks: addResource(st.popRocks, POP_ROCKS_PER_CATCH + bonus),
+              stardust: addResource(st.stardust, STARDUST_PER_CATCH),
+            },
             COMET_LAST_PASS_KEY,
             currentPass(st),
           )
           return setFlag(harvested, COMET_FIRST_CAUGHT_FLAG)
         })
         const gained = session.getState().popRocks.current - heldBefore // the actual haul (bonus included)
+        const dust = session.getState().stardust.current - stardustBefore
         ctx.logText(
-          `The harpoon bites and the comet swings round on the line — ${formatCount(gained)} pop rocks shaken loose into the hold.`,
+          `The harpoon bites and the comet swings round on the line — ${formatCount(gained)} pop rocks and ${formatCount(dust)} stardust shaken loose into the hold.`,
         )
         if (wasFirstCatch) {
-          // the first catch — signpost the deferred ride without spelling it out
-          ctx.notify('Riding the comet down, pop rocks raining into the hold. You could almost steer it.')
+          // the first catch — the §175 marquee beat: the comet is a vehicle. Let the wonder land; the
+          // ride-it section (and its fare) teaches the cost on its own.
+          ctx.notify('You ride it down through the dark, stardust raining into the hold — and you understand, all at once, that you could go anywhere it goes.')
         }
       }
       render()

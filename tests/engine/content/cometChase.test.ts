@@ -10,6 +10,8 @@ import {
   currentPass,
   cometCatchable,
   msUntilNextPass,
+  canRide,
+  rideComet,
   type ChaseState,
 } from '@/engine/content/cometChase'
 import {
@@ -20,7 +22,9 @@ import {
   COMET_LAST_PASS_KEY,
   COMET_PERIOD_MS,
   ARENA_W,
+  RIDE_STARDUST_COST,
 } from '@/content/comet/cometChase'
+import { addResource } from '@/engine/types/Resource'
 import { createDefaultSave } from '@/engine/state/defaultSave'
 import { Vec2 } from '@/engine/quest/Vec2'
 
@@ -169,5 +173,36 @@ describe('the comet pass cooldown (the soft-timer faucet)', () => {
 
   it('the seed comet stays within the arena width (a sanity check on the config)', () => {
     expect(createChase().comet.x).toBeLessThanOrEqual(ARENA_W)
+  })
+})
+
+describe('riding the comet (the §175 fast-travel, fuelled by stardust)', () => {
+  const withStardust = (n: number) => ({
+    ...createDefaultSave(),
+    stardust: addResource(createDefaultSave().stardust, n),
+  })
+
+  it('cannot ride with no stardust', () => {
+    expect(canRide(createDefaultSave())).toBe(false)
+  })
+
+  it('can ride once you hold the fare', () => {
+    expect(canRide(withStardust(RIDE_STARDUST_COST))).toBe(true)
+    expect(canRide(withStardust(RIDE_STARDUST_COST - 1))).toBe(false)
+  })
+
+  it('a ride burns exactly the fare and leaves the rest', () => {
+    const s = withStardust(RIDE_STARDUST_COST + 3)
+    const result = rideComet(s)
+    expect(result.ok).toBe(true)
+    expect(result.state.stardust.current).toBe(3)
+  })
+
+  it('refuses (and is a no-op, same reference) when the fare is short', () => {
+    const s = withStardust(RIDE_STARDUST_COST - 1)
+    const result = rideComet(s)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('unaffordable')
+    expect(result.state).toBe(s)
   })
 })

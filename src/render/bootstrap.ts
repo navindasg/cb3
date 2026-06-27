@@ -688,6 +688,11 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showSkyPort: skyport.showSkyPort,
+    // Ride-the-comet fast-travel (Act 2 — §175) drops you at a far stratum. Thunks: sourPlanet/mintPlanet
+    // are created just below; read only at click time, by which point they are assigned.
+    showReef: () => reef.showReef(),
+    showSourPlanet: () => sourPlanet.showSourPlanet(),
+    showMintPlanet: () => mintPlanet.showMintPlanet(),
   })
 
   // The Sourbeard duel screen (Act 2 — quest 8: the broadside duel that reads the yard's hull/cannon/sail
@@ -813,6 +818,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showMoon: moon.showMoon,
     showSkyPort: skyport.showSkyPort,
     showReef: reef.showReef,
+    showComet: comet.showComet,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
     startForest: quests.startForest,

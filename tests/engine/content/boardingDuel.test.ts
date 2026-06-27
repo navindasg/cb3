@@ -162,14 +162,17 @@ describe('the boarding melee — the balance contract', () => {
   })
 
   it('punishes pure aggression (all-lunge) for the sword and iron sword — you eat too many cuts', () => {
-    for (const id of ['woodenSword', 'ironSword']) {
+    // The pop rock pike is included on purpose: its damage is held at the iron sword's (its premium is
+    // reach, which is irrelevant on foot), so a NEW premium weapon does not let all-lunge brute past the
+    // read here — exactly the boundary that kept the pike at damage 5 (see items.ts POP_ROCK_PIKE).
+    for (const id of ['woodenSword', 'ironSword', 'popRockPike']) {
       const lost = playOut(createBoarding(withWeapon(id)), () => 'lunge')
       expect(boardingOutcome(lost)).toBe('lost')
     }
   })
 
   it('lets each forged blade win with clean reads', () => {
-    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace']) {
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
       expect(bestFinalHp(createBoarding(withWeapon(id)))).toBeGreaterThan(0)
     }
   })

@@ -70,6 +70,7 @@ test('the comet passes: chase it, lead the harpoon, harvest pop rocks, fit the p
   const after = await getState(page)
   expect(after.flags['cometFirstCaught']).toBe(true)
   expect(after.popRocks.current).toBeGreaterThan(0) // the haul, committed on catch
+  expect(after.stardust.current).toBeGreaterThan(0) // stardust harvested alongside the pop rocks (DESIGN §180)
 
   // (4) The harvested pop rocks (topped up, with candies) unlock the yard's pop-rock-gun cannon tier.
   await page.evaluate(() => {
@@ -84,4 +85,73 @@ test('the comet passes: chase it, lead the harpoon, harvest pop rocks, fit the p
   await expect(page.getByTestId('skyport-yard-screen')).toBeVisible()
   await page.getByTestId('yard-upgrade-cannons').click()
   expect((await getState(page)).numbers['galleonCannon']).toBe(2)
+})
+
+test('ride the comet: spend stardust to fast-travel to a far stratum (DESIGN §175)', async ({ page }) => {
+  await page.goto('/')
+  await page.getByTestId('ack-opener').click()
+
+  // A player who has caught the comet at least once (cometFirstCaught) — the ride-it section unlocks — and
+  // holds enough stardust for a ride. The current pass is already harvested (cometLastPass == currentPass,
+  // i.e. floor(90_000*5 / 90_000) == 5), so the comet is on cooldown — the state in which ride-it is offered
+  // (you ride the comet you have caught, not one you are still harpooning).
+  await page.evaluate(() => {
+    ;(window as any).__cb3.session.dispatch((state: any) => ({
+      ...state,
+      accumulatedGameTimeMs: 90_000 * 5,
+      flags: {
+        ...state.flags,
+        mapUnlocked: true,
+        statusBarUnlocked: true,
+        celestialNavigationLearned: true,
+        fishbowlHelmForged: true,
+        galleonCommissioned: true,
+        reefReached: true,
+        cometFirstCaught: true,
+      },
+      numbers: { ...state.numbers, cometLastPass: 5 },
+      stardust: { current: 12, lifetimeAccumulated: 12, historicalMax: 12 },
+      strings: { ...state.strings, galleonName: 'the Sweet Tooth' },
+    }))
+  })
+
+  await page.evaluate(() => (window as any).__cb3.showComet())
+  await expect(page.getByTestId('comet-screen')).toBeVisible()
+  // The ride-it section is offered (you have caught the comet before).
+  await expect(page.getByTestId('comet-ride')).toBeVisible()
+
+  // Ride to the rock candy reef: the fare is burned and you arrive on the reef.
+  const before = (await getState(page)).stardust.current
+  await page.getByTestId('comet-ride-reef').click()
+  await expect(page.getByTestId('reef-screen')).toBeVisible()
+  expect((await getState(page)).stardust.current).toBeLessThan(before) // the fare was spent
+})
+
+test('the pop rock pike: forged from the comet-stuff once you have caught the comet', async ({ page }) => {
+  await page.goto('/')
+  await page.getByTestId('ack-opener').click()
+
+  // A player with forge access (the spoon), who has caught the comet (the recipe's gate) and holds the
+  // pop-rock haul + candy fee the pike costs.
+  await page.evaluate(() => {
+    ;(window as any).__cb3.session.dispatch((state: any) => ({
+      ...state,
+      flags: { ...state.flags, spoonOwned: true, cometFirstCaught: true },
+      ownedItems: { ...state.ownedItems, woodenSpoon: true },
+      candies: { current: 10_000, lifetimeAccumulated: 10_000, historicalMax: 10_000 },
+      popRocks: { current: 300, lifetimeAccumulated: 300, historicalMax: 300 },
+    }))
+  })
+
+  await page.evaluate(() => (window as any).__cb3.showForge())
+  await expect(page.getByTestId('forge-screen')).toBeVisible()
+  await expect(page.getByTestId('buy-popRockPike')).toBeVisible()
+
+  // Forge it: owned + auto-equipped to the weapon slot.
+  await page.getByTestId('buy-popRockPike').click()
+  await expect(page.getByTestId('shop-row-popRockPike')).toContainText('owned')
+
+  const s = await getState(page)
+  expect(s.ownedItems['popRockPike']).toBe(true)
+  expect(s.equipped['weapon']).toBe('popRockPike')
 })

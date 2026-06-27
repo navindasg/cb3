@@ -66,3 +66,14 @@ export const COMET_PERIOD_MS = 90_000
 /** Pop rocks a catch frees: a base haul, plus a one-time bonus the FIRST time you ride one down. */
 export const POP_ROCKS_PER_CATCH = 40
 export const POP_ROCKS_FIRST_CATCH_BONUS = 60
+
+/** Stardust a catch frees, harvested ALONGSIDE the pop rocks (DESIGN §180 "harvest pop rocks + stardust").
+ * Stardust is the rarer haul: it is the comet's own light, the fuel you spend to RIDE the comet between the
+ * strata (below) and — banked — the star-sea craft material (the stardust rapier §230, the fossil star §309).
+ * Smaller than the pop-rock haul so a ride is a real choice against saving it. §22-open tuning. */
+export const STARDUST_PER_CATCH = 8
+
+/** Stardust burned to ride the comet to another stratum (the §175 fast-travel — "land on it... ride it
+ * between strata"). Each ride costs this; a catch (STARDUST_PER_CATCH) funds a little over one ride, so the
+ * comet pays its own fare with some left to bank. Riding never costs pop rocks — only its own light. */
+export const RIDE_STARDUST_COST = 5
