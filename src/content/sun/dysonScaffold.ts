@@ -8,9 +8,9 @@ import type { PriceLine } from '@/engine/types/defs'
 // the reward — the first strut on the star — is the only payoff this slice.
 //
 // Stages whose reward slices have not yet landed stay `deferred:true` (shown locked so the wall ahead is
-// legible). As of Increment 4, stages 1 (the solar collectors), 2 (the gummy work-crews) and 3 (the star
-// sea) are all buildable; stages 4-5 (the observation deck / the descent port) remain deferred until their
-// slices land. Their escalating prices (~x10/stage to ~1e12, folding in caramel/stardust in their own
+// legible). As of Increment 5, stages 1 (the solar collectors), 2 (the gummy work-crews), 3 (the star sea)
+// and 4 (the observation deck) are all buildable; stage 5 (the descent port) remains deferred until its
+// slice lands. Their escalating prices (~x10/stage to ~1e12, folding in caramel/stardust in their own
 // slices) are real. The numbers key holding the highest completed stage is `dysonStage` (default 0).
 // §22-open tuning. Whoever runs the scaffold is terse and tired; the shipwright's bravado is gone.
 
@@ -186,8 +186,9 @@ export const DYSON_STAGES: readonly DysonStage[] = [
       { resource: 'rockCandy', amount: 3_000_000 },
     ],
     doneFlag: 'dysonStage4Done',
-    deferred: true,
-    note: 'needs the observation deck',
+    // Increment 5 — un-deferred: the observation deck (this stage's reward) has landed, so the gantry is
+    // buildable. Raising it opens the deck — the §15/§189 emotional core where the astronomer goes quiet and
+    // the player watches a star go out — and steepens the star counter's descent through the rest of the act.
   },
   {
     stage: 5,

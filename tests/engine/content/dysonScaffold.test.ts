@@ -112,8 +112,8 @@ describe('the dyson scaffold — canBuildStage', () => {
   })
 
   it('is false on a deferred next stage even when nominally affordable', () => {
-    // After stage 3, the next stage (4) is deferred — its reward economy (the observation deck) has not landed.
-    const s = atStage(3, {
+    // After stage 4, the next stage (5, the descent port) is deferred — its build-out slice has not landed.
+    const s = atStage(4, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
       caramel: createResource(1e9),
@@ -208,8 +208,8 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
   })
 
   it('returns the SAME reference + deferred on a deferred next stage', () => {
-    // After stage 3, the next stage (4, the observation deck) is still deferred.
-    const before = atStage(3, {
+    // After stage 4, the next stage (5, the descent port) is still deferred.
+    const before = atStage(4, {
       candies: createResource(1e15),
       rockCandy: createResource(1e12),
       caramel: createResource(1e9),
@@ -230,9 +230,9 @@ describe('the dyson scaffold — buildStage refuses (no partial spend, SAME ref)
 })
 
 describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
-  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 4+ are deferred)', () => {
-    // From stage 0, the only buildable stage is 1; stages 2 and 3 are buildable once their predecessor is
-    // done; stage 4 is deferred (its reward, the observation deck, has not landed).
+  it('cannot raise stage N+1 before stage N (the next stage is always currentStage+1, and 5+ are deferred)', () => {
+    // From stage 0, the only buildable stage is 1; stages 2-4 are buildable once their predecessor is done;
+    // stage 5 is deferred (its reward, the descent port build-out, has not landed).
     const s = funded()
     expect(nextStage(s)!.stage).toBe(1)
     // even with infinite resources, you cannot skip past the sequential ladder to a deferred stage
@@ -252,10 +252,14 @@ describe('the dyson scaffold — sequential, one-way (farm-proof)', () => {
     const third = buildStage(second.state)
     expect(third.ok).toBe(true)
     expect(currentStage(third.state)).toBe(3)
-    // now stage 4 is next, but it is deferred — a re-build is refused
+    // stage 4 is next AND now buildable (Increment 5 un-deferred it — the observation deck has landed)
     const fourth = buildStage(third.state)
-    expect(fourth.ok).toBe(false)
-    expect(fourth.reason).toBe('deferred')
+    expect(fourth.ok).toBe(true)
+    expect(currentStage(fourth.state)).toBe(4)
+    // now stage 5 is next, but it is deferred — a re-build is refused
+    const fifth = buildStage(fourth.state)
+    expect(fifth.ok).toBe(false)
+    expect(fifth.reason).toBe('deferred')
   })
 
   it('raising stage 1 a second time is a no-op once done (the ledger has moved past it)', () => {
@@ -329,13 +333,14 @@ describe('the dyson stages config — sanity', () => {
     expect(STAGE1_CANDIES).toBeGreaterThan(STAGE1_ROCK)
   })
 
-  it('stages 2 and 3 are buildable (Inc-3 + Inc-4 un-deferred them); stages 4-5 stay deferred', () => {
-    // stage 2 (the lower ring, the gummy work-crews) and stage 3 (the outer bracing, the star sea) are now
-    // buildable — no deferred flag.
+  it('stages 2-4 are buildable (Inc-3/4/5 un-deferred them); stage 5 stays deferred', () => {
+    // stage 2 (the lower ring, the gummy work-crews), stage 3 (the outer bracing, the star sea) and stage 4
+    // (the observation gantry, the observation deck) are now buildable — no deferred flag.
     expect(DYSON_STAGES[1]!.deferred).toBeFalsy()
     expect(DYSON_STAGES[2]!.deferred).toBeFalsy()
-    // stages 4-5 remain deferred until their reward slices land, each with a note saying why.
-    for (const stage of DYSON_STAGES.slice(3)) {
+    expect(DYSON_STAGES[3]!.deferred).toBeFalsy()
+    // stage 5 (the descent port) remains deferred until its build-out slice lands, with a note saying why.
+    for (const stage of DYSON_STAGES.slice(4)) {
       expect(stage.deferred).toBe(true)
       expect(stage.note).toBeTruthy()
     }

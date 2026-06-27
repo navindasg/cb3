@@ -34,6 +34,24 @@ import {
   canBuildTrawler,
   buildTrawler,
 } from '@/engine/content/starSea'
+import {
+  deckOpen,
+  starEaterSighted,
+  witnessStarDie,
+} from '@/engine/content/observationDeck'
+import { projectedStars, starDescentMultiplier } from '@/engine/content/starCounter'
+import {
+  STAR_DEATH_FRAMES,
+  EATER_FAR,
+  EATER_NEAR,
+  EATER_CLOSE,
+  EATER_NEAR_AT_STAGE,
+  EATER_CLOSE_AT_STAGE,
+} from '@/content/sun/observationDeck'
+import { selectVariant } from '@/engine/content/dialogue'
+import { ASTRONOMER_DIALOGUE } from '@/content/dialogue/astronomer'
+import { t } from '@/content/i18n/en'
+import type { GameTextKey } from '@/content/i18n/schema'
 import { DYSON_STAGES, DYSON_STAGE_COUNT } from '@/content/sun/dysonScaffold'
 import {
   SOLAR_COLLECTOR_CANDY_COST,
@@ -62,6 +80,9 @@ import { SUN_REACHED_FLAG } from '@/content/flags'
 // The sun is built from pure ASCII (engine/content/dysonScaffold.SUN_ART_BASE + the scaffold overlays);
 // the amber glow is the CSS .glow-sun class on the <pre> (NEVER the unicode sun glyph). The voice here is
 // terse and tired — the shipwright's bravado is gone; this is the §186 idle wall, with dread.
+
+/** Resolve an i18n key to its English string (the thin-wiring cast used by every render module). */
+const tk = (key: string): string => t(key as GameTextKey)
 
 const RESOURCE_LABEL: Record<ResourceKey, string> = {
   candies: 'candies',
@@ -121,9 +142,20 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       session.dispatch((s) => ({ ...s, flags: { ...s.flags, [SUN_REACHED_FLAG]: true } }))
     }
 
+    // Whether we are looking through the deck's glass rather than at the scaffold itself. A transient view
+    // toggle (never persisted) — the deck's one persistent effect (the witnessed star death) lives in the
+    // engine's commit-once witnessStarDie. Reset on each entry so the scaffold is always the landing view.
+    let viewingDeck = false
+
     function render(): void {
       ctx.clearScreen()
       const s = session.getState()
+
+      if (viewingDeck) {
+        renderDeck(s)
+        return
+      }
+
       heading('the dyson scaffold', 'scaffold-screen')
 
       // Defensive: a stray route here before the Act-2 gate answers in voice, not a blank screen.
@@ -143,6 +175,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       renderSolarWorks(s)
       renderWorkCrews(s)
       renderStarSea(s)
+      renderDeckEntry(s)
 
       screen.appendChild(ctx.button('back to the sky port', 'scaffold-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'scaffold-to-map', () => ctx.showMap()))
@@ -330,6 +363,131 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
         buyTrawler.classList.add('shop-unaffordable')
       }
       screen.appendChild(buyTrawler)
+    }
+
+    /**
+     * The entry to the observation deck (the stage-4 reward, §15/§189). Shown only once the observation
+     * gantry is raised (deckOpen). One button into the deck's own sub-view; the heavy beat (the scripted
+     * star death, the astronomer's turn, the silhouette) lives in renderDeck. Nothing here before stage 4.
+     */
+    function renderDeckEntry(s: GameState): void {
+      if (!deckOpen(s)) return
+      heading('the observation deck', 'scaffold-deck-entry')
+      paragraph(
+        'A long glass runs out from the gantry into the dark past the sun. The astronomer is up here now, the one who sold you the telescope a lifetime ago. He is not talking.',
+        'blurb',
+        'scaffold-deck-entry-blurb',
+      )
+      screen.appendChild(
+        ctx.button(
+          starEaterSighted(s) ? 'the observation deck' : 'look through the glass',
+          'scaffold-to-deck',
+          () => {
+            viewingDeck = true
+            render()
+          },
+        ),
+      )
+    }
+
+    /**
+     * The observation deck sub-view (§15/§189 — THE emotional core). The live star counter (projectedStars,
+     * which now falls faster — the dyson acceleration made visible). The FIRST time the player looks, the
+     * scripted star-death plays and witnessStarDie commits ONE star + the sighted flag (commit-once,
+     * farm-proof — a second visit shows the static aftermath, never re-fires). The astronomer's grim line is
+     * the one place the game states the §15 truth. The eater silhouette resolves nearer the further the cage
+     * has come. Pure ASCII; the glow is CSS. Silence here — the only music is saved for Act 4.
+     */
+    function renderDeck(s: GameState): void {
+      heading('the observation deck', 'deck-screen')
+
+      // The one-shot: the first look removes exactly one star and stamps the flag, atomically (the engine
+      // refuses to re-fire). We branch the copy on whether THIS render is the first view.
+      const firstView = !starEaterSighted(s)
+      if (firstView) {
+        session.dispatch((st) => witnessStarDie(st))
+        ctx.logText('A star you were looking straight at went out. Not dimmed. Gone, the way a candle is gone.')
+      }
+      const now = session.getState()
+
+      // The live counter — the number that has fallen all game, here where you finally watch it move (and,
+      // post-acceleration, move faster). projectedStars reads the accelerated rate automatically.
+      paragraph(
+        `stars in the sky: ${formatCount(projectedStars(now))}`,
+        'blurb',
+        'deck-counter',
+      )
+
+      // The scripted star-death frames, only on the first view; afterward the glass shows the aftermath.
+      const glass = doc.createElement('pre')
+      glass.className = 'arena glow-sun'
+      glass.setAttribute('data-testid', 'deck-glass')
+      glass.textContent = firstView
+        ? STAR_DEATH_FRAMES.join('\n')
+        : eaterArt(currentStage(now)).join('\n')
+      screen.appendChild(glass)
+
+      if (firstView) {
+        paragraph(
+          'You watched it die. Where it was, there is a shape in the glass now — far off, small, the wrong kind of dark. It was not there a moment ago. You have the cold, certain sense that it is closer than it was.',
+          'blurb',
+          'deck-first-view',
+        )
+      } else {
+        paragraph(
+          'The shape is still there in the glass, out past the sun. It is closer now. It does not seem to be in a hurry. It does not need to be.',
+          'blurb',
+          'deck-silhouette',
+        )
+      }
+
+      // The astronomer's turn — the one place the game says it. His grim variant is gated on dysonStage4Done,
+      // so on the deck (which only opens at stage 4) it is always the selected line.
+      renderAstronomer(now)
+
+      // The dread made arithmetic: name the acceleration the building has caused, without explaining the why.
+      const mult = starDescentMultiplier(now)
+      if (mult > 1) {
+        paragraph(
+          `The counter is falling faster than it used to. Something about the scaffold. (the descent is ${mult.toFixed(2)}x what it was)`,
+          'blurb',
+          'deck-acceleration',
+        )
+      }
+
+      screen.appendChild(
+        ctx.button('back to the scaffold', 'deck-to-scaffold', () => {
+          viewingDeck = false
+          render()
+        }, 0),
+      )
+    }
+
+    /** The astronomer, speaking on the deck — his highest-priority (grim) variant, resolved by the engine. */
+    function renderAstronomer(s: GameState): void {
+      const variant = selectVariant(ASTRONOMER_DIALOGUE, s)
+      if (!variant) return
+      const who = doc.createElement('p')
+      who.className = 'speaker'
+      who.textContent = `${tk(ASTRONOMER_DIALOGUE.nameKey)}:`
+      screen.appendChild(who)
+      const speech = doc.createElement('div')
+      speech.className = 'dialogue'
+      speech.setAttribute('data-testid', 'deck-astronomer')
+      for (const lineKey of variant.lines) {
+        const line = doc.createElement('p')
+        line.className = 'dialogue-line'
+        line.textContent = tk(lineKey)
+        speech.appendChild(line)
+      }
+      screen.appendChild(speech)
+    }
+
+    /** Pick the eater silhouette for how far the cage has come (a fleck at stage 4, a mouth/edges by 5). */
+    function eaterArt(stage: number): readonly string[] {
+      if (stage >= EATER_CLOSE_AT_STAGE) return EATER_CLOSE
+      if (stage >= EATER_NEAR_AT_STAGE) return EATER_NEAR
+      return EATER_FAR
     }
 
     function doBuildTrawler(): void {

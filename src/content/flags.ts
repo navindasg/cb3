@@ -184,3 +184,15 @@ export const DYSON_STAGE_DONE_FLAGS = [
   'dysonStage4Done',
   'dysonStage5Done',
 ] as const
+
+/**
+ * Set the first time the player witnesses a star go out on the observation deck (Act 3 — the stage-4
+ * reward, DESIGN §15/§189). The deck opens with dysonStage4Done; the scripted first-view is gated on this
+ * flag being UNSET. engine/content/observationDeck.witnessStarDie sets the SAME literal in lock-step (the
+ * moonStrata idiom) in the same dispatch that removes EXACTLY one star — commit-once, farm-proof: a second
+ * call returns the SAME reference and nothing is removed. The engine never imports this content value
+ * (ADR §3). After it is set the deck re-renders as a static "the silhouette is closer now" scene; the
+ * astronomer's grim line (the one place the game states the §15 truth) is gated on dysonStage4Done, not on
+ * this — he is changed for good once the gantry is up.
+ */
+export const STAR_EATER_SIGHTED_FLAG = 'starEaterSighted'

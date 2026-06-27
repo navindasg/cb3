@@ -83,6 +83,9 @@ export interface GameText {
   'dialogue.astronomer.seed1': string
   'dialogue.astronomer.seed2': string
   'dialogue.astronomer.seed3': string
+  'dialogue.astronomer.grim1': string
+  'dialogue.astronomer.grim2': string
+  'dialogue.astronomer.grim3': string
 
   // --- recipes ---
   'recipe.syrupOfHealth.name': string

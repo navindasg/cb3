@@ -83,6 +83,10 @@ export const en: GameText = {
   'dialogue.astronomer.seed1': 'A meteorite! Iron-nickel, certainly. I shall write a paper.',
   'dialogue.astronomer.seed2': 'That object in the crater? Volcanic glass. Or an egg. Definitely not a seed.',
   'dialogue.astronomer.seed3': 'Whatever you do, do not plant it. There is no possible reason to plant it.',
+  // The observation deck (§15/§189) — the one place the game states the truth aloud. He does not theorise now.
+  'dialogue.astronomer.grim1': 'I was wrong. About all of it.',
+  'dialogue.astronomer.grim2': 'They are not burning out. They are being eaten.',
+  'dialogue.astronomer.grim3': 'Eight thousand and counting down. I never thought to ask down to what.',
 
   // recipes
   'recipe.syrupOfHealth.name': 'syrup of health',
