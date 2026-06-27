@@ -326,6 +326,12 @@ pre {
   color: #ffd0f0;
   text-shadow: 0 0 4px #ff7fd6, 0 0 10px #ff4dc4;
 }
+.glow-egg {
+  /* The caramel core: the egg + the half-hatched dragon. Paler and softer than the blazing photosphere
+   * (.glow-sun) — the warmth kept on from inside, not a fire. Melancholy gold turning to awe. */
+  color: #f0cf8a;
+  text-shadow: 0 0 3px #ffe6a8, 0 0 9px rgba(255, 214, 130, 0.45);
+}
 
 /* The pulsing overlay is a separate, absolutely-positioned layer that animates OPACITY
  * only (the static glow class above carries the colour/shadow). contain:paint isolates it. */

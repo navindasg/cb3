@@ -12,6 +12,7 @@ import { ACT0_SECRETS } from '@/content/secrets'
 import { TAVERN_RUMORS } from '@/content/tavern/rumors'
 import { ALL_DEATH_MESSAGES } from '@/content/deathMessages'
 import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
+import { DRAGON_WORDS, DRAGON_SPEAKER_KEY } from '@/content/sun/caramelCore'
 
 const KEYS = new Set(Object.keys(en))
 const has = (key: string): boolean => KEYS.has(key)
@@ -63,6 +64,15 @@ describe('en.ts locale completeness', () => {
     for (const threshold of FIELD_REVEAL_THRESHOLDS) {
       const key = `action.${threshold.action}` as GameTextKey
       expect(has(key), key).toBe(true)
+    }
+  })
+
+  it('the solar dragon speaker + every small word resolve to non-empty i18n strings (Act 4 — the caramel core)', () => {
+    expect(has(DRAGON_SPEAKER_KEY), DRAGON_SPEAKER_KEY).toBe(true)
+    expect(t(DRAGON_SPEAKER_KEY)).toBeTruthy()
+    for (const key of DRAGON_WORDS) {
+      expect(has(key), key).toBe(true)
+      expect(t(key), key).toBeTruthy()
     }
   })
 })

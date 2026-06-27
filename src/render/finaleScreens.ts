@@ -34,6 +34,24 @@ import {
   MIN_PLATING,
   RUNG_COUNT,
 } from '@/content/sun/photosphere'
+import {
+  coreOpen,
+  coreStage,
+  atDragon,
+  approachCore,
+} from '@/engine/content/caramelCore'
+import {
+  CORE_STAGES,
+  CORE_ART,
+  CORE_BLURB,
+  DRAGON_WORDS,
+  DRAGON_SPEAKER_KEY,
+  CARAMEL_CORE_HEADING,
+  APPROACH_LABEL,
+  LEAVE_CORE_LABEL,
+  type CoreStageId,
+} from '@/content/sun/caramelCore'
+import { t } from '@/content/i18n/en'
 import type { DescentAudio } from '@/render/descentAudio'
 
 // The finale screens (Act 4 — quest 11+, DESIGN §194/§196). A wiring sub-module of the DOM bootstrap,
@@ -65,16 +83,22 @@ export interface FinaleContext {
   showMap(): void
   /** Return to the dyson scaffold (the descent port is reached from the scaffold). */
   showScaffold(): void
-  /** The caramel-core reveal (the clean hook — wired in the next slice; routed on a cleared descent). */
-  showCaramelCore(): void
+  /** The star-eater's arrival (the next slice, 4.4); the caramel-core reveal routes here off the dragon. */
+  showStarEater(): void
 }
 
 export interface FinaleScreens {
   /** The photosphere descent port — the landing beat, the descent gate, and the rung-by-rung descent. */
   showDescentPort(): void
   /**
+   * The caramel-core reveal (Quest 12) — the §15 lock: molten caramel -> the shell -> the egg -> the
+   * half-hatched solar dragon. A non-combat scene; the dragon's small words do the work. Routes onward to
+   * the star-eater's arrival.
+   */
+  showCaramelCore(): void
+  /**
    * The finale flow's entry. This slice routes it straight to the descent port; later slices add the
-   * caramel-core reveal, the star-eater fight, and the choice screen behind it.
+   * star-eater fight and the choice screen behind it.
    */
   showFinale(): void
 }
@@ -168,7 +192,7 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     function renderCleared(): void {
       backdrop()
       paragraph(DESCENT_CORE_REACHED_BLURB, 'blurb', 'descent-cleared')
-      screen.appendChild(ctx.button('go down to the core', 'descent-to-core', () => ctx.showCaramelCore()))
+      screen.appendChild(ctx.button('go down to the core', 'descent-to-core', () => showCaramelCore()))
       screen.appendChild(ctx.button('back to the scaffold', 'descent-to-scaffold', () => ctx.showScaffold(), 0))
     }
 
@@ -179,7 +203,7 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
         if (!committed) commitClear()
         backdrop()
         paragraph(DESCENT_CORE_REACHED_BLURB, 'blurb', 'descent-won')
-        screen.appendChild(ctx.button('go down to the core', 'descent-to-core', () => ctx.showCaramelCore()))
+        screen.appendChild(ctx.button('go down to the core', 'descent-to-core', () => showCaramelCore()))
         return
       }
       if (outcome === 'lost') {
@@ -263,9 +287,96 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     render()
   }
 
+  /**
+   * The caramel-core reveal (Quest 12, §15/§196/§285) — the §15 larval-star lock. A non-combat scene: the
+   * stage march (molten -> shell -> egg -> dragon) is the tested engine (engine/content/caramelCore); this
+   * only draws the per-stage ASCII (glowing via .glow-egg, never a glyph) + blurb and routes the 'go closer'
+   * clicks. The truth is SHOWN — the egg, the child keeping the light on — and the dragon's small words
+   * (§278) do the work; no lore dump. approachCore sets caramelCoreReached + solarDragonMet atomically on the
+   * step that reaches the dragon; from there the words reveal one at a time, then it routes to the star-eater.
+   */
+  function showCaramelCore(): void {
+    // How many of the dragon's small words are shown (transient to this visit; first shows on arrival).
+    let wordsShown = 1
+
+    function render(): void {
+      ctx.clearScreen()
+      const s = session.getState()
+
+      heading(CARAMEL_CORE_HEADING, 'caramel-core-screen')
+
+      // Defensive: a stray route here before the descent is cleared answers in voice, not a blank screen.
+      if (!coreOpen(s)) {
+        paragraph(
+          'The bathysphere has not reached the core. There is nothing down here yet but light.',
+          'blurb',
+          'caramel-core-shut',
+        )
+        screen.appendChild(ctx.button('back to the descent port', 'core-to-port', () => showDescentPort(), 0))
+        return
+      }
+
+      const stage = coreStage(s)
+      // coreStage clamps into [0, DRAGON_STAGE], so the lookup is always defined; the 'molten' fallback
+      // keeps the type honest under noUncheckedIndexedAccess (it is unreachable in practice).
+      const stageId: CoreStageId = CORE_STAGES[stage] ?? 'molten'
+
+      const art = doc.createElement('pre')
+      art.className = 'arena glow-egg'
+      art.setAttribute('data-testid', 'caramel-core-art')
+      art.setAttribute('data-stage', String(stage))
+      art.setAttribute('data-stage-id', stageId)
+      art.textContent = CORE_ART[stageId]
+      screen.appendChild(art)
+
+      paragraph(CORE_BLURB[stageId], 'blurb', 'caramel-core-blurb')
+
+      if (atDragon(s)) renderDragon()
+      else screen.appendChild(ctx.button(APPROACH_LABEL, 'core-approach', () => stepCloser()))
+    }
+
+    function renderDragon(): void {
+      // The dragon's few small words (§278), revealed one per click; the speaker is unnamed (§22 — "the dragon").
+      const speaker = t(DRAGON_SPEAKER_KEY)
+      const words = doc.createElement('pre')
+      words.className = 'arena'
+      words.setAttribute('data-testid', 'solar-dragon-words')
+      words.setAttribute('data-words-shown', String(wordsShown))
+      words.textContent = DRAGON_WORDS.slice(0, wordsShown)
+        .map((key) => `${speaker}:  ${t(key)}`)
+        .join('\n\n')
+      screen.appendChild(words)
+
+      if (wordsShown < DRAGON_WORDS.length) {
+        // It has more to say. A small word at a time.
+        screen.appendChild(ctx.button('wait', 'core-listen', () => listenMore()))
+      } else {
+        // It has said all it can. The sky has noticed you came down — onward to the star-eater (4.4).
+        screen.appendChild(ctx.button(LEAVE_CORE_LABEL, 'core-to-star-eater', () => ctx.showStarEater()))
+      }
+    }
+
+    function stepCloser(): void {
+      // The pure transition: advance the cursor; the step that reaches the dragon sets both flags atomically.
+      const before = atDragon(session.getState())
+      session.dispatch((st) => approachCore(st))
+      if (!before && atDragon(session.getState())) {
+        ctx.logText('The core is an egg. Curled inside it, half out of the shell, the solar dragon keeps the light on.')
+      }
+      render()
+    }
+
+    function listenMore(): void {
+      wordsShown = Math.min(DRAGON_WORDS.length, wordsShown + 1)
+      render()
+    }
+
+    render()
+  }
+
   function showFinale(): void {
     showDescentPort()
   }
 
-  return { showDescentPort, showFinale }
+  return { showDescentPort, showCaramelCore, showFinale }
 }

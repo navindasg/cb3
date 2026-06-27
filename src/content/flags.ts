@@ -236,3 +236,23 @@ export const DESCENT_CUE_PLAYED_FLAG = 'descentCuePlayed'
  * engine never imports this content value, ADR §3). No schema bump: a flag rides the flags z.record.
  */
 export const PHOTOSPHERE_CLEARED_FLAG = 'photosphereCleared'
+
+/**
+ * Set when the caramel-core reveal reaches its final stage (Act 4 — quest 12, DESIGN §15/§196/§285). The
+ * §15 larval-star spine LOCKS into place here: the core is not a furnace but an EGG, and curled inside it the
+ * half-hatched solar dragon keeps the light on because that is what the egg does. Set in the SAME dispatch as
+ * SOLAR_DRAGON_MET_FLAG (commit-once, the witnessStarDie idiom) on the call that advances to the dragon stage.
+ * engine/content/caramelCore sets the SAME literal in lock-step (the moonStrata idiom — the engine never
+ * imports this content value, ADR §3). The reveal is a scene, not a gate: re-viewable, but it grants nothing
+ * to farm (no resource, no loot). No schema bump: a flag rides the flags z.record.
+ */
+export const CARAMEL_CORE_REACHED_FLAG = 'caramelCoreReached'
+
+/**
+ * Set in the SAME dispatch as CARAMEL_CORE_REACHED_FLAG, when the reveal reaches the half-hatched solar
+ * dragon (Act 4 — quest 12, DESIGN §278/§285). Implies caramelCoreReached (the two are always set together —
+ * asserted in the engine test). The dragon speaks in single small words; this flag gates the "met" state the
+ * screen reads to keep showing the dragon (and is the clean hook the star-eater arrival opens on).
+ * engine/content/caramelCore sets the SAME literal in lock-step (the moonStrata idiom, ADR §3).
+ */
+export const SOLAR_DRAGON_MET_FLAG = 'solarDragonMet'

@@ -69,6 +69,7 @@ export interface GameText {
   // --- speakers ---
   'speaker.grandma': string
   'speaker.astronomer': string
+  'speaker.solarDragon': string
 
   // --- grandma dialogue ---
   'dialogue.grandma.intro1': string
@@ -88,6 +89,11 @@ export interface GameText {
   'dialogue.astronomer.grim1': string
   'dialogue.astronomer.grim2': string
   'dialogue.astronomer.grim3': string
+
+  // --- the solar dragon (Act 4 — the caramel core; it speaks in single small words, §278) ---
+  'dialogue.solarDragon.word1': string
+  'dialogue.solarDragon.word2': string
+  'dialogue.solarDragon.word3': string
 
   // --- recipes ---
   'recipe.syrupOfHealth.name': string

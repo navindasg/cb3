@@ -69,6 +69,7 @@ export const en: GameText = {
   // speakers
   'speaker.grandma': 'Grandma',
   'speaker.astronomer': 'The Astronomer',
+  'speaker.solarDragon': 'the dragon',
 
   // grandma dialogue
   'dialogue.grandma.intro1': 'There you are, dear. You look hungry.',
@@ -89,6 +90,11 @@ export const en: GameText = {
   'dialogue.astronomer.grim1': 'I was wrong. About all of it.',
   'dialogue.astronomer.grim2': 'They are not burning out. They are being eaten.',
   'dialogue.astronomer.grim3': 'Eight thousand and counting down. I never thought to ask down to what.',
+
+  // the solar dragon — single small words (§278); the §15 spine, spoken by the thing itself.
+  'dialogue.solarDragon.word1': 'Warm.',
+  'dialogue.solarDragon.word2': 'I keep it warm.',
+  'dialogue.solarDragon.word3': 'Are you mine?',
 
   // recipes
   'recipe.syrupOfHealth.name': 'syrup of health',
