@@ -43,9 +43,7 @@ import { projectedStars, starDescentMultiplier } from '@/engine/content/starCoun
 import {
   STAR_DEATH_FRAMES,
   EATER_FAR,
-  EATER_NEAR,
   EATER_CLOSE,
-  EATER_NEAR_AT_STAGE,
   EATER_CLOSE_AT_STAGE,
 } from '@/content/sun/observationDeck'
 import { selectVariant } from '@/engine/content/dialogue'
@@ -445,11 +443,11 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       // so on the deck (which only opens at stage 4) it is always the selected line.
       renderAstronomer(now)
 
-      // The dread made arithmetic: name the acceleration the building has caused, without explaining the why.
-      const mult = starDescentMultiplier(now)
-      if (mult > 1) {
+      // The dread made plain — but the number stays the only tell, as everywhere else. We name that the
+      // counter is falling faster without ever printing the multiplier; the moving number does the rest.
+      if (starDescentMultiplier(now) > 1) {
         paragraph(
-          `The counter is falling faster than it used to. Something about the scaffold. (the descent is ${mult.toFixed(2)}x what it was)`,
+          'The counter is falling faster than it used to. Something about the scaffold.',
           'blurb',
           'deck-acceleration',
         )
@@ -483,11 +481,9 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       screen.appendChild(speech)
     }
 
-    /** Pick the eater silhouette for how far the cage has come (a fleck at stage 4, a mouth/edges by 5). */
+    /** Pick the eater silhouette for how far the cage has come (a fleck at stage 4, close/edges by 5). */
     function eaterArt(stage: number): readonly string[] {
-      if (stage >= EATER_CLOSE_AT_STAGE) return EATER_CLOSE
-      if (stage >= EATER_NEAR_AT_STAGE) return EATER_NEAR
-      return EATER_FAR
+      return stage >= EATER_CLOSE_AT_STAGE ? EATER_CLOSE : EATER_FAR
     }
 
     function doBuildTrawler(): void {

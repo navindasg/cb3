@@ -2,9 +2,7 @@ import {
   STAGE_ACCEL,
   STAR_DEATH_FRAMES,
   EATER_FAR,
-  EATER_NEAR,
   EATER_CLOSE,
-  EATER_NEAR_AT_STAGE,
   EATER_CLOSE_AT_STAGE,
 } from '@/content/sun/observationDeck'
 
@@ -38,12 +36,11 @@ describe('the observation deck content — pure-ASCII frames (no emoji / unicode
 
   it('every eater silhouette is pure printable ASCII', () => {
     assertPureAscii(EATER_FAR)
-    assertPureAscii(EATER_NEAR)
     assertPureAscii(EATER_CLOSE)
   })
 
   it('each silhouette set keeps a single fixed row width (never raggeds the grid)', () => {
-    for (const art of [STAR_DEATH_FRAMES, EATER_FAR, EATER_NEAR, EATER_CLOSE]) {
+    for (const art of [STAR_DEATH_FRAMES, EATER_FAR, EATER_CLOSE]) {
       const width = art[0]!.length
       for (const row of art) expect(row.length).toBe(width)
     }
@@ -55,11 +52,11 @@ describe('the observation deck content — pure-ASCII frames (no emoji / unicode
   })
 })
 
-describe('the observation deck content — eater-distance stage thresholds', () => {
-  it('the silhouette only resolves nearer as the cage closes (near ≤ close stage)', () => {
-    expect(EATER_NEAR_AT_STAGE).toBeLessThanOrEqual(EATER_CLOSE_AT_STAGE)
-    // both are within the 5-stage scaffold
-    expect(EATER_CLOSE_AT_STAGE).toBeLessThanOrEqual(5)
-    expect(EATER_NEAR_AT_STAGE).toBeGreaterThanOrEqual(4) // never before the deck (stage 4) exists
+describe('the observation deck content — eater-distance stage threshold', () => {
+  it('the silhouette closes within the deck span (it opens at stage 4, the cage closes at stage 5)', () => {
+    // The deck spans exactly two scaffold stages: a fleck at 4, the descent at 5. The close threshold must
+    // sit inside that span (4..5) so the silhouette is far when the deck opens and near once the cage closes.
+    expect(EATER_CLOSE_AT_STAGE).toBeGreaterThan(4) // still a fleck on the deck's first stage
+    expect(EATER_CLOSE_AT_STAGE).toBeLessThanOrEqual(5) // within the 5-stage scaffold
   })
 })

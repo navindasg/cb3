@@ -45,10 +45,11 @@ export const STAR_DEATH_FRAMES: readonly string[] = [
 
 // --- the star-eater silhouette (very far, getting closer across the act) ------------------------------
 // The shape the dying star leaves behind in the glass — a darkness with an outline, larger and nearer the
-// further the act runs (the screen picks a stage by the dyson progress). NOT named, NOT explained anywhere
+// further the act runs (the screen picks a frame by the dyson progress). NOT named, NOT explained anywhere
 // but the astronomer's one line. It is the §15 truth, shown: the thing that hatched from the moon's hollow
-// core (§15.2), grown, out among the stars, eating them. Three sizes — first sighting (a fleck), the act's
-// middle (a mouth), and the descent (close enough to have edges). Pure printable ASCII.
+// core (§15.2), grown, out among the stars, eating them. The deck spans exactly two scaffold stages — it
+// opens at stage 4 and the cage closes at stage 5 — so the silhouette has two states: the first sighting (a
+// fleck, far) and the descent (close enough to have edges). Pure printable ASCII.
 
 /** First sighting — a fleck against the dark, almost nothing. Far. */
 export const EATER_FAR: readonly string[] = [
@@ -57,15 +58,6 @@ export const EATER_FAR: readonly string[] = [
   '           (o)           ',
   '            \'            ',
   '                         ',
-] as const
-
-/** Middle of the act — a shape now, with a mouth. Closer. */
-export const EATER_NEAR: readonly string[] = [
-  '          _____          ',
-  '        ,/     \\.        ',
-  '       (   o    )        ',
-  '        \\  vvv  /        ',
-  '         `-----`         ',
 ] as const
 
 /** The descent — close enough to have edges, and to fill the glass. It is not in a hurry. */
@@ -79,8 +71,7 @@ export const EATER_CLOSE: readonly string[] = [
 
 // --- which silhouette resolves, by how far the cage has come ------------------------------------------
 
-/** The dyson-stage thresholds at which the eater grows nearer in the glass. At stage 4 (the deck just
- * opened) it is a fleck; by stage 5 (the descent) it has a mouth and edges. The screen reads currentStage
- * against these. §22-open. */
-export const EATER_NEAR_AT_STAGE = 5
+/** The dyson stage at which the eater closes from a fleck to the near silhouette in the glass. At stage 4
+ * (the deck just opened) it is a fleck; by stage 5 (the descent) it has edges and fills the glass. The
+ * screen reads currentStage against this. §22-open. */
 export const EATER_CLOSE_AT_STAGE = 5
