@@ -20,6 +20,7 @@ import {
 import { EAT_IT_THRESHOLD } from '@/content/sun/endings'
 import { addResource } from '@/engine/types/Resource'
 import { createDefaultSave } from '@/engine/state/defaultSave'
+import { projectedStars, reconcileStars, MS_PER_STAR } from '@/engine/content/starCounter'
 import type { GameState } from '@/engine/types/GameState'
 
 /** A save with the star-eater driven off — the choice is open. */
@@ -172,5 +173,51 @@ describe('chooseEnding dispatcher', () => {
     expect(chooseEnding(once, 'feed')).toBe(once)
     expect(chooseEnding(once, 'eat')).toBe(once)
     expect(chosenEnding(once)).toBe('hatch') // the first choice stands
+  })
+})
+
+// --- the engine<->engine lock-step ACROSS the endings/starCounter boundary (the game's last payoff) -------
+//
+// chooseHatch / chooseFeed write the branch-flag literals (starsRelighting / starCounterFrozen); projectedStars
+// / reconcileStars read their OWN independently-re-declared copies of those literals (the moonStrata idiom, ADR
+// §3). endings.test.ts proves chooseX writes the CONTENT constant and starCounter.test.ts proves the counter
+// reacts to flags set by ITS OWN raw-literal helpers — but nothing ties the producer to the consumer THROUGH
+// the shared literal, so a drift in starCounter.ts's local copy (e.g. a typo) would pass both suites green
+// while the finale's central payoff silently broke. These pipe the real chooseHatch(state) / chooseFeed(state)
+// output straight into projectedStars / reconcileStars, so a drift in either local literal fails a test.
+
+/** A telescope-owned, star-eater-beaten save with `stars` left and `elapsed` accumulated time since purchase. */
+const wonWithTelescope = (stars: number, elapsed: number): GameState => {
+  const s = won()
+  return {
+    ...s,
+    flags: { ...s.flags, telescopeOwned: true },
+    numbers: { ...s.numbers, telescopeBoughtAtMs: 0 },
+    accumulatedGameTimeMs: elapsed,
+    starsRemaining: stars,
+  }
+}
+
+describe('endings -> starCounter lock-step (chooseHatch/chooseFeed pipe THROUGH the counter)', () => {
+  it('chooseHatch makes the counter tick UP through projectedStars/reconcileStars (the only up-tick)', () => {
+    const start = wonWithTelescope(5000, 3 * MS_PER_STAR)
+    // Before the choice the counter is descending (down 3 of 5000).
+    expect(projectedStars(start)).toBe(4997)
+    const hatched = chooseHatch(start)
+    // After hatch the SAME elapsed time relights UP (+3) — driven purely by the flag chooseHatch wrote and the
+    // literal starCounter re-declares. A drift in either literal would leave this still descending.
+    expect(projectedStars(hatched)).toBe(5003)
+    const next = reconcileStars(hatched)
+    expect(next.starsRemaining).toBeGreaterThan(start.starsRemaining)
+    expect(next.starsRemaining).toBe(5003)
+  })
+
+  it('chooseFeed FREEZES the counter: projectedStars unmoved + reconcileStars a SAME-ref no-op', () => {
+    const start = wonWithTelescope(4321, 500 * MS_PER_STAR)
+    const fed = chooseFeed(start)
+    // The stored count, unmoved, no matter how much time has passed (the freeze branch chooseFeed flagged).
+    expect(projectedStars(fed)).toBe(4321)
+    // And the descent stops forever — reconcile is a SAME-reference no-op (it never re-anchors or moves).
+    expect(reconcileStars(fed)).toBe(fed)
   })
 })

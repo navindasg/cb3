@@ -789,6 +789,9 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     heading(CHOICE_HEADING, 'choice-screen')
 
     // Already chosen: the choice is terminal — route to the committed ending's scene (the game is over).
+    // showEnding() is itself terminal for EVERY committed value (hatch/feed draw the scene; a deferred 'eat'
+    // or a corrupt/forward-compat string draws a safe terminal fallback) — it NEVER re-enters showChoice(),
+    // so this hop can never mutually recurse.
     if (endingChosen(s)) {
       showEnding()
       return
@@ -879,14 +882,28 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     const s = session.getState()
     const ending = chosenEnding(s)
 
-    // Defensive: routed here with no committed ending — fall back to the choice (or the aftermath).
+    // These two branches MUST render terminally INLINE and must NOT call showChoice(): showChoice() routes any
+    // committed endingChosen straight back here, so bouncing back to it would mutually recurse and hang the tab.
+    //
+    // No committed ending at all (corrupt/forward-compat endingChosen string -> chosenEnding === null, while
+    // endingChosen() may still read true): a deadpan terminal fallback + the map button. Never re-enter the
+    // choice.
     if (ending === null) {
-      showChoice()
+      heading(CHOICE_HEADING, 'ending-screen')
+      paragraph(
+        'The light is gone, and what came after it has not been written down anywhere you can read.',
+        'blurb',
+        'ending-unknown',
+      )
+      screen.appendChild(ctx.button('back to the map', 'ending-to-map', () => ctx.showMap(), 0))
       return
     }
-    // Ending 3 has no terminal scene this slice (its NG+ reset is the next slice); fall back to the choice.
+    // Ending 3 (EAT IT) has no terminal scene this slice (its NG+ dark-save reset is the next slice). Render the
+    // deferred notice terminally INLINE — never bounce to showChoice (the recursion guard).
     if (ending === 'eat') {
-      showChoice()
+      heading(CHOICE_HEADING, 'ending-screen')
+      paragraph(EAT_DEFERRED_NOTE, 'blurb', 'ending-eat-deferred')
+      screen.appendChild(ctx.button('back to the map', 'ending-to-map', () => ctx.showMap(), 0))
       return
     }
 
