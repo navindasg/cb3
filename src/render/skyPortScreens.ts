@@ -45,9 +45,11 @@ const RESOURCE_LABEL: Record<ResourceKey, string> = {
   stardust: 'stardust',
 }
 
-/** A tiny ASCII galleon that gains canvas (sails) and plating (hull) as she is fitted out. Pure ASCII. */
+/** A tiny ASCII galleon that gains canvas (sails) and plating (hull) as she is fitted out. Pure ASCII.
+ * Sails redraw the canvas as they are fitted: cotton-candy (tier 1) -> storm-silk (tier 2, wider) ->
+ * solar (tier 3, the canvas catches the sun — a rayed top row flecked with light). */
 function galleonArt(hull: number, sails: number): string {
-  const canvas = sails >= 2 ? '  |^^^|' : '  |^^|'
+  const canvas = sails >= 3 ? ' \\*^^^*/' : sails >= 2 ? '  |^^^|' : '  |^^|'
   const plate = hull >= 3 ? '#' : hull >= 2 ? '=' : '-'
   return [canvas, '   | |', ` \\${plate.repeat(8)}/`, '  ~~~~~~~~~~'].join('\n')
 }
