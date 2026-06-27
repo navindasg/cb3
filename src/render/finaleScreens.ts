@@ -46,6 +46,8 @@ import {
   createStarEater,
   createBroadside,
   createOnFoot,
+  onFootOutcome,
+  resolveOnFoot,
   createCore,
   advancePhase,
   forfeit,
@@ -62,8 +64,6 @@ import {
 } from '@/engine/content/shipDuel'
 import { RANGE_NAMES } from '@/content/ship/shipDuel'
 import {
-  resolveExchange,
-  boardingOutcome,
   cutFor,
   type BoardingState,
   type BoardingAction,
@@ -559,7 +559,7 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
       // The §286 reveal flickers in EXACTLY once at the phase-2 -> phase-3 boundary — surfaced when we
       // ENTER the core phase below. Here we are still on foot.
       const b = boarding
-      const outcome = boardingOutcome(b)
+      const outcome = onFootOutcome(b)
       if (outcome === 'won') {
         advance()
         return
@@ -598,7 +598,7 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
 
     function exchange(action: BoardingAction): void {
       if (!boarding) return
-      boarding = resolveExchange(boarding, action)
+      boarding = resolveOnFoot(boarding, action)
       render()
     }
 

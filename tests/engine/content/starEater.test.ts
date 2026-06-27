@@ -2,6 +2,8 @@ import {
   createStarEater,
   createBroadside,
   createOnFoot,
+  onFootOutcome,
+  resolveOnFoot,
   createCore,
   advancePhase,
   forfeit,
@@ -14,8 +16,6 @@ import {
 } from '@/engine/content/starEater'
 import { resolveManeuver, duelOutcome, type DuelState, type Maneuver } from '@/engine/content/shipDuel'
 import {
-  resolveExchange,
-  boardingOutcome,
   cutFor,
   type BoardingState,
   type BoardingAction,
@@ -91,24 +91,26 @@ const correctGuard = (turn: number): BoardingAction =>
   cutFor(turn).line === 'high' ? 'guard-high' : 'guard-low'
 const tellGuard = (turn: number): BoardingAction =>
   cutFor(turn).tell === 'high' ? 'guard-high' : 'guard-low'
+// The finale reuses the boarding sim on its OWN longer clock; drive it through the finale wrappers
+// (onFootOutcome / resolveOnFoot) so the phase-2 contract is checked on the timer the player actually plays.
 const playBoarding = (
   start: BoardingState,
   choose: (s: BoardingState) => BoardingAction,
 ): BoardingState => {
   let s = start
-  for (let i = 0; i < 200 && boardingOutcome(s) === null; i++) s = resolveExchange(s, choose(s))
+  for (let i = 0; i < 200 && onFootOutcome(s) === null; i++) s = resolveOnFoot(s, choose(s))
   return s
 }
 const bestBoardingHp = (start: BoardingState): number => {
   const memo = new Map<string, number>()
   const search = (s: BoardingState): number => {
-    const o = boardingOutcome(s)
+    const o = onFootOutcome(s)
     if (o === 'won') return s.yourHp
     if (o === 'lost') return -Infinity
     const key = `${s.yourHp}|${s.foeHp}|${s.turn}`
     const cached = memo.get(key)
     if (cached !== undefined) return cached
-    const r = Math.max(search(resolveExchange(s, correctGuard(s.turn))), search(resolveExchange(s, 'lunge')))
+    const r = Math.max(search(resolveOnFoot(s, correctGuard(s.turn))), search(resolveOnFoot(s, 'lunge')))
     memo.set(key, r)
     return r
   }
@@ -158,7 +160,7 @@ describe('the star-eater — phase construction reuses the existing engines', ()
     const b = createOnFoot(withWeapon('ironSword'))
     expect(b.foeHp).toBe(EATER_ONFOOT_HP)
     expect(b.weapon).toEqual({ damage: 5, strikes: 1 })
-    expect(boardingOutcome(b)).toBeNull()
+    expect(onFootOutcome(b)).toBeNull()
   })
 
   it('phase 3 builds a core defense off the equipped weapon', () => {
@@ -278,7 +280,10 @@ describe('the star-eater — phase 1 balance: the broadside reads the maxed ship
     expect(bestDuelHp(createBroadside(withShip(2, 3, 2)))).toBe(-Infinity) // strong but not maxed loses
   })
 
-  it('the maxed kit clears it; the guns are the strictly-required axis; sub-maxed combos lose', () => {
+  it('the BEST REACHABLE ship (all tiers buildable) clears it; sub-maxed combos lose', () => {
+    // MAXED = (3,3,3) is now actually buildable: cannon t3 (the nougat bombard) was un-deferred for the
+    // finale (review) with a real price + unlockFlag (galleonUpgrade), mirroring the solar sails. So this
+    // asserts REAL winnability with the best ship a player can build, not a config nobody can reach.
     expect(bestDuelHp(createBroadside(MAXED))).toBeGreaterThan(0)
     // The cannon is the binding DPS axis: drop it to tier 2 (with hull + sails maxed) and you cannot out-
     // gun the eater inside the boarding clock — a strict loss (the comet-and-beyond gun ladder must be maxed).
@@ -304,20 +309,25 @@ describe('the star-eater — phase 2 balance: the on-foot climax reads the equip
     expect(bestBoardingHp(createOnFoot(withWeapon('candyCaneBow')))).toBe(-Infinity)
   })
 
-  it('punishes naive guard-by-the-tell for the common blades (you must read the feints)', () => {
-    for (const id of ['woodenSword', 'ironSword']) {
-      expect(boardingOutcome(playBoarding(createOnFoot(withWeapon(id)), (s) => tellGuard(s.turn)))).toBe('lost')
+  // The naive-loses contract covers the FULL forged arsenal — the mace and the whip included, not just the
+  // weak blades (the Inc-20 durable lesson: a grid-search that omits the bait build proves nothing about it).
+  // Kept in lock-step with the wins-with-reads list below so a future weapon can't slip the gate (review).
+  const FORGED_BLADES = ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']
+
+  it('punishes naive guard-by-the-tell for EVERY forged blade (you must read the feints)', () => {
+    for (const id of FORGED_BLADES) {
+      expect(onFootOutcome(playBoarding(createOnFoot(withWeapon(id)), (s) => tellGuard(s.turn)))).toBe('lost')
     }
   })
 
-  it('punishes pure aggression (all-lunge) for the common blades', () => {
-    for (const id of ['woodenSword', 'ironSword']) {
-      expect(boardingOutcome(playBoarding(createOnFoot(withWeapon(id)), () => 'lunge'))).toBe('lost')
+  it('punishes pure aggression (all-lunge) for EVERY forged blade — the mace and whip too', () => {
+    for (const id of FORGED_BLADES) {
+      expect(onFootOutcome(playBoarding(createOnFoot(withWeapon(id)), () => 'lunge'))).toBe('lost')
     }
   })
 
   it('lets each forged blade win with clean reads', () => {
-    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
+    for (const id of FORGED_BLADES) {
       expect(bestBoardingHp(createOnFoot(withWeapon(id)))).toBeGreaterThan(0)
     }
   })
@@ -329,8 +339,8 @@ describe('the star-eater — phase 3 balance: the core defense reads the equippe
     expect(bestCoreHp(createCore(withWeapon('candyCaneBow')))).toBe(-Infinity)
   })
 
-  it('punishes naive all-strike for the common blades (you must guard to defend the egg)', () => {
-    for (const id of ['woodenSword', 'ironSword']) {
+  it('punishes naive all-strike for EVERY forged blade — the mace and whip too (you must guard the egg)', () => {
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
       expect(coreOutcome(playCore(createCore(withWeapon(id)), () => 'strike'))).toBe('lost')
     }
   })

@@ -145,8 +145,11 @@ describe('the core defense — the balance contract', () => {
     expect(bestFinalHp(createCoreDefense(withWeapon('candyCaneBow')))).toBe(-Infinity)
   })
 
-  it('punishes naive all-strike for the common blades (you must guard to defend the egg)', () => {
-    for (const id of ['woodenSword', 'ironSword']) {
+  it('punishes naive all-strike for EVERY forged blade — the mace and whip too (you must guard the egg)', () => {
+    // Lock-step with the wins-with-reads list below: the naive line must lose for the WHOLE arsenal (the
+    // Inc-20 durable lesson — a grid-search that omits the bait builds, the mace/whip, proves nothing). The
+    // all-striker eats a claw every turn and bleeds out (CLAW_PLAYER_DAMAGE) before even a heavy blade wins.
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
       const lost = playOut(createCoreDefense(withWeapon(id)), () => 'strike')
       expect(coreOutcome(lost)).toBe('lost')
     }

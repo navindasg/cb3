@@ -80,11 +80,13 @@ export function cutFor(turn: number): Cut {
 }
 
 /** The bout's result, or null while it is still on. Checked on the resolved state. The foe-down check
- * comes first: the killing thrust beats a simultaneous cut. */
-export function boardingOutcome(state: BoardingState): BoardingOutcome {
+ * comes first: the killing thrust beats a simultaneous cut. `maxTurns` defaults to Sourbeard's MAX_TURNS;
+ * the star-eater finale reuses this sim on its OWN (longer) clock by passing EATER_ONFOOT_MAX_TURNS (the live
+ * Sourbeard fight always uses the default, so its tuning is untouched). */
+export function boardingOutcome(state: BoardingState, maxTurns: number = MAX_TURNS): BoardingOutcome {
   if (state.foeHp <= 0) return 'won'
   if (state.yourHp <= 0) return 'lost'
-  if (state.turn >= MAX_TURNS) return 'lost' // his crew overran you
+  if (state.turn >= maxTurns) return 'lost' // his crew overran you
   return null
 }
 
@@ -92,10 +94,15 @@ export function boardingOutcome(state: BoardingState): BoardingOutcome {
  * Resolve one exchange. GUARD a line: if it matches his ACTUAL cut you block it (no damage) and riposte for
  * RIPOSTE_FACTOR x damage x strikes; if you mis-read (or he feinted), the cut lands for its dmg and you do
  * not riposte. LUNGE: deal LUNGE_FACTOR x damage x strikes, but you are committed — the cut always lands.
- * Pure — returns a new state; a no-op (SAME reference) once the bout is over.
+ * Pure — returns a new state; a no-op (SAME reference) once the bout is over. `maxTurns` defaults to
+ * Sourbeard's MAX_TURNS; the finale passes its own longer clock so the bout does not freeze at turn 16.
  */
-export function resolveExchange(state: BoardingState, action: BoardingAction): BoardingState {
-  if (boardingOutcome(state) !== null) return state
+export function resolveExchange(
+  state: BoardingState,
+  action: BoardingAction,
+  maxTurns: number = MAX_TURNS,
+): BoardingState {
+  if (boardingOutcome(state, maxTurns) !== null) return state
 
   const cut = cutFor(state.turn)
   const riposte = RIPOSTE_FACTOR * state.weapon.damage * state.weapon.strikes

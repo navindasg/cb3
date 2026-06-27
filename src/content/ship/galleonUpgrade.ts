@@ -80,7 +80,19 @@ const CANNON_TIERS: readonly GalleonTier[] = [
     name: 'pop rock guns',
     price: [{ resource: 'popRocks', amount: 120 }, { resource: 'candies', amount: 500_000 }],
   },
-  { tier: 3, name: 'the nougat bombard', deferred: true, note: 'a late-Act-2 forge commission' },
+  {
+    tier: 3,
+    name: 'the nougat bombard',
+    // Act 4 — the star-eater finale (review): un-deferred. The §198 broadside phase reads the galleon's
+    // maxed tiers, and that fight is only winnable with cannon t3 (the grid-searched balance), so the top
+    // gun must be buildable. Mirrors the solar sails' un-defer (the t3 above): a real price + an unlockFlag.
+    // Priced in the pop rocks the comet sweeps (the cannon's own ammo) plus candies, gated on dysonStage3Done
+    // (the star sea — the same late milestone the solar sails open on), so the bombard surfaces in the yard
+    // once the late-game economy is open and well before the finale. §22-open.
+    price: [{ resource: 'popRocks', amount: 250 }, { resource: 'candies', amount: 80_000_000 }],
+    unlockFlag: 'dysonStage3Done',
+    note: 'a late forge commission — raise the dyson scaffold to stage 3 first',
+  },
 ]
 
 /** The three outfitting tracks, in the order the yard lists them. */

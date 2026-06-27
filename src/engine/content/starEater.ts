@@ -1,10 +1,23 @@
 import type { GameState } from '@/engine/types/GameState'
 import { setFlag } from '@/engine/state/reducers'
 import { deriveStats, type DuelState } from '@/engine/content/shipDuel'
-import { deriveMeleeWeapon, type BoardingState } from '@/engine/content/boardingDuel'
+import {
+  deriveMeleeWeapon,
+  boardingOutcome,
+  resolveExchange,
+  type BoardingState,
+  type BoardingAction,
+  type BoardingOutcome,
+} from '@/engine/content/boardingDuel'
 import { createCoreDefense, type CoreDefenseState } from '@/engine/content/coreDefense'
 import { START_RANGE } from '@/content/ship/shipDuel'
-import { EATER_SHIP_HP, EATER_SHIP_SHOT, EATER_ONFOOT_PLAYER_HP, EATER_ONFOOT_HP } from '@/content/sun/starEater'
+import {
+  EATER_SHIP_HP,
+  EATER_SHIP_SHOT,
+  EATER_ONFOOT_PLAYER_HP,
+  EATER_ONFOOT_HP,
+  EATER_ONFOOT_MAX_TURNS,
+} from '@/content/sun/starEater'
 
 // The star-eater orchestrator (Act 4 — quest 13, the finale, DESIGN §198/§286). Pure & immutable. It
 // SEQUENCES the three-phase finale by REUSING the existing fight engines rather than re-implementing them:
@@ -112,6 +125,25 @@ export function createOnFoot(state: GameState): BoardingState {
     turn: 0,
     weapon: deriveMeleeWeapon(state),
   }
+}
+
+/**
+ * The on-foot phase's outcome on the FINALE clock (EATER_ONFOOT_MAX_TURNS — longer than Sourbeard's, so the
+ * higher eater HP is clearable by a slow blade with clean reads while all-lunge still dies to the dangerous
+ * feint). A thin wrapper over boardingDuel.boardingOutcome with the finale's clock baked in — the screen and
+ * the balance test read THIS so phase 2 never freezes at Sourbeard's turn 16.
+ */
+export function onFootOutcome(state: BoardingState): BoardingOutcome {
+  return boardingOutcome(state, EATER_ONFOOT_MAX_TURNS)
+}
+
+/**
+ * Resolve one on-foot exchange on the FINALE clock — a thin wrapper over boardingDuel.resolveExchange with
+ * EATER_ONFOOT_MAX_TURNS, so the bout runs to the finale's longer timer rather than Sourbeard's. Pure &
+ * immutable (a no-op SAME reference once the phase is over), exactly as the underlying sim.
+ */
+export function resolveOnFoot(state: BoardingState, action: BoardingAction): BoardingState {
+  return resolveExchange(state, action, EATER_ONFOOT_MAX_TURNS)
 }
 
 // --- phase 3: the core defense (the new coreDefense sim) -----------------------------------------------

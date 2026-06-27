@@ -191,10 +191,54 @@ describe('the galleon yard — cannon upgrades (pop rocks from the comet)', () =
     expect(result.state.candies.current).toBe(5_000_000 - 500_000)
   })
 
-  it('the nougat bombard (tier 3) is deferred until a late-Act-2 forge commission', () => {
-    const s = stocked({ popRocks: createResource(200), numbers: { [GALLEON_CANNON_KEY]: 2 } })
-    expect(nextTier(s, CANNON)!.deferred).toBe(true)
-    expect(canUpgrade(s, CANNON)).toBe(false)
-    expect(upgradeGalleon(s, CANNON).reason).toBe('deferred')
+  // The nougat bombard (cannon tier 3) was un-deferred for the Act-4 star-eater finale (review): the §198
+  // broadside phase is only winnable at cannon t3, so the top gun must be buildable. It is now flag-gated
+  // (dysonStage3Done — the star sea, the same milestone the solar sails open on), not material-deferred.
+  const atCannonTier2 = (over: { stage3?: boolean; popRocks?: number; candies?: number } = {}): GameState => ({
+    ...createDefaultSave(),
+    numbers: { [GALLEON_CANNON_KEY]: 2 },
+    flags: over.stage3 === false ? {} : { [STAGE3]: true },
+    popRocks: createResource(over.popRocks ?? 1_000),
+    candies: createResource(over.candies ?? 200_000_000),
+  })
+
+  it('the nougat bombard (tier 3) is no longer deferred — it is flag-gated, not material-deferred', () => {
+    const next = nextTier(atCannonTier2(), CANNON)!
+    expect(next.tier).toBe(3)
+    expect(next.deferred).toBeUndefined()
+    expect(next.unlockFlag).toBe('dysonStage3Done')
+    expect(next.price).toBeDefined()
+  })
+
+  it('cannot fit the nougat bombard before stage 3 — locked (SAME reference), even with materials in hand', () => {
+    const before = atCannonTier2({ stage3: false, popRocks: 1_000, candies: 200_000_000 })
+    expect(canUpgrade(before, CANNON)).toBe(false)
+    const result = upgradeGalleon(before, CANNON)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('locked')
+    expect(result.state).toBe(before)
+  })
+
+  it('fits the nougat bombard once stage 3 is reached, spending pop rocks + candies', () => {
+    const before = atCannonTier2({ stage3: true, popRocks: 1_000, candies: 200_000_000 })
+    const price = nextTier(before, CANNON)!.price!
+    const popCost = price.find((l) => l.resource === 'popRocks')!.amount
+    const candyCost = price.find((l) => l.resource === 'candies')!.amount
+    expect(canUpgrade(before, CANNON)).toBe(true)
+    const result = upgradeGalleon(before, CANNON)
+    expect(result.ok).toBe(true)
+    expect(trackTier(result.state, GALLEON_CANNON_KEY)).toBe(3)
+    expect(result.state.popRocks.current).toBe(1_000 - popCost)
+    expect(result.state.candies.current).toBe(200_000_000 - candyCost)
+    expect(nextTier(result.state, CANNON)).toBeNull() // top of the cannon track
+  })
+
+  it('refuses the nougat bombard when pop rocks are short, even past stage 3 (SAME reference, unaffordable)', () => {
+    const before = atCannonTier2({ stage3: true, popRocks: 0, candies: 200_000_000 })
+    expect(canUpgrade(before, CANNON)).toBe(false)
+    const result = upgradeGalleon(before, CANNON)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('unaffordable')
+    expect(result.state).toBe(before)
   })
 })

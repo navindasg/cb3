@@ -40,18 +40,28 @@ export const EATER_SHIP_SHOT = 30
 // --- PHASE 2: on foot, on the creature (reuses the boarding melee against a higher eater HP) -----------
 
 /**
- * Your HP for the on-foot phase — the same tight pool family as the Sourbeard boarding (the read has to
- * matter), a touch higher because the eater's HP is higher and the bout runs longer. Reads no armour, just
- * the hand weapon.
+ * Your HP for the on-foot phase — a TIGHT pool (tighter than Sourbeard's 16), so eating the dangerous feint
+ * is nearly fatal and a fast/heavy blade cannot simply out-trade the bout: it must read the feints or die to
+ * the accumulated cuts before the higher-HP eater drops. Reads no armour, just the hand weapon. Grid-searched
+ * (the engine test) so all-lunge LOSES for EVERY forged blade — the mace and the whip included (review).
  */
-export const EATER_ONFOOT_PLAYER_HP = 20
+export const EATER_ONFOOT_PLAYER_HP = 12
 
 /**
- * The star-eater's HP on foot — ABOVE Sourbeard's deck HP so this reads as the climax, not a rerun. Grid-
- * searched so bare hands + naive guard-by-the-tell + all-lunge all LOSE, and a forged blade with clean reads
- * wins. It reuses Sourbeard's cut cadence (the generic high/low feint pattern); the freshness is the HP wall.
+ * The star-eater's HP on foot — ABOVE Sourbeard's deck HP (64) so this reads as the climax, not a rerun, and
+ * high enough that even the heaviest blade's all-lunge line must survive past the DANGEROUS feint (cut idx 5)
+ * and dies to it. Grid-searched (the engine test) so bare hands + the bow + naive guard-by-the-tell + all-
+ * lunge ALL LOSE for every forged blade, and a forged blade with clean reads wins inside the finale clock.
  */
-export const EATER_ONFOOT_HP = 72
+export const EATER_ONFOOT_HP = 81
+
+/**
+ * The on-foot phase's OWN clock (longer than Sourbeard's MAX_TURNS=16) — the finale reuses the boarding sim
+ * but on its own timer, so the higher eater HP wall is clearable by a slow forged blade with perfect reads
+ * while the all-lunge line still dies to the dangerous feint. The boarding sim takes this as an override; the
+ * live Sourbeard fight keeps its own 16-turn clock (this constant never touches it). Grid-searched (review).
+ */
+export const EATER_ONFOOT_MAX_TURNS = 22
 
 // --- PHASE 3: the core defense (the new krakenFight-style telegraph-and-block sim) ----------------------
 
@@ -62,15 +72,19 @@ export const EATER_ONFOOT_HP = 72
  */
 export const EGG_HP = 60
 
-/** Your HP for the core defense — a flat pool; the eater also rakes YOU when you fail to guard a claw. */
-export const CORE_PLAYER_HP = 22
+/** Your HP for the core defense — a flat pool; the eater also rakes YOU when you fail to guard a claw. Tight
+ * enough that an all-striker (who never guards, so the claw rakes you every turn) bleeds out before the eater
+ * drops — even the heaviest blade (review: all-strike must lose for the mace and whip too, not just the weak
+ * blades), while a clean reader is barely grazed. */
+export const CORE_PLAYER_HP = 20
 
 /**
  * The star-eater's HP for the core phase — what you whittle down by GUARDING (a blocked claw lets you chip
- * it) and STRIKING. Tuned so a forged blade clears it inside the clock with clean reads, but naive all-strike
- * (which never guards) loses the egg first.
+ * it) and STRIKING. Grid-searched (the engine test) so a forged blade clears it inside the clock with clean
+ * reads, but naive all-strike (which never guards) loses the egg or bleeds you out first — for EVERY forged
+ * blade, the mace and whip included (review), not merely the weakest two.
  */
-export const CORE_EATER_HP = 64
+export const CORE_EATER_HP = 66
 
 /** A weapon whose cooldown is under this (ms) strikes/ripostes TWICE a turn — the whip's niche, as everywhere. */
 export const CORE_FAST_COOLDOWN_MS = 400
@@ -85,8 +99,11 @@ export const STRIKE_FACTOR = 2
 /** What a claw does when it LANDS on the egg (you struck instead of guarding, or mis-read the feint). */
 export const CLAW_EGG_DAMAGE = 9
 
-/** What a claw also rakes off YOU when it lands (the eater is fast — failing to guard costs you too). */
-export const CLAW_PLAYER_DAMAGE = 4
+/** What a claw also rakes off YOU when it lands (the eater is fast — failing to guard costs you too). Raised
+ * (review) so the all-striker — who eats a claw EVERY turn — is bled out before a heavy/fast blade can race
+ * the eater down: this is the lever that makes naive all-strike lose for the mace and the whip, not just the
+ * weak blades. A clean reader almost never eats one, so it barely matters to the intended line. */
+export const CLAW_PLAYER_DAMAGE = 7
 
 /**
  * The eater's claw pattern for the core phase — a telegraphed high/low line per turn, mostly honest with two
@@ -112,8 +129,10 @@ export const CLAW_PATTERN: readonly Claw[] = [
   { tell: 'low', line: 'low' },
 ]
 
-/** The clock: the eater overwhelms the egg if you have not driven it off within this many turns. */
-export const CORE_MAX_TURNS = 18
+/** The clock: the eater overwhelms the egg if you have not driven it off within this many turns. Long enough
+ * (review) that a slow forged blade with perfect reads can whittle the raised eater HP down in time, while the
+ * naive all-strike line still loses you/the egg first. */
+export const CORE_MAX_TURNS = 20
 
 // --- the mid-fight reveal (§3/§286 — the eater speaks in UI; made exactly once) ------------------------
 
