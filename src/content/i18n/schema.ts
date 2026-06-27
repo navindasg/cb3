@@ -192,6 +192,10 @@ export interface GameText {
   // --- the star-eater (Act 4 — the finale; the eater speaks in UI, §3/§286 — made exactly once) ---
   'ui.eaterCounter': string
 
+  // --- the endings (Act 4 — the choice; the two terminal scenes' surfaced sky lines, §200/§201) ---
+  'ending.hatch.sky': string
+  'ending.feed.sky': string
+
   // --- misc UI flavor ---
   'ui.starCounter': string
   'ui.candyCounter': string

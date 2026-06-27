@@ -39,9 +39,39 @@ const DYSON_STAGE_DONE_FLAGS = [
   'dysonStage5Done',
 ] as const
 
-/** Whether the star counter is visible (only after the telescope is bought). */
+// Act 4 — the endings (DESIGN §200/§201/§203). Two terminal branches re-declare their content flag literals
+// here in lock-step with content/flags.STARS_RELIGHTING_FLAG / STAR_COUNTER_FROZEN_FLAG (the moonStrata idiom —
+// the engine never imports a content FLAG value, ADR §3):
+//  - starsRelighting (ending 1, LET IT HATCH): the dragon ascends burning and relights the eaten stars, so the
+//    counter ticks UP toward STARTING_STARS (clamped — the ONLY up-tick in the entire game), still on
+//    accumulatedGameTimeMs, still drift-free via the same re-anchor machinery, just inverted.
+//  - starCounterFrozen (ending 2, FEED THE SUN): the star-eater becomes the egg's guardian and the sky stops —
+//    projectedStars returns the stored count unchanged and reconcileStars early-returns the SAME reference.
+
+/** content/flags.STARS_RELIGHTING_FLAG — ending 1: the descent inverts and the stars come BACK. */
+const STARS_RELIGHTING_FLAG = 'starsRelighting'
+
+/** content/flags.STAR_COUNTER_FROZEN_FLAG — ending 2: the descent stops forever, up or down. */
+const STAR_COUNTER_FROZEN_FLAG = 'starCounterFrozen'
+
+/** Whether the relight (up-tick) branch is active (ending 1). Strict === true. */
+function relighting(state: GameState): boolean {
+  return state.flags[STARS_RELIGHTING_FLAG] === true
+}
+
+/** Whether the freeze branch is active (ending 2). Strict === true. */
+function frozen(state: GameState): boolean {
+  return state.flags[STAR_COUNTER_FROZEN_FLAG] === true
+}
+
+/**
+ * Whether the star counter is visible: after the telescope is bought (the Act-1 reveal — it holds for the rest
+ * of the game), OR once an ending has flipped the descent into its relight/freeze branch (so the up-tick /
+ * the stop shows even on the off chance the telescope flag were ever cleared). In practice telescopeOwned holds
+ * all game, so the ending clauses are belt-and-braces; the relight up-tick is the one the player is watching.
+ */
 export function starCounterVisible(state: GameState): boolean {
-  return state.flags['telescopeOwned'] === true
+  return state.flags['telescopeOwned'] === true || relighting(state) || frozen(state)
 }
 
 /**
@@ -70,11 +100,16 @@ export function effectiveMsPerStar(state: GameState): number {
  * the persisted starsRemaining (the descent is monotonic — time only removes stars).
  */
 export function projectedStars(state: GameState): number {
+  // Ending 2 (FEED THE SUN): the counter is frozen forever — the stored value, unmoved (up or down).
+  if (frozen(state)) return state.starsRemaining
   if (!starCounterVisible(state)) return state.starsRemaining
   const boughtAt = state.numbers['telescopeBoughtAtMs'] ?? state.accumulatedGameTimeMs
   const elapsed = Math.max(0, state.accumulatedGameTimeMs - boughtAt)
-  const lost = Math.floor(elapsed / effectiveMsPerStar(state))
-  return Math.max(0, state.starsRemaining - lost)
+  const gained = Math.floor(elapsed / effectiveMsPerStar(state))
+  // Ending 1 (LET IT HATCH): the descent inverts — the dragon relights the eaten stars, the count rises toward
+  // 8128 and clamps there (the ONLY up-tick in the game).
+  if (relighting(state)) return Math.min(STARTING_STARS, state.starsRemaining + gained)
+  return Math.max(0, state.starsRemaining - gained)
 }
 
 /**
@@ -84,18 +119,33 @@ export function projectedStars(state: GameState): number {
  * when no whole star has elapsed.
  */
 export function reconcileStars(state: GameState): GameState {
+  // Ending 2 (FEED THE SUN): the counter stops forever — never re-anchor, never move. SAME reference.
+  if (frozen(state)) return state
   if (!starCounterVisible(state)) return state
   const boughtAt = state.numbers['telescopeBoughtAtMs'] ?? state.accumulatedGameTimeMs
   const elapsed = Math.max(0, state.accumulatedGameTimeMs - boughtAt)
   const msPerStar = effectiveMsPerStar(state)
-  const lost = Math.floor(elapsed / msPerStar)
-  if (lost <= 0) return state
-  const starsRemaining = Math.max(0, state.starsRemaining - lost)
+  const whole = Math.floor(elapsed / msPerStar)
+  if (whole <= 0) return state
+
+  // Ending 1 (LET IT HATCH): the descent inverts — relight stars toward 8128 (clamped). Otherwise descend
+  // toward 0 (clamped). Either way re-anchor to the consumed boundary at the CURRENT rate, so a rate that
+  // changes between passes never double-counts the partial star (the count stays drift-free + monotonic in
+  // its direction). If the relight has already reached the cap, there is nothing to add — SAME reference.
+  if (relighting(state)) {
+    const starsRemaining = Math.min(STARTING_STARS, state.starsRemaining + whole)
+    if (starsRemaining === state.starsRemaining) return state
+    return {
+      ...state,
+      starsRemaining,
+      numbers: { ...state.numbers, telescopeBoughtAtMs: boughtAt + whole * msPerStar },
+    }
+  }
+
+  const starsRemaining = Math.max(0, state.starsRemaining - whole)
   return {
     ...state,
     starsRemaining,
-    // Re-anchor to the consumed boundary at the CURRENT rate, so a rate that changes between passes never
-    // double-counts the partial star already accounted for (the descent stays drift-free + monotonic).
-    numbers: { ...state.numbers, telescopeBoughtAtMs: boughtAt + lost * msPerStar },
+    numbers: { ...state.numbers, telescopeBoughtAtMs: boughtAt + whole * msPerStar },
   }
 }

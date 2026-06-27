@@ -814,10 +814,6 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showScaffold: scaffold.showScaffold,
-    // The choice / ending screen is the next slice (4.5); the star-eater win's onward hook routes there.
-    // Until that screen exists, the hook lands the player back at the scaffold — the win has already
-    // committed starEaterDefeated, so re-entry shows the aftermath, ready for 4.5 to wire the real choice in.
-    showChoice: () => scaffold.showScaffold(),
   })
 
   // --- driver + lifecycle wiring ------------------------------------------
@@ -885,6 +881,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showDescentPort: finale.showDescentPort,
     showCaramelCore: finale.showCaramelCore,
     showStarEater: finale.showStarEater,
+    showChoice: finale.showChoice,
+    showEnding: finale.showEnding,
     showFinale: finale.showFinale,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,

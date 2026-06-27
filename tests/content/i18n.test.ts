@@ -75,4 +75,11 @@ describe('en.ts locale completeness', () => {
       expect(t(key), key).toBeTruthy()
     }
   })
+
+  it("the endings' terminal sky lines resolve to non-empty i18n strings (Act 4 — the choice)", () => {
+    for (const key of ['ending.hatch.sky', 'ending.feed.sky'] as const) {
+      expect(has(key), key).toBe(true)
+      expect(t(key), key).toBeTruthy()
+    }
+  })
 })

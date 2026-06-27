@@ -193,6 +193,10 @@ export const en: GameText = {
   // the star-eater speaks in UI (§3/§286) — its candy counter, shown exactly once at the fight's heart.
   'ui.eaterCounter': 'You have 8,101 stars.',
 
+  // the endings' terminal sky lines (Act 4 — the choice). Hatch: the sky is coming back. Feed: it is held.
+  'ending.hatch.sky': 'and rising',
+  'ending.feed.sky': 'held',
+
   // misc UI
   'ui.starCounter': 'stars in the sky',
   'ui.candyCounter': 'candies',

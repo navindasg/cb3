@@ -103,6 +103,36 @@ import {
   LEAVE_CORE_LABEL,
   type CoreStageId,
 } from '@/content/sun/caramelCore'
+import {
+  canChoose,
+  canEatIt,
+  chosenEnding,
+  endingChosen,
+  chooseHatch,
+  chooseFeed,
+  type Ending,
+} from '@/engine/content/endings'
+import {
+  CHOICE_HEADING,
+  CHOICE_BLURB,
+  CHOICE_ART,
+  HATCH_LABEL,
+  HATCH_DESC,
+  HATCH_HEADING,
+  HATCH_BLURB,
+  HATCH_ART,
+  FEED_LABEL,
+  FEED_DESC,
+  FEED_HEADING,
+  FEED_BLURB,
+  FEED_ART,
+  EAT_LABEL,
+  EAT_DESC,
+  EAT_DEFERRED_NOTE,
+  EAT_LOCKED_NOTE,
+  CHOICE_BACK_LABEL,
+} from '@/content/sun/endings'
+import { projectedStars } from '@/engine/content/starCounter'
 import { t } from '@/content/i18n/en'
 import type { DescentAudio } from '@/render/descentAudio'
 
@@ -135,12 +165,6 @@ export interface FinaleContext {
   showMap(): void
   /** Return to the dyson scaffold (the descent port is reached from the scaffold). */
   showScaffold(): void
-  /**
-   * The choice / ending screen (the next slice, 4.5). The star-eater win routes here. Until that screen
-   * exists the bootstrap thunk lands the player back at the scaffold — the win has already committed
-   * starEaterDefeated, so re-entry shows the aftermath, ready for 4.5 to wire the real choice in.
-   */
-  showChoice(): void
 }
 
 export interface FinaleScreens {
@@ -160,6 +184,20 @@ export interface FinaleScreens {
    * choice on a win.
    */
   showStarEater(): void
+  /**
+   * The choice screen (Quest 13's aftermath, §16/§200-204) — gated on starEaterDefeated. Shows all three
+   * endings; ending 3 (EAT IT) is threshold-gated and routes to a deferred notice this slice. Choosing
+   * ending 1 or 2 commits the terminal effect (counter UP / counter FROZEN) and routes to showEnding. Once
+   * an ending is chosen, re-entry shows the chosen terminal scene (the choice is locked, commit-once).
+   */
+  showChoice(): void
+  /**
+   * The terminal ending presentation (§200/§201) — the chosen scene: the dragon ascending and the night sky
+   * refilling (hatch), or the sealed egg and the watch and the frozen sky (feed). Read off the committed
+   * endingChosen string; a re-entry shows the same scene (the star readout in the corner reflects up/frozen
+   * automatically). The end of the game.
+   */
+  showEnding(): void
   /**
    * The finale flow's entry. This slice routes it straight to the descent port; later slices add the
    * star-eater fight and the choice screen behind it.
@@ -701,14 +739,14 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
       }
       silhouette()
       paragraph(STAR_EATER_WON_BLURB, 'blurb', 'star-eater-won')
-      screen.appendChild(ctx.button(STAR_EATER_TO_CHOICE_LABEL, 'star-eater-to-choice', () => ctx.showChoice()))
+      screen.appendChild(ctx.button(STAR_EATER_TO_CHOICE_LABEL, 'star-eater-to-choice', () => showChoice()))
     }
 
     function renderAftermath(): void {
       // Re-entry after the win: the calm aftermath, the hook into the choice (farm-proof — no re-fight, no loot).
       silhouette()
       paragraph(STAR_EATER_WON_BLURB, 'blurb', 'star-eater-aftermath')
-      screen.appendChild(ctx.button(STAR_EATER_TO_CHOICE_LABEL, 'star-eater-to-choice', () => ctx.showChoice()))
+      screen.appendChild(ctx.button(STAR_EATER_TO_CHOICE_LABEL, 'star-eater-to-choice', () => showChoice()))
       screen.appendChild(ctx.button('back to the core', 'star-eater-to-core', () => showCaramelCore(), 0))
     }
 
@@ -736,9 +774,150 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     openOrFight()
   }
 
+  /**
+   * The choice screen (Quest 13's aftermath, §16/§200-204) — the series-tradition finite, poignant ending. A
+   * thin wiring screen: the gate (canChoose = starEaterDefeated && !endingChosen), the threshold for ending 3
+   * (canEatIt), and each ending's commit-once effect all live in the tested engine (engine/content/endings).
+   * This only draws the three options + routes the clicks. Once an ending is committed, re-entry shows the
+   * chosen terminal scene (showEnding); the choice is locked (commit-once — no ending can be re-triggered).
+   * Coverage-excluded, Playwright-verified — the same thin-wiring contract as the rest of the finale.
+   */
+  function showChoice(): void {
+    ctx.clearScreen()
+    const s = session.getState()
+
+    heading(CHOICE_HEADING, 'choice-screen')
+
+    // Already chosen: the choice is terminal — route to the committed ending's scene (the game is over).
+    if (endingChosen(s)) {
+      showEnding()
+      return
+    }
+    // Defensive: a stray route here before the star-eater is driven off answers in voice, not a blank screen.
+    if (!canChoose(s)) {
+      paragraph(
+        'There is no choice to make yet. The thing in the dark is still coming.',
+        'blurb',
+        'choice-shut',
+      )
+      screen.appendChild(ctx.button('back to the core', 'choice-to-core', () => showCaramelCore(), 0))
+      return
+    }
+
+    const art = doc.createElement('pre')
+    art.className = 'arena glow-egg'
+    art.setAttribute('data-testid', 'choice-art')
+    art.textContent = CHOICE_ART
+    screen.appendChild(art)
+
+    paragraph(CHOICE_BLURB, 'blurb', 'choice-blurb')
+
+    // Ending 1 — let it hatch (the poignant default; always offered).
+    screen.appendChild(ctx.button(HATCH_LABEL, 'choice-hatch', () => commit('hatch')))
+    paragraph(HATCH_DESC, 'blurb choice-desc', 'choice-hatch-desc')
+
+    // Ending 2 — feed the sun (always offered).
+    screen.appendChild(ctx.button(FEED_LABEL, 'choice-feed', () => commit('feed')))
+    paragraph(FEED_DESC, 'blurb choice-desc', 'choice-feed-desc')
+
+    // Ending 3 — eat it (threshold-gated this slice; disabled below the §22-open threshold, and even when
+    // enabled it routes to a deferred notice — the NG+ dark-save reset is the next slice).
+    const eatEnabled = canEatIt(s)
+    const eat = ctx.button(EAT_LABEL, 'choice-eat', () => eatIt())
+    if (!eatEnabled) {
+      eat.disabled = true
+      eat.classList.add('shop-unaffordable')
+    }
+    screen.appendChild(eat)
+    paragraph(EAT_DESC, 'blurb choice-desc', 'choice-eat-desc')
+    if (!eatEnabled) paragraph(EAT_LOCKED_NOTE, 'blurb', 'choice-eat-locked')
+
+    screen.appendChild(ctx.button(CHOICE_BACK_LABEL, 'choice-back', () => showStarEater(), 0))
+  }
+
+  /**
+   * Commit ending 1 or 2: dispatch the pure commit-once transition (chooseHatch / chooseFeed sets the
+   * endingChosen string + its branch flag — and, for feed, zeroes the candy hoard — atomically), log the
+   * beat, then route to the terminal scene. A no-op at the engine level once any ending is already chosen, so
+   * a double-click cannot re-fire the effect.
+   */
+  function commit(ending: Exclude<Ending, 'eat'>): void {
+    if (endingChosen(session.getState())) {
+      showEnding()
+      return
+    }
+    if (ending === 'hatch') {
+      session.dispatch((st) => chooseHatch(st))
+      ctx.logText('You open the shell. The sun goes dark — and then something climbs out of it, burning, and goes up to put the stars back.')
+    } else {
+      session.dispatch((st) => chooseFeed(st))
+      ctx.logText('You pour the whole hoard into the light. The dragon sleeps on, and the star-eater settles in to keep the watch. The sky stops.')
+    }
+    showEnding()
+  }
+
+  /**
+   * Ending 3 (EAT IT) — shown-but-deferred this slice. The §367 light-remix / inverted-opening NG+ dark save
+   * is the next slice; here the (threshold-unlocked) button only shows a deferred notice. It does NOT commit
+   * endingChosen, so the choice stays open for the player to take a finished ending instead.
+   */
+  function eatIt(): void {
+    ctx.clearScreen()
+    heading(CHOICE_HEADING, 'choice-screen')
+    paragraph(EAT_DEFERRED_NOTE, 'blurb', 'choice-eat-deferred')
+    screen.appendChild(ctx.button('back to the choice', 'choice-eat-back', () => showChoice(), 0))
+  }
+
+  /**
+   * The terminal ending presentation (§200/§201) — the chosen scene, read off the committed endingChosen
+   * string. The dragon ascending and the night sky refilling (hatch), or the sealed egg and the watch and the
+   * frozen sky (feed). A re-entry shows the same scene; the corner star readout reflects the up-tick / the
+   * freeze automatically (it reads projectedStars). The end of the game — no onward route but the map.
+   */
+  function showEnding(): void {
+    ctx.clearScreen()
+    const s = session.getState()
+    const ending = chosenEnding(s)
+
+    // Defensive: routed here with no committed ending — fall back to the choice (or the aftermath).
+    if (ending === null) {
+      showChoice()
+      return
+    }
+    // Ending 3 has no terminal scene this slice (its NG+ reset is the next slice); fall back to the choice.
+    if (ending === 'eat') {
+      showChoice()
+      return
+    }
+
+    const isHatch = ending === 'hatch'
+    heading(isHatch ? HATCH_HEADING : FEED_HEADING, 'ending-screen')
+
+    const art = doc.createElement('pre')
+    art.className = 'arena glow-sun'
+    art.setAttribute('data-testid', 'ending-art')
+    art.setAttribute('data-ending', ending)
+    art.textContent = isHatch ? HATCH_ART : FEED_ART
+    screen.appendChild(art)
+
+    paragraph(isHatch ? HATCH_BLURB : FEED_BLURB, 'blurb', 'ending-blurb')
+
+    // The sky readout, surfaced on the terminal scene itself (the corner StatusBar also reflects it): rising
+    // for hatch, held for feed. projectedStars reads the right branch automatically.
+    const sky = doc.createElement('p')
+    sky.className = 'blurb'
+    sky.setAttribute('data-testid', 'ending-sky')
+    sky.textContent = isHatch
+      ? `${t('ui.starCounter')}: ${projectedStars(s).toLocaleString()} (${t('ending.hatch.sky')})`
+      : `${t('ui.starCounter')}: ${projectedStars(s).toLocaleString()} (${t('ending.feed.sky')})`
+    screen.appendChild(sky)
+
+    screen.appendChild(ctx.button('back to the map', 'ending-to-map', () => ctx.showMap(), 0))
+  }
+
   function showFinale(): void {
     showDescentPort()
   }
 
-  return { showDescentPort, showCaramelCore, showStarEater, showFinale }
+  return { showDescentPort, showCaramelCore, showStarEater, showChoice, showEnding, showFinale }
 }

@@ -1,0 +1,176 @@
+import {
+  canChoose,
+  canEatIt,
+  chosenEnding,
+  endingChosen,
+  chooseHatch,
+  chooseFeed,
+  chooseEat,
+  chooseEnding,
+} from '@/engine/content/endings'
+import {
+  STAR_EATER_DEFEATED_FLAG,
+  ENDING_CHOSEN_FLAG,
+  ENDING_HATCH,
+  ENDING_FEED,
+  ENDING_EAT,
+  STARS_RELIGHTING_FLAG,
+  STAR_COUNTER_FROZEN_FLAG,
+} from '@/content/flags'
+import { EAT_IT_THRESHOLD } from '@/content/sun/endings'
+import { addResource } from '@/engine/types/Resource'
+import { createDefaultSave } from '@/engine/state/defaultSave'
+import type { GameState } from '@/engine/types/GameState'
+
+/** A save with the star-eater driven off — the choice is open. */
+const won = (over: Partial<GameState> = {}): GameState => {
+  const s = createDefaultSave()
+  return { ...s, flags: { ...s.flags, [STAR_EATER_DEFEATED_FLAG]: true }, ...over }
+}
+
+/** A won save holding `amount` candies (so ending 2's sacrifice has something to zero). */
+const wonWithCandies = (amount: number): GameState => {
+  const s = won()
+  return { ...s, candies: addResource(s.candies, amount) }
+}
+
+describe('the choice — canChoose gate (starEaterDefeated && !endingChosen)', () => {
+  it('is shut on a fresh save (the eater is not yet beaten)', () => {
+    expect(canChoose(createDefaultSave())).toBe(false)
+  })
+
+  it('opens once the star-eater is driven off', () => {
+    expect(canChoose(won())).toBe(true)
+  })
+
+  it('closes once an ending has been chosen (commit-once, terminal)', () => {
+    expect(canChoose(chooseHatch(won()))).toBe(false)
+    expect(canChoose(chooseFeed(won()))).toBe(false)
+    expect(canChoose(chooseEat(won()))).toBe(false)
+  })
+})
+
+describe('endingChosen / chosenEnding readers', () => {
+  it('reads false / null before any choice', () => {
+    expect(endingChosen(won())).toBe(false)
+    expect(chosenEnding(won())).toBeNull()
+  })
+
+  it('reflects the committed ending string', () => {
+    expect(chosenEnding(chooseHatch(won()))).toBe('hatch')
+    expect(chosenEnding(chooseFeed(won()))).toBe('feed')
+    expect(chosenEnding(chooseEat(won()))).toBe('eat')
+    expect(endingChosen(chooseHatch(won()))).toBe(true)
+  })
+
+  it('the ending ids match the content constants', () => {
+    expect(ENDING_HATCH).toBe('hatch')
+    expect(ENDING_FEED).toBe('feed')
+    expect(ENDING_EAT).toBe('eat')
+  })
+})
+
+describe('canEatIt — ending 3 threshold gate (lifetimeCandiesEaten)', () => {
+  it('is closed at or below the threshold', () => {
+    expect(canEatIt(won({ lifetimeCandiesEaten: 0 }))).toBe(false)
+    expect(canEatIt(won({ lifetimeCandiesEaten: EAT_IT_THRESHOLD }))).toBe(false)
+  })
+
+  it('opens strictly above the threshold', () => {
+    expect(canEatIt(won({ lifetimeCandiesEaten: EAT_IT_THRESHOLD + 1 }))).toBe(true)
+  })
+})
+
+describe('ending 1 — LET IT HATCH (the counter will tick UP)', () => {
+  it('sets endingChosen=hatch + the starsRelighting flag in one dispatch', () => {
+    const next = chooseHatch(won())
+    expect(next.strings[ENDING_CHOSEN_FLAG]).toBe(ENDING_HATCH)
+    expect(next.flags[STARS_RELIGHTING_FLAG]).toBe(true)
+  })
+
+  it('does NOT set the frozen flag and does NOT touch candies', () => {
+    const start = wonWithCandies(5000)
+    const next = chooseHatch(start)
+    expect(next.flags[STAR_COUNTER_FROZEN_FLAG]).toBeUndefined()
+    expect(next.candies.current).toBe(start.candies.current)
+  })
+
+  it('is a SAME-reference no-op once any ending is already chosen (commit-once)', () => {
+    const once = chooseHatch(won())
+    expect(chooseHatch(once)).toBe(once)
+    // and a different ending cannot override a committed one
+    const fed = chooseFeed(won())
+    expect(chooseHatch(fed)).toBe(fed)
+    expect(chosenEnding(chooseHatch(fed))).toBe('feed')
+  })
+})
+
+describe('ending 2 — FEED THE SUN (zero the hoard, freeze the counter)', () => {
+  it('sets endingChosen=feed + the starCounterFrozen flag + zeroes candies.current in one dispatch', () => {
+    const start = wonWithCandies(12_345)
+    const next = chooseFeed(start)
+    expect(next.strings[ENDING_CHOSEN_FLAG]).toBe(ENDING_FEED)
+    expect(next.flags[STAR_COUNTER_FROZEN_FLAG]).toBe(true)
+    expect(next.candies.current).toBe(0)
+  })
+
+  it('does NOT set the relight flag', () => {
+    expect(chooseFeed(won()).flags[STARS_RELIGHTING_FLAG]).toBeUndefined()
+  })
+
+  it('preserves lifetime totals when zeroing the hoard (lifetime survives NG+)', () => {
+    const start = wonWithCandies(9_000)
+    const before = start.candies.lifetimeAccumulated
+    const next = chooseFeed(start)
+    expect(next.candies.current).toBe(0)
+    expect(next.candies.lifetimeAccumulated).toBe(before)
+  })
+
+  it('handles a zero hoard gracefully (still freezes, no crash)', () => {
+    const start = won() // a default save has 0 candies
+    const next = chooseFeed(start)
+    expect(next.candies.current).toBe(0)
+    expect(next.flags[STAR_COUNTER_FROZEN_FLAG]).toBe(true)
+  })
+
+  it('is a SAME-reference no-op once any ending is already chosen (the sacrifice can never re-run)', () => {
+    const once = chooseFeed(wonWithCandies(5_000))
+    expect(chooseFeed(once)).toBe(once)
+    // a player cannot zero the hoard again to re-trigger anything
+    const replayed = chooseFeed(once)
+    expect(replayed.candies.current).toBe(0)
+    expect(replayed).toBe(once)
+  })
+})
+
+describe('ending 3 — EAT IT (shown-but-deferred stub this slice)', () => {
+  it('records endingChosen=eat (the NG+ reset is the next slice)', () => {
+    expect(chosenEnding(chooseEat(won()))).toBe('eat')
+  })
+
+  it('is a SAME-reference no-op once any ending is already chosen', () => {
+    const once = chooseEat(won())
+    expect(chooseEat(once)).toBe(once)
+  })
+})
+
+describe('chooseEnding dispatcher', () => {
+  it('routes to each ending', () => {
+    expect(chosenEnding(chooseEnding(won(), 'hatch'))).toBe('hatch')
+    expect(chosenEnding(chooseEnding(won(), 'feed'))).toBe('feed')
+    expect(chosenEnding(chooseEnding(won(), 'eat'))).toBe('eat')
+  })
+
+  it('feed via the dispatcher zeroes the hoard + freezes', () => {
+    const next = chooseEnding(wonWithCandies(7_777), 'feed')
+    expect(next.candies.current).toBe(0)
+    expect(next.flags[STAR_COUNTER_FROZEN_FLAG]).toBe(true)
+  })
+
+  it('is a SAME-reference no-op once any ending is committed (no re-trigger / farm)', () => {
+    const once = chooseEnding(won(), 'hatch')
+    expect(chooseEnding(once, 'feed')).toBe(once)
+    expect(chooseEnding(once, 'eat')).toBe(once)
+    expect(chosenEnding(once)).toBe('hatch') // the first choice stands
+  })
+})

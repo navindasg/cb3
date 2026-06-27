@@ -259,6 +259,14 @@ pre {
   max-width: 30rem;
   color: #6a6a6a;
 }
+/* The one-line description shown under each ending option (Act 4 — the choice). Tighter + dimmer than a
+   regular blurb so it reads as sub-text on the option above it. */
+.choice-desc {
+  margin: 0.1rem auto 0.7rem;
+  max-width: 28rem;
+  font-size: 0.92em;
+  color: #5c5c5c;
+}
 .shop-row {
   display: flex;
   align-items: center;

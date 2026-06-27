@@ -208,3 +208,104 @@ describe('offline catch-up keeps the accelerated descent (accumulatedGameTimeMs,
     expect(next.nGPlusRun).toBe(s.nGPlusRun)
   })
 })
+
+// --- Act 4 — ending 2: FEED THE SUN freezes the counter forever (up or down) ----------------------------
+
+/** Telescope owned + the starCounterFrozen flag set (ending 2). */
+function frozen(over: Partial<GameState> = {}): GameState {
+  const base = telescopeOwned(over)
+  return { ...base, flags: { ...base.flags, starCounterFrozen: true } }
+}
+
+describe('ending 2 — FEED THE SUN freezes the counter (projectedStars / reconcileStars stop)', () => {
+  it('projectedStars returns the stored count unchanged no matter how much time has passed', () => {
+    const s = frozen({ accumulatedGameTimeMs: 1000 * MS_PER_STAR, starsRemaining: 4321 })
+    expect(projectedStars(s)).toBe(4321)
+  })
+
+  it('reconcileStars is a SAME-reference no-op even with many whole stars of elapsed time', () => {
+    const s = frozen({ accumulatedGameTimeMs: 500 * MS_PER_STAR, starsRemaining: 4321 })
+    expect(reconcileStars(s)).toBe(s)
+  })
+
+  it('freeze beats acceleration: dyson stages do not unfreeze the descent', () => {
+    const base = withStages(5, { accumulatedGameTimeMs: 1000 * MS_PER_STAR, starsRemaining: 4321 })
+    const s = { ...base, flags: { ...base.flags, starCounterFrozen: true } }
+    expect(projectedStars(s)).toBe(4321)
+    expect(reconcileStars(s)).toBe(s)
+  })
+
+  it('the counter is still visible while frozen (the stopped sky shows)', () => {
+    expect(starCounterVisible(frozen())).toBe(true)
+  })
+})
+
+// --- Act 4 — ending 1: LET IT HATCH inverts the counter (the ONLY up-tick in the game) ------------------
+
+/** Telescope owned + the starsRelighting flag set (ending 1 — the up-tick branch). */
+function relighting(over: Partial<GameState> = {}): GameState {
+  const base = telescopeOwned(over)
+  return { ...base, flags: { ...base.flags, starsRelighting: true } }
+}
+
+describe('ending 1 — LET IT HATCH relights the stars (projectedStars / reconcileStars tick UP toward 8128)', () => {
+  it('projectedStars rises by one per MS_PER_STAR of accumulated time (the first up-tick in the game)', () => {
+    const oneLater = relighting({ accumulatedGameTimeMs: MS_PER_STAR, starsRemaining: 5000 })
+    expect(projectedStars(oneLater)).toBe(5001)
+    const tenLater = relighting({ accumulatedGameTimeMs: 10 * MS_PER_STAR, starsRemaining: 5000 })
+    expect(projectedStars(tenLater)).toBe(5010)
+  })
+
+  it('clamps the rise at STARTING_STARS (8128) — the sky cannot over-fill', () => {
+    const s = relighting({ accumulatedGameTimeMs: 1e15, starsRemaining: 8000 })
+    expect(projectedStars(s)).toBe(STARTING_STARS)
+    expect(projectedStars(s)).toBe(8128)
+  })
+
+  it('reconcileStars adds the elapsed whole stars and re-anchors the boughtAt stamp', () => {
+    const s = relighting({ accumulatedGameTimeMs: 3 * MS_PER_STAR, starsRemaining: 5000 })
+    const next = reconcileStars(s)
+    expect(next.starsRemaining).toBe(5003)
+    expect(next.numbers['telescopeBoughtAtMs']).toBe(3 * MS_PER_STAR)
+  })
+
+  it('reconcileStars is a SAME-reference no-op when no whole star has elapsed', () => {
+    const s = relighting({ accumulatedGameTimeMs: MS_PER_STAR - 1, starsRemaining: 5000 })
+    expect(reconcileStars(s)).toBe(s)
+  })
+
+  it('reconcileStars is a SAME-reference no-op once the relight has reached the cap (no over-fill, no churn)', () => {
+    const s = relighting({ accumulatedGameTimeMs: 1e9 * MS_PER_STAR, starsRemaining: STARTING_STARS })
+    expect(reconcileStars(s)).toBe(s)
+  })
+
+  it('reconcileStars clamps the persisted count at 8128 even when more time than needed has elapsed', () => {
+    const s = relighting({ accumulatedGameTimeMs: 1000 * MS_PER_STAR, starsRemaining: 8120 })
+    const next = reconcileStars(s)
+    expect(next.starsRemaining).toBe(8128)
+  })
+
+  it('is MONOTONE UP: reconcile never DECREASES starsRemaining under relight', () => {
+    const s = relighting({ accumulatedGameTimeMs: 7 * MS_PER_STAR, starsRemaining: 5000 })
+    const next = reconcileStars(s)
+    expect(next.starsRemaining).toBeGreaterThanOrEqual(s.starsRemaining)
+  })
+
+  it('a second pass with no new time is a SAME-reference no-op (no double-relight)', () => {
+    const s = relighting({ accumulatedGameTimeMs: 3 * MS_PER_STAR, starsRemaining: 5000 })
+    const once = reconcileStars(s)
+    const twice = reconcileStars(once)
+    expect(twice).toBe(once)
+  })
+
+  it('the relight rises FASTER under dyson acceleration (the same machinery, inverted)', () => {
+    // 4 stages -> ×2.0 -> effectiveMsPerStar = MS_PER_STAR/2; three base-intervals = 6 stars relit.
+    const base = withStages(4, { accumulatedGameTimeMs: 3 * MS_PER_STAR, starsRemaining: 5000 })
+    const s = { ...base, flags: { ...base.flags, starsRelighting: true } }
+    expect(projectedStars(s)).toBe(5006)
+  })
+
+  it('the counter is visible while relighting (the refilling sky shows)', () => {
+    expect(starCounterVisible(relighting())).toBe(true)
+  })
+})

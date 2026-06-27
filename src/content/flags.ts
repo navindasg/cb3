@@ -278,3 +278,36 @@ export const STAR_EATER_DEFEATED_FLAG = 'starEaterDefeated'
  * No schema bump: a flag rides the flags z.record.
  */
 export const EATER_COUNTER_SHOWN_FLAG = 'eaterCounterShown'
+
+/**
+ * The string flag recording WHICH ending was chosen (Act 4 — the choice, DESIGN §16/§200-204). Lives in the
+ * STRINGS namespace (not flags), set commit-once to one of 'hatch' / 'feed' / 'eat' — its presence gates the
+ * choice itself (canChoose requires it UNSET) and gates each ending's persistent effect (the effect fires only
+ * on the dispatch that sets it, never re-runnable / farmable). engine/content/endings reads/sets the SAME
+ * literal in lock-step (the moonStrata idiom — the engine never imports this content value, ADR §3). No schema
+ * bump: a string rides the strings z.record.
+ */
+export const ENDING_CHOSEN_FLAG = 'endingChosen'
+
+/** The three terminal ending ids the ENDING_CHOSEN_FLAG string can hold. */
+export const ENDING_HATCH = 'hatch'
+export const ENDING_FEED = 'feed'
+export const ENDING_EAT = 'eat'
+
+/**
+ * Set by ending 1 (LET IT HATCH) — the sun goes dark, the dragon ascends BURNING and relights the eaten stars
+ * (DESIGN §200/§202). engine/content/starCounter reads the SAME literal in lock-step (the moonStrata idiom) to
+ * switch the descent into an INVERTED relight branch: projectedStars / reconcileStars tick the count UP toward
+ * STARTING_STARS=8128 (clamped there — the ONLY up-tick in the whole game), still on accumulatedGameTimeMs. Set
+ * commit-once TOGETHER with the ending string by engine/content/endings.chooseHatch. No schema bump (a flag).
+ */
+export const STARS_RELIGHTING_FLAG = 'starsRelighting'
+
+/**
+ * Set by ending 2 (FEED THE SUN) — the dragon sleeps sated and the star-eater becomes its guardian; the sky
+ * stops, up or down, forever (DESIGN §201/§203). engine/content/starCounter reads the SAME literal in lock-step
+ * (the moonStrata idiom): when set, projectedStars returns starsRemaining unchanged and reconcileStars early-
+ * returns the SAME reference (the descent freezes). Set commit-once TOGETHER with the ending string + the candy
+ * hoard zeroed by engine/content/endings.chooseFeed. No schema bump (a flag rides the flags z.record).
+ */
+export const STAR_COUNTER_FROZEN_FLAG = 'starCounterFrozen'
