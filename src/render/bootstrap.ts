@@ -248,6 +248,10 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
 
   function showOpener(): void {
     clearScreen()
+    // The §367 inversion: a dark save (ending 3 — EAT IT carried forward) opens on the eater's line, now yours —
+    // "You have 8,100 stars," the sky already falling — in the SAME world as a light remix, NOT a second game.
+    // The light run opens on the series' first line, "You have 1 candy." Read the darkRun flag the dark save set.
+    const dark = session.getState().flags['darkRun'] === true
     const art = doc.createElement('pre')
     art.textContent = ' . \n( )\n `—`'
     art.classList.add('glow-sun')
@@ -255,7 +259,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     screen.appendChild(art)
     const line = doc.createElement('p')
     line.setAttribute('data-testid', 'opening-line')
-    line.textContent = 'You have 1 candy.'
+    line.textContent = dark ? t('ending.eat.darkOpening') : 'You have 1 candy.'
     screen.appendChild(line)
     screen.appendChild(
       button(
@@ -814,6 +818,9 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showScaffold: scaffold.showScaffold,
+    // Ending 3 (EAT IT): after the NG+ dark save is dispatched + persisted, reload so the bootstrap re-loads the
+    // autosaved dark save and opens on the inverted §367 opener (the dev-panel reset idiom; a no-op in jsdom).
+    reboot: () => doc.defaultView?.location.reload(),
   })
 
   // --- driver + lifecycle wiring ------------------------------------------

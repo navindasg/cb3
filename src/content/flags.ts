@@ -311,3 +311,15 @@ export const STARS_RELIGHTING_FLAG = 'starsRelighting'
  * hoard zeroed by engine/content/endings.chooseFeed. No schema bump (a flag rides the flags z.record).
  */
 export const STAR_COUNTER_FROZEN_FLAG = 'starCounterFrozen'
+
+/**
+ * Set by ending 3 (EAT IT) — you eat the sun, and the NG+ DARK SAVE begins (DESIGN §204/§286/§367). The
+ * inverted opening: a black screen, the night sky, "You have 8,100 stars," and the counter ticking DOWN from
+ * 8100 (a fresh start in the SAME world, a light remix — NOT a second full game). engine/state/newGamePlus's
+ * beginDarkSave sets the SAME literal in lock-step (the moonStrata idiom — the engine never imports this content
+ * value, ADR §3) on the fresh dark state; the opener/strings read it to flip into the inverted §367 dialogue.
+ * darkRunComplete (the secret completion, §367) is darkRun && starsRemaining >= 8128 — reachable only by
+ * carrying the relight forward. Set commit-once TOGETHER with the endingChosen='eat' string by chooseEat. No
+ * schema bump (a flag rides the flags z.record).
+ */
+export const DARK_RUN_FLAG = 'darkRun'

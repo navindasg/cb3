@@ -197,6 +197,11 @@ export const en: GameText = {
   'ending.hatch.sky': 'and rising',
   'ending.feed.sky': 'held',
 
+  // ending 3 — EAT IT (the §367 inverted opening). The light opened on "You have 1 candy"; the dark run opens
+  // on the eater's line, now yours — and the sky is already falling, from 8,100. The deadpan turn of §286/§367.
+  'ending.eat.darkOpening': 'You have 8,100 stars.',
+  'ending.eat.darkSky': 'and falling',
+
   // misc UI
   'ui.starCounter': 'stars in the sky',
   'ui.candyCounter': 'candies',

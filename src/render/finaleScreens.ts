@@ -106,10 +106,12 @@ import {
 import {
   canChoose,
   canEatIt,
+  canEatSun,
   chosenEnding,
   endingChosen,
   chooseHatch,
   chooseFeed,
+  chooseEat,
   type Ending,
 } from '@/engine/content/endings'
 import {
@@ -128,8 +130,14 @@ import {
   FEED_ART,
   EAT_LABEL,
   EAT_DESC,
-  EAT_DEFERRED_NOTE,
   EAT_LOCKED_NOTE,
+  EAT_CONFIRM_NOTE,
+  EAT_CONFIRM_LABEL,
+  EAT_CANCEL_LABEL,
+  EAT_HEADING,
+  EAT_BLURB,
+  EAT_ART,
+  DARK_BEGIN_LABEL,
   CHOICE_BACK_LABEL,
 } from '@/content/sun/endings'
 import { projectedStars } from '@/engine/content/starCounter'
@@ -165,6 +173,12 @@ export interface FinaleContext {
   showMap(): void
   /** Return to the dyson scaffold (the descent port is reached from the scaffold). */
   showScaffold(): void
+  /**
+   * Reboot the app from disk (ending 3 — EAT IT). After the NG+ dark save is dispatched + persisted, the page
+   * reloads so the bootstrap re-loads the autosaved dark save and opens on the inverted §367 opener. The host
+   * implements this as a real page reload (the dev-panel reset idiom); it is a no-op in jsdom/SSR.
+   */
+  reboot(): void
 }
 
 export interface FinaleScreens {
@@ -186,9 +200,10 @@ export interface FinaleScreens {
   showStarEater(): void
   /**
    * The choice screen (Quest 13's aftermath, §16/§200-204) — gated on starEaterDefeated. Shows all three
-   * endings; ending 3 (EAT IT) is threshold-gated and routes to a deferred notice this slice. Choosing
-   * ending 1 or 2 commits the terminal effect (counter UP / counter FROZEN) and routes to showEnding. Once
-   * an ending is chosen, re-entry shows the chosen terminal scene (the choice is locked, commit-once).
+   * endings; ending 3 (EAT IT) is threshold-gated (canEatSun) and, on confirm, eats the sun, begins the NG+
+   * dark save, persists it, and reboots into the inverted §367 opener. Choosing ending 1 or 2 commits the
+   * terminal effect (counter UP / counter FROZEN) and routes to showEnding. Once an ending is chosen, re-entry
+   * shows the chosen terminal scene (the choice is locked, commit-once).
    */
   showChoice(): void
   /**
@@ -823,8 +838,8 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     screen.appendChild(ctx.button(FEED_LABEL, 'choice-feed', () => commit('feed')))
     paragraph(FEED_DESC, 'blurb choice-desc', 'choice-feed-desc')
 
-    // Ending 3 — eat it (threshold-gated this slice; disabled below the §22-open threshold, and even when
-    // enabled it routes to a deferred notice — the NG+ dark-save reset is the next slice).
+    // Ending 3 — eat it (threshold-gated; disabled below the §22-open lifetime threshold). When enabled it
+    // routes to a confirm screen, then eats the sun and begins the NG+ dark save (the §367 inverted opening).
     const eatEnabled = canEatIt(s)
     const eat = ctx.button(EAT_LABEL, 'choice-eat', () => eatIt())
     if (!eatEnabled) {
@@ -860,15 +875,78 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
   }
 
   /**
-   * Ending 3 (EAT IT) — shown-but-deferred this slice. The §367 light-remix / inverted-opening NG+ dark save
-   * is the next slice; here the (threshold-unlocked) button only shows a deferred notice. It does NOT commit
-   * endingChosen, so the choice stays open for the player to take a finished ending instead.
+   * Ending 3 (EAT IT) — the point-of-no-return confirm (§204/§286/§367). Defensive: re-validates canEatSun (the
+   * pure gate: star-eater driven off, no ending committed, lifetime past the threshold) before offering the
+   * commit, so a stale click cannot reach the eat past a committed ending. The confirm does NOT touch state; only
+   * the commit (commitEat) does. Choosing 'not yet' returns to the open choice.
    */
   function eatIt(): void {
     ctx.clearScreen()
+    const s = session.getState()
     heading(CHOICE_HEADING, 'choice-screen')
-    paragraph(EAT_DEFERRED_NOTE, 'blurb', 'choice-eat-deferred')
-    screen.appendChild(ctx.button('back to the choice', 'choice-eat-back', () => showChoice(), 0))
+
+    if (!canEatSun(s)) {
+      // The gate closed under us (already chosen, or never qualified) — route to whatever is true now.
+      showChoice()
+      return
+    }
+
+    const art = doc.createElement('pre')
+    art.className = 'arena glow-egg'
+    art.setAttribute('data-testid', 'choice-eat-confirm-art')
+    art.textContent = CHOICE_ART
+    screen.appendChild(art)
+
+    paragraph(EAT_CONFIRM_NOTE, 'blurb', 'choice-eat-confirm')
+    screen.appendChild(ctx.button(EAT_CONFIRM_LABEL, 'choice-eat-confirm-yes', () => commitEat()))
+    screen.appendChild(ctx.button(EAT_CANCEL_LABEL, 'choice-eat-confirm-no', () => showChoice(), 0))
+  }
+
+  /**
+   * Commit ending 3 (EAT IT) — the terminal scene + the NG+ dark-save round-trip that ENDS the game. The order:
+   * draw the black screen + the night sky + the eater's line, now yours ("You have 8,100 stars."), THEN, on the
+   * 'begin again, in the dark' click, dispatch chooseEat (which builds the fresh dark save — fresh default +
+   * carried lifetime + the §367 darkRun flag + the inverted 8100 opening, all commit-once), persist it with
+   * save(), and reboot so the bootstrap re-loads the autosaved dark save and opens on the inverted opener.
+   *
+   * The state effect (chooseEat -> beginDarkSave) is the tested engine; this only draws the scene and routes the
+   * reboot. chooseEat is commit-once at the engine level (a SAME-ref no-op once any ending is chosen), so a
+   * double-click cannot re-roll the dark save; and after the reboot the loaded dark save has endingChosen='eat'
+   * carried forward, so a stray re-entry on it is still gated.
+   */
+  function commitEat(): void {
+    if (endingChosen(session.getState())) {
+      showEnding()
+      return
+    }
+    ctx.clearScreen()
+    heading(EAT_HEADING, 'ending-screen')
+
+    const art = doc.createElement('pre')
+    art.className = 'arena glow-sun'
+    art.setAttribute('data-testid', 'ending-art')
+    art.setAttribute('data-ending', 'eat')
+    art.textContent = EAT_ART
+    screen.appendChild(art)
+
+    paragraph(EAT_BLURB, 'blurb', 'ending-eat-blurb')
+
+    // The eater's counter, now yours — the §367 inverted opening, already falling from 8100.
+    const sky = doc.createElement('p')
+    sky.className = 'blurb'
+    sky.setAttribute('data-testid', 'ending-eat-opening')
+    sky.textContent = `${t('ending.eat.darkOpening')} (${t('ending.eat.darkSky')})`
+    screen.appendChild(sky)
+
+    // The point of no return: eat the sun (build + persist the dark save), then reboot into the dark opener.
+    screen.appendChild(
+      ctx.button(DARK_BEGIN_LABEL, 'ending-eat-begin', () => {
+        session.dispatch((st) => chooseEat(st))
+        session.save()
+        ctx.logText('You eat the sun. The light goes out, and the world begins again, in the dark.')
+        ctx.reboot()
+      }),
+    )
   }
 
   /**
@@ -898,11 +976,25 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
       screen.appendChild(ctx.button('back to the map', 'ending-to-map', () => ctx.showMap(), 0))
       return
     }
-    // Ending 3 (EAT IT) has no terminal scene this slice (its NG+ dark-save reset is the next slice). Render the
-    // deferred notice terminally INLINE — never bounce to showChoice (the recursion guard).
+    // Ending 3 (EAT IT) — the terminal night-sky scene, read off the committed 'eat' string. In the normal flow
+    // the eat path reboots straight into the inverted §367 opener (it never lands here); this is the defensive
+    // re-entry (e.g. a committed dark save routed back through showChoice -> showEnding). Render it terminally
+    // INLINE — the black screen, the night sky, the eater's line now yours — and never bounce to showChoice
+    // (the recursion guard). The only route out is to look at the (dark) map.
     if (ending === 'eat') {
-      heading(CHOICE_HEADING, 'ending-screen')
-      paragraph(EAT_DEFERRED_NOTE, 'blurb', 'ending-eat-deferred')
+      heading(EAT_HEADING, 'ending-screen')
+      const eatArt = doc.createElement('pre')
+      eatArt.className = 'arena glow-sun'
+      eatArt.setAttribute('data-testid', 'ending-art')
+      eatArt.setAttribute('data-ending', 'eat')
+      eatArt.textContent = EAT_ART
+      screen.appendChild(eatArt)
+      paragraph(EAT_BLURB, 'blurb', 'ending-eat-blurb')
+      const eatSky = doc.createElement('p')
+      eatSky.className = 'blurb'
+      eatSky.setAttribute('data-testid', 'ending-eat-opening')
+      eatSky.textContent = `${t('ending.eat.darkOpening')} (${t('ending.eat.darkSky')})`
+      screen.appendChild(eatSky)
       screen.appendChild(ctx.button('back to the map', 'ending-to-map', () => ctx.showMap(), 0))
       return
     }

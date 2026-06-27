@@ -144,8 +144,8 @@ describe('ending 2 — FEED THE SUN (zero the hoard, freeze the counter)', () =>
   })
 })
 
-describe('ending 3 — EAT IT (shown-but-deferred stub this slice)', () => {
-  it('records endingChosen=eat (the NG+ reset is the next slice)', () => {
+describe('ending 3 — EAT IT (records the eat; the NG+ dark save lives in newGamePlus.test)', () => {
+  it('records endingChosen=eat (the dark save round-trip is covered in newGamePlus.test)', () => {
     expect(chosenEnding(chooseEat(won()))).toBe('eat')
   })
 

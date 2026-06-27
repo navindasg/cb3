@@ -82,4 +82,13 @@ describe('en.ts locale completeness', () => {
       expect(t(key), key).toBeTruthy()
     }
   })
+
+  it('ending 3 (EAT IT) — the §367 inverted-opening lines resolve (the eater\'s line now yours)', () => {
+    for (const key of ['ending.eat.darkOpening', 'ending.eat.darkSky'] as const) {
+      expect(has(key), key).toBe(true)
+      expect(t(key), key).toBeTruthy()
+    }
+    // The deadpan inversion: the light run opened on "You have 1 candy"; the dark run opens on 8,100 stars.
+    expect(t('ending.eat.darkOpening')).toContain('8,100')
+  })
 })

@@ -196,6 +196,10 @@ export interface GameText {
   'ending.hatch.sky': string
   'ending.feed.sky': string
 
+  // --- ending 3 — EAT IT (the §367 inverted opening; the eater's "you have N stars" line, now yours) ---
+  'ending.eat.darkOpening': string
+  'ending.eat.darkSky': string
+
   // --- misc UI flavor ---
   'ui.starCounter': string
   'ui.candyCounter': string

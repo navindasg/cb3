@@ -11,10 +11,16 @@
 //  - ending 2 (FEED THE SUN): the warm melancholy status quo. You leave the egg sealed and feed the sun your
 //    whole candy hoard so the dragon can sleep sated; the star-eater settles in as its guardian, and the sky
 //    FREEZES exactly where it is, forever (§201/§203). The literal-number sacrifice is the deadpan gut-punch.
-//  - ending 3 (EAT IT): shown-but-deferred (the next slice — the §367 light-remix / inverted-opening NG+).
+//  - ending 3 (EAT IT): you eat the sun. A black screen, the night sky, "You have 8,100 stars," and the NG+
+//    DARK SAVE begins (§204/§286/§367) — the inverted opening, a light remix of the same world (NOT a second
+//    full game). The counter ticks DOWN from 8100. Offered only once lifetimeCandiesEaten > EAT_IT_THRESHOLD.
+//    The secret completion (§367) is carrying the counter back to 8128. This ENDS the game.
 //
-// Both ending-1 and ending-2 effects run through the EXISTING starsRemaining + starCounter machinery — no new
-// resource, no schema bump (the choice rides the strings z.record, the branches ride the flags z.record).
+// All three endings' effects run through the EXISTING starsRemaining + starCounter (+ ngPlusCarryover, for eat)
+// machinery — no new resource, no schema bump (the choice rides the strings z.record, the branches ride the
+// flags z.record, the dark save reuses existing fields).
+//
+// Ending 4 (the fossil-star epilogue, DESIGN §309/§16.4) is DEFERRED + signposted as polish.
 
 /**
  * The §22-open lifetime-candies-eaten threshold above which ending 3 (EAT IT) is offered as a SELECTABLE
@@ -119,26 +125,65 @@ export const FEED_ART = [
   '        \' - . _ _ . - \'',
 ].join('\n')
 
-// --- ending 3: EAT IT (shown-but-deferred — the §367 light-remix NG+ is the next slice) -----------------
+// --- ending 3: EAT IT (the §367 light-remix / inverted-opening NG+ dark save — this ENDS the game) -------
 
 /** The ending-3 button label — eat the egg, the dragon, the light, all of it. */
 export const EAT_LABEL = 'eat it'
 
 /**
  * The ending-3 button's one-line description (shown under the option; only ENABLED once lifetimeCandiesEaten
- * passes EAT_IT_THRESHOLD). The §367 light-remix / inverted-opening NG+ dark save is the NEXT slice; this slice
- * shows the option (enabled or disabled) but the screen routes it to a "deferred" notice rather than the reset.
+ * passes EAT_IT_THRESHOLD). Choosing it eats the sun and begins the NG+ dark save — a black-screen restart of
+ * the same world, the sky already falling. The deadpan: you spent the whole game watching a counter; now you
+ * are the thing that makes it fall.
  */
 export const EAT_DESC =
-  'Do the one thing it does. Eat the egg, the dragon, the light, the whole warm impossible thing — and find out what is left of the world when you have. (This way is still being written.)'
-
-/** The note shown when ending 3 is the still-deferred path (this slice). */
-export const EAT_DEFERRED_NOTE =
-  'That way is not open yet. The dark that comes after eating the last light is still being built.'
+  'Do the one thing it does. Eat the egg, the dragon, the light, the whole warm impossible thing. The sun goes out for good, and the world begins again in the dark — the same world, the same one candy, only now you have eaten a star and you know exactly what the counter is counting.'
 
 /** The note shown under a DISABLED ending-3 option — you have not eaten enough to think like the thing yet. */
 export const EAT_LOCKED_NOTE =
   'You have not eaten enough, yet, to even consider it.'
+
+/** A confirm/warning note shown before the eat-the-sun commit (it ends the game and restarts in the dark). */
+export const EAT_CONFIRM_NOTE =
+  'This is the last light. Eat it, and the game is over — and it begins again, in the dark, from one candy and a sky already going out. Lifetime stays with you. Nothing else does.'
+
+/** The eat-the-sun commit button label (the point of no return). */
+export const EAT_CONFIRM_LABEL = 'eat the sun'
+
+/** The eat-the-sun cancel/back button label. */
+export const EAT_CANCEL_LABEL = 'not yet'
+
+// --- ending 3 terminal scene: the black screen + the night sky (the §367 inverted opening) --------------
+
+/** The ending-3 terminal heading — the light is gone; what is left is the dark. */
+export const EAT_HEADING = 'and the light goes out'
+
+/**
+ * The ending-3 terminal blurb — you eat the sun; everything goes dark; and then, slowly, the night sky: the
+ * stars the dyson scaffold did not reach, the ones still burning, 8,100 of them, already going out one at a
+ * time. The world begins again from one candy, in the dark. The §286/§367 turn: you have become the thing in
+ * the telescope. The "You have 8,100 stars" line is the i18n string (rendered separately, the eater's voice
+ * now yours).
+ */
+export const EAT_BLURB =
+  'You open your mouth, and you eat the sun. There is no flash, no roar — the light just stops, the way a candy stops when you have eaten it, and then there is only the dark, and you, and very far off the cold pinpricks of every star the scaffold never reached. You count them without meaning to. The number is already falling. Somewhere down in the new dark there is a field, and a single candy in it, and a grandmother who will not remember any of this. Go on. You know how this goes. You have eaten enough to think like the thing that does.'
+
+/**
+ * The ending-3 terminal ASCII — the night sky after the sun is eaten: scattered stars on black, the sky the
+ * dark run opens onto. The glow is .glow-sun (cold and far now, not warm). Pure ASCII; the dots are the 8,100.
+ */
+export const EAT_ART = [
+  '   .        .   *      .       .     *    .',
+  '       *        .        .   *       .',
+  '  .      *   .      .        *    .       *',
+  '     .        *        .         .    *',
+  '  *      .        .   *      .        .   .',
+  '      .     *        .        *    .      *',
+  '   .        .        you have eaten the sun.',
+].join('\n')
+
+/** The label leaving the dark opening into the new (dark) run. */
+export const DARK_BEGIN_LABEL = 'begin again, in the dark'
 
 // --- the choice/ending screen's misc labels -------------------------------------------------------------
 
