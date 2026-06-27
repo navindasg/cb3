@@ -55,6 +55,8 @@ import { createSourPlanetScreens, type SourPlanetScreens } from '@/render/sourPl
 import { createKrakenScreens, type KrakenScreens } from '@/render/krakenScreens'
 import { createMintPlanetScreens, type MintPlanetScreens } from '@/render/mintPlanetScreens'
 import { createScaffoldScreens, type ScaffoldScreens } from '@/render/scaffoldScreens'
+import { createFinaleScreens, type FinaleScreens } from '@/render/finaleScreens'
+import { createDescentAudio } from '@/render/descentAudio'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -789,6 +791,29 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     showSkyPort: skyport.showSkyPort,
+    // The descent port is its own (finale) screen, reached from the scaffold once the bathysphere is
+    // built (a thunk: finale is created just below — read only at click time, by which point assigned).
+    showDescentPort: () => finale.showDescentPort(),
+  })
+
+  // The game's ONLY audio glue (Act 4 — §194): the descent cue. Test-safe (feature-detected, lazy on the
+  // user gesture, never constructed at load), coverage-excluded. Created here, held by the finale screens.
+  const descentAudio = createDescentAudio()
+
+  // The finale screens (Act 4 — the photosphere descent port + the one cue). Same thin-wiring contract;
+  // the reach gate (descentPortAvailable = act3GateCleared), the cue decision, and the fire-once latch live
+  // in the tested engine (engine/content/photosphere). Routed back through showScaffold / showMap.
+  const finale: FinaleScreens = createFinaleScreens({
+    doc,
+    screen,
+    session,
+    descentAudio,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showScaffold: scaffold.showScaffold,
   })
 
   // --- driver + lifecycle wiring ------------------------------------------
@@ -853,6 +878,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showReef: reef.showReef,
     showComet: comet.showComet,
     showScaffold: scaffold.showScaffold,
+    showDescentPort: finale.showDescentPort,
+    showFinale: finale.showFinale,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
     startForest: quests.startForest,

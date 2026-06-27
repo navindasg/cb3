@@ -126,6 +126,8 @@ export interface ScaffoldContext {
   showMap(): void
   /** Return to the sky port (the galleon's home berth). */
   showSkyPort(): void
+  /** Cross to the photosphere descent port (Act 4 — the finale) — wired by the bootstrap. */
+  showDescentPort(): void
 }
 
 export interface ScaffoldScreens {
@@ -450,6 +452,10 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       if (act3GateCleared(s)) {
         heading('Act 3 complete — the descent waits', 'scaffold-act3-complete')
         paragraph(ACT3_COMPLETE_BLURB, 'blurb', 'scaffold-act3-complete-blurb')
+        // The crossing into Act 4: down through the hatch to the photosphere descent port (its own screen).
+        screen.appendChild(
+          ctx.button('out onto the gantry, to the hatch', 'scaffold-to-descent', () => ctx.showDescentPort()),
+        )
       }
     }
 

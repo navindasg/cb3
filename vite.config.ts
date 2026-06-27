@@ -30,6 +30,11 @@ export default defineConfig({
         'src/render/krakenScreens.ts',
         'src/render/mintPlanetScreens.ts',
         'src/render/scaffoldScreens.ts',
+        'src/render/finaleScreens.ts',
+        // render/descentAudio.ts is the game's ONLY Web Audio glue: feature-detected, lazy on a user
+        // gesture, never constructed in jsdom/vitest. The DECISION to play is a pure tested engine
+        // predicate (engine/content/photosphere); the synthesis is verified by ear/Playwright, not units.
+        'src/render/descentAudio.ts',
         'src/render/questScreens.ts',
         'src/render/devPanel.ts',
         // Overworld.ts is the responsive DOM shell: it lives off getBoundingClientRect/innerHeight

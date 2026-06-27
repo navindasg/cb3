@@ -207,3 +207,23 @@ export const STAR_EATER_SIGHTED_FLAG = 'starEaterSighted'
  * (dysonStage5Done && this), the Act-4 descent hook; the §194 audio cue is the Act-4 payoff, not fired here.
  */
 export const BATHYSPHERE_BUILT_FLAG = 'bathysphereBuilt'
+
+/**
+ * Set the instant the photosphere descent begins (Act 4 — quest 11, DESIGN §194). The descent button's
+ * click handler (the user gesture) dispatches this flag in the SAME path that fires the game's ONLY
+ * audio cue — so the flag stamps the moment sound first enters the game after ~18 silent hours. The
+ * descent itself (the deterministic hazard sim) is wired in a later slice; this flag is the cue-fire
+ * latch's "started" half. engine/content/photosphere reads the SAME literal in lock-step (the moonStrata
+ * idiom — the engine never imports this content value, ADR §3).
+ */
+export const PHOTOSPHERE_DESCENT_STARTED_FLAG = 'photosphereDescentStarted'
+
+/**
+ * Set once the descent cue has played (Act 4 — quest 11, DESIGN §194). The fire-once latch's "played"
+ * half: the pure predicate engine/content/photosphere.shouldPlayDescentCue is true ONLY while the descent
+ * has started AND this flag is unset; the descent-button handler dispatches markDescentCuePlayed (which
+ * sets this) in the same path it performs the sound, so the cue fires EXACTLY once and can never re-fire
+ * or be farmed. engine/content/photosphere reads/sets the SAME literal in lock-step (the moonStrata idiom
+ * — the engine never imports this content value, ADR §3). The SOUND lives in coverage-excluded render glue.
+ */
+export const DESCENT_CUE_PLAYED_FLAG = 'descentCuePlayed'
