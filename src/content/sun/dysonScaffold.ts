@@ -160,7 +160,9 @@ export const DYSON_STAGES: readonly DysonStage[] = [
     ],
     doneFlag: 'dysonStage2Done',
     deferred: true,
-    note: 'needs the gummy work-crews (a stage-2 reward, Act 3)',
+    // surfaced verbatim on the works-master's screen — keep it diegetic; the dev rationale
+    // (this lands with the stage-2 reward slice) stays here, not in the player-facing string.
+    note: 'needs the gummy work-crews',
   },
   {
     stage: 3,
@@ -171,7 +173,7 @@ export const DYSON_STAGES: readonly DysonStage[] = [
     ],
     doneFlag: 'dysonStage3Done',
     deferred: true,
-    note: 'needs the star sea (a stage-3 reward, Act 3)',
+    note: 'needs the star sea',
   },
   {
     stage: 4,
@@ -182,7 +184,7 @@ export const DYSON_STAGES: readonly DysonStage[] = [
     ],
     doneFlag: 'dysonStage4Done',
     deferred: true,
-    note: 'needs the observation deck (a stage-4 reward, Act 3)',
+    note: 'needs the observation deck',
   },
   {
     stage: 5,
@@ -193,6 +195,7 @@ export const DYSON_STAGES: readonly DysonStage[] = [
     ],
     doneFlag: 'dysonStage5Done',
     deferred: true,
-    note: 'needs the descent port build-out (the Act-3 gate, Act 3)',
+    // the §184-style Act-3 gate lands with this final build-out slice.
+    note: 'needs the descent port build-out',
   },
 ]

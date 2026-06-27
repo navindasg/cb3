@@ -2,6 +2,7 @@ import type { OverworldDef } from '@/engine/types/overworld'
 import type { GameState } from '@/engine/types/GameState'
 import { createDefaultSave } from '@/engine/state/defaultSave'
 import { revealedRegions, revealedBounds, composeOverworld } from '@/render/overworldModel'
+import { ACT0_OVERWORLD } from '@/content/overworld'
 
 const WORLD: OverworldDef = {
   worldWidth: 40,
@@ -70,5 +71,43 @@ describe('overworld model', () => {
     expect(buffer.hotspots).toContainEqual({ x: 18, y: 0, width: 4, height: 1, action: 'enter:b' })
     // 'alpha' region (world 2,10) → cropped (0,6).
     expect(buffer.charAt(0, 6)).toBe('a')
+  })
+})
+
+describe('the Act-0 overworld composite — the sun marker is never overdrawn', () => {
+  // Regression for the Act-3 sun collision: with the whole dense top band revealed (sky, storm
+  // front, jawbreaker moon) the marquee 'the sun' label must still read — a later region in the
+  // compose order must not paint over its label cells. (Spaces are transparent, later wins.)
+  function allRevealed(): GameState {
+    const flags: Record<string, boolean> = {}
+    for (const region of ACT0_OVERWORLD.regions) {
+      if (region.revealFlag) flags[region.revealFlag] = true
+    }
+    return { ...createDefaultSave(), flags }
+  }
+
+  it("renders 'the sun' label intact in the full composite and keeps its clickable hotspot", () => {
+    const sun = ACT0_OVERWORLD.regions.find((r) => r.id === 'sun')
+    expect(sun).toBeDefined()
+    if (!sun) return
+    const { buffer, bounds } = composeOverworld(ACT0_OVERWORLD, allRevealed())
+
+    // Find the sun's label within its own art, map to cropped buffer coords, read it back whole.
+    const labelRow = sun.art.findIndex((row) => row.includes(sun.label))
+    expect(labelRow).toBeGreaterThanOrEqual(0)
+    const labelCol = sun.art[labelRow]!.indexOf(sun.label)
+    const cropX = sun.x - bounds.minX + labelCol
+    const cropY = sun.y - bounds.minY + labelRow
+    const got = Array.from({ length: sun.label.length }, (_, i) => buffer.charAt(cropX + i, cropY)).join('')
+    expect(got).toBe(sun.label)
+
+    // The hotspot over the sun's label survives compositing (still clickable).
+    expect(buffer.hotspots).toContainEqual({
+      x: cropX,
+      y: cropY,
+      width: sun.label.length,
+      height: 1,
+      action: sun.action,
+    })
   })
 })
