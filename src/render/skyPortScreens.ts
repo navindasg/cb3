@@ -15,6 +15,7 @@ import { GALLEON_COMMISSION, type CommissionLine } from '@/content/ship/galleon'
 import { trackTier, nextTier, canUpgrade, upgradeGalleon } from '@/engine/content/galleonUpgrade'
 import { reefReached } from '@/engine/content/reefVoyage'
 import { sourbeardBoarded } from '@/engine/content/boardingDuel'
+import { scaffoldReachable } from '@/engine/content/dysonScaffold'
 import {
   GALLEON_TRACKS,
   GALLEON_HULL_KEY,
@@ -74,6 +75,8 @@ export interface SkyPortContext {
   showSourPlanet(): void
   /** Sail to the mint planet & the ice labyrinth (Act 2 — quest 10) — wired by the bootstrap. */
   showMintPlanet(): void
+  /** Set sail for the sun & the dyson scaffold (Act 3) — wired by the bootstrap. */
+  showScaffold(): void
 }
 
 export interface SkyPortScreens {
@@ -250,6 +253,11 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         screen.appendChild(ctx.button('sail to the sour planet', 'skyport-to-sour', () => ctx.showSourPlanet()))
         // ...and a white world of ice turns slow and cold beyond it (Act 2 — the mint planet, quest 10).
         screen.appendChild(ctx.button('sail to the mint planet', 'skyport-to-mint', () => ctx.showMintPlanet()))
+      }
+      // Once the Act-2 gate is cleared (hull t3 + 10k peppermint), the sun itself is in reach — the
+      // shipwright says nothing about it; the dark has gone quiet (Act 3 — the dyson scaffold, §186).
+      if (scaffoldReachable(s)) {
+        screen.appendChild(ctx.button('set sail for the sun', 'skyport-to-sun', () => ctx.showScaffold()))
       }
       screen.appendChild(ctx.button("the shipwright's yard (fit out the galleon)", 'skyport-to-yard', () => showYard()))
       screen.appendChild(ctx.button('back to the moon', 'skyport-to-moon', () => ctx.showMoon()))

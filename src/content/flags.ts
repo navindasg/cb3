@@ -157,3 +157,30 @@ export const KRAKEN_DEFEATED_FLAG = 'krakenDefeated'
  * Gated behind the broadside arc (sourbeardDefeats >= 3), so the melee only opens at the third encounter.
  */
 export const SOURBEARD_BOARDED_FLAG = 'sourbeardBoarded'
+
+/**
+ * Set the first time the sun is reached — by setting sail from the sky port or travelling up to the
+ * top-of-map 'sun' overworld region (Act 3 — the dyson scaffold, DESIGN §186/§188). Reach is gated on the
+ * EXISTING engine predicate act2GateCleared (hull t3 + 10k peppermint), so this flag is reveal-only: it
+ * shows the 'sun' overworld region forever after, nothing more. The scaffold screen sets the SAME literal
+ * in lock-step (the moonStrata idiom) on the first arrival; the engine never imports this content value
+ * (ADR §3). The dyson stages themselves live in the dysonStage numbers ledger + their done-flags below.
+ */
+export const SUN_REACHED_FLAG = 'sunReached'
+
+/**
+ * The five dyson-scaffold stage done-flags (Act 3 — the 5-stage build machine, DESIGN §188). Each is set
+ * when its stage is funded + raised at the scaffold; the next stage is gated on the previous flag (the
+ * machine is strictly sequential, one-way). engine/content/dysonScaffold sets the SAME literals in
+ * lock-step (the moonStrata idiom) — the engine re-declares these strings rather than importing the
+ * content value (ADR §3). Each flag is also the unlock hook for that stage's reward slice (stage 1 ->
+ * the solar collectors, stage 2 -> gummy work-crews, stage 3 -> the star sea, stage 4 -> the observation
+ * deck, stage 5 -> the descent port / the bathysphere) and feeds the star-counter acceleration.
+ */
+export const DYSON_STAGE_DONE_FLAGS = [
+  'dysonStage1Done',
+  'dysonStage2Done',
+  'dysonStage3Done',
+  'dysonStage4Done',
+  'dysonStage5Done',
+] as const

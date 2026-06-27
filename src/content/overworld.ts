@@ -18,6 +18,26 @@ export const ACT0_OVERWORLD: OverworldDef = {
   worldWidth: 124,
   worldHeight: 40,
   regions: [
+    // --- the sun: the top of the map (revealed once you first reach the dyson scaffold, Act 3) ------
+    // Appears once sunReached is set (by setting sail from the sky port, or by arriving here). The
+    // jawbreaker moon at y:0 confirmed the map extends upward; the sun sits above it all. Reach is
+    // gated on the Act-2 gate (hull t3 + 10k peppermint, the engine's act2GateCleared) — this region
+    // is reveal-only. Pure-ASCII disc; the amber glow is the .glow-sun CSS class (never the unicode sun).
+    {
+      id: 'sun',
+      x: 56,
+      y: 0,
+      revealFlag: 'sunReached',
+      label: 'the sun',
+      action: 'enter:sun',
+      art: [
+        '       . * * * * * .       ',
+        '     * * the sun * * *     ',
+        '       * * * * * * *       ',
+        "      '. * * * * * .'      ",
+      ],
+    },
+
     // --- the sky (revealed once the beanstalk reaches the clouds) ---------------------------
     {
       id: 'sky',

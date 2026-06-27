@@ -51,6 +51,7 @@ import { createSourbeardScreens, type SourbeardScreens } from '@/render/sourbear
 import { createSourPlanetScreens, type SourPlanetScreens } from '@/render/sourPlanetScreens'
 import { createKrakenScreens, type KrakenScreens } from '@/render/krakenScreens'
 import { createMintPlanetScreens, type MintPlanetScreens } from '@/render/mintPlanetScreens'
+import { createScaffoldScreens, type ScaffoldScreens } from '@/render/scaffoldScreens'
 import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
@@ -504,6 +505,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     if (kind === 'enter' && target === 'observatory') return town.showObservatory()
     if (kind === 'enter' && target === 'cloudCommons') return sky.showCloudCommons()
     if (kind === 'enter' && target === 'moon') return moon.showMoon()
+    if (kind === 'enter' && target === 'sun') return scaffold.showScaffold()
     // "the sky" is the cloud band itself; once the beanstalk is an elevator it carries you up to
     // the cumulus commons. Before that it's just sky — answer visibly, never with a dead click.
     if (kind === 'travel' && target === 'sky') {
@@ -664,6 +666,9 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showSourPlanet: () => sourPlanet.showSourPlanet(),
     // The mint planet is its own screen, likewise reached after the reef (a thunk: created below).
     showMintPlanet: () => mintPlanet.showMintPlanet(),
+    // The dyson scaffold is its own screen, reached once the Act-2 gate is cleared (a thunk: the
+    // scaffold is created just below — read only at click time, by which point it is assigned).
+    showScaffold: () => scaffold.showScaffold(),
   })
 
   // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
@@ -764,6 +769,22 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showSkyPort: skyport.showSkyPort,
   })
 
+  // The dyson-scaffold screen (Act 3 — reach the sun: the 5-stage build machine over the sun's ASCII).
+  // Same thin-wiring contract; the stage machine + the reach gate (act2GateCleared) + the sun-art
+  // assembler live in the tested engine (engine/content/dysonScaffold). Routed back through showSkyPort /
+  // showMap. First arrival sets sunReached (reveal-only), surfacing the 'sun' overworld region.
+  const scaffold: ScaffoldScreens = createScaffoldScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showMap,
+    showSkyPort: skyport.showSkyPort,
+  })
+
   // --- driver + lifecycle wiring ------------------------------------------
 
   const initialSpeed = import.meta.env.DEV
@@ -825,6 +846,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showSkyPort: skyport.showSkyPort,
     showReef: reef.showReef,
     showComet: comet.showComet,
+    showScaffold: scaffold.showScaffold,
     startClimb: quests.startClimb,
     startStormFront: quests.startStormFront,
     startForest: quests.startForest,
