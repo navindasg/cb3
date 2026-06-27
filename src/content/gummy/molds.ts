@@ -12,7 +12,7 @@ import type { GameState } from '@/engine/types/GameState'
 // they multiply the WHOLE standing army's output (rock candy AND peppermint) by a count-driven factor.
 // The crew count is a one-way numbers ledger; gummyWorkCrewMultiplier is a pure read of it (× the
 // stage-2 flag), and BOTH producers (rockCandy + peppermint) fold it into their getRate. A small warm
-// beat in a cold act: the army that was a war machine now just moves candy. Type-only engine import.
+// beat in a cold act: the mining army you grew on the moon now runs the grind at the sun. Type-only engine import.
 
 /** numbers-namespace key for the grown worm-gummy count. */
 export const GUMMY_WORM_COUNT_KEY = 'gummyWormCount'

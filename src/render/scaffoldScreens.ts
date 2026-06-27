@@ -260,7 +260,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
 
       heading('the gummy work-crews', 'scaffold-crews')
       paragraph(
-        'A column of gummy folk files up from the galleon and sets to work on the struts without a word. The works-master watches them go. "The gummies have unionized. They are very efficient. They do not complain. They cannot." The army that was a war machine now just moves candy.',
+        'A column of gummy folk files up from the galleon and sets to work on the struts without a word. The works-master watches them a moment, then looks back at the sun. "They are faster than us. They do not get cold." The same little folk who burrowed your moon, set against a sun.',
         'blurb',
         'scaffold-crews-blurb',
       )
@@ -273,7 +273,7 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
         'scaffold-crew-count',
       )
       paragraph(
-        `the army now mines +${formatCount(rockRate)} rock candy/s and +${formatCount(peppermintRate)} peppermint/s`,
+        `the army now mines +${rockRate.toFixed(2)} rock candy/s and +${peppermintRate.toFixed(2)} peppermint/s`,
         'blurb',
         'scaffold-crew-rates',
       )
