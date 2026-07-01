@@ -312,7 +312,11 @@ describe('the star-eater — phase 2 balance: the on-foot climax reads the equip
   // The naive-loses contract covers the FULL forged arsenal — the mace and the whip included, not just the
   // weak blades (the Inc-20 durable lesson: a grid-search that omits the bait build proves nothing about it).
   // Kept in lock-step with the wins-with-reads list below so a future weapon can't slip the gate (review).
-  const FORGED_BLADES = ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']
+  // The mantle sword (hero-tier, base damage 12) is included: it is HELD to the iron sword's damage inside
+  // the discrete fights via meleeWeapon (MANTLE_SWORD_MELEE_CAP), so its raw weight/scaling cannot let naive
+  // play brute past the read — an uncapped mantle sword all-lunge WINS (durable Inc-21 lesson: re-run the
+  // grid-search when a new weapon touches a tuned fight).
+  const FORGED_BLADES = ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike', 'mantleSword']
 
   it('punishes naive guard-by-the-tell for EVERY forged blade (you must read the feints)', () => {
     for (const id of FORGED_BLADES) {
@@ -324,6 +328,11 @@ describe('the star-eater — phase 2 balance: the on-foot climax reads the equip
     for (const id of FORGED_BLADES) {
       expect(onFootOutcome(playBoarding(createOnFoot(withWeapon(id)), () => 'lunge'))).toBe('lost')
     }
+  })
+
+  it('the mantle sword all-lunge loses even at a huge lifetime (the melee cap holds regardless of scaling)', () => {
+    const glutton: GameState = { ...withWeapon('mantleSword'), lifetimeCandiesEaten: 1e9 }
+    expect(onFootOutcome(playBoarding(createOnFoot(glutton), () => 'lunge'))).toBe('lost')
   })
 
   it('lets each forged blade win with clean reads', () => {
@@ -340,13 +349,20 @@ describe('the star-eater — phase 3 balance: the core defense reads the equippe
   })
 
   it('punishes naive all-strike for EVERY forged blade — the mace and whip too (you must guard the egg)', () => {
-    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
+    // The mantle sword is included and held to the iron sword's damage inside the fight (MANTLE_SWORD_MELEE_CAP),
+    // so even the hero blade's all-striker loses the egg — its scaling cannot brute the core (durable Inc-21).
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike', 'mantleSword']) {
       expect(coreOutcome(playCore(createCore(withWeapon(id)), () => 'strike'))).toBe('lost')
     }
   })
 
+  it('the mantle sword all-strike loses even at a huge lifetime (the melee cap holds regardless of scaling)', () => {
+    const glutton: GameState = { ...withWeapon('mantleSword'), lifetimeCandiesEaten: 1e9 }
+    expect(coreOutcome(playCore(createCore(glutton), () => 'strike'))).toBe('lost')
+  })
+
   it('lets each forged blade win with clean reads', () => {
-    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike', 'mantleSword']) {
       expect(bestCoreHp(createCore(withWeapon(id)))).toBeGreaterThan(0)
     }
   })
@@ -363,7 +379,7 @@ describe('the star-eater — the FULL KIT is required across all three phases (n
 
   it('the maxed ship + a forged blade clears every phase (the full kit wins)', () => {
     expect(bestDuelHp(createBroadside(MAXED))).toBeGreaterThan(0)
-    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike', 'mantleSword']) {
       expect(bestBoardingHp(createOnFoot(withWeapon(id)))).toBeGreaterThan(0)
       expect(bestCoreHp(createCore(withWeapon(id)))).toBeGreaterThan(0)
     }

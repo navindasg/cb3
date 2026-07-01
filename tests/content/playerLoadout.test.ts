@@ -1,9 +1,11 @@
 import { createDefaultSave } from '@/engine/state/defaultSave'
 import {
   playerQuestWeapons,
+  meleeWeapon,
   BARE_HANDS,
   mantleSwordDamage,
   MANTLE_SWORD_SCALE_DIVISOR,
+  MANTLE_SWORD_MELEE_CAP,
 } from '@/content/items/playerLoadout'
 import { MANTLE_SWORD } from '@/content/items/items'
 import type { GameState } from '@/engine/types/GameState'
@@ -83,5 +85,34 @@ describe('the wrapper — the mantle sword scales off lifetimeCandiesEaten (§28
     const glutton = { ...withWeapon('ironSword'), lifetimeCandiesEaten: 1e9 }
     const [w] = playerQuestWeapons(glutton)
     expect(w?.damage).toBe(5) // iron sword's fixed damage, untouched by lifetime
+  })
+})
+
+describe('meleeWeapon — the discrete telegraph fights read a CAPPED mantle sword (the balance hold)', () => {
+  it('holds the mantle sword to the iron sword\'s damage even at a huge lifetime (all-lunge stays safe)', () => {
+    const [w] = meleeWeapon(withMantleAndEaten(9 * MANTLE_SWORD_SCALE_DIVISOR)) // real-time would swing at base+3
+    expect(w?.id).toBe(MANTLE_SWORD.id)
+    expect(w?.damage).toBe(MANTLE_SWORD_MELEE_CAP) // 5, not 15 — the hero weight is held in the duels
+    // reach + speed are untouched (only the damage is capped)
+    expect(w?.range).toBe(MANTLE_SWORD.weapon!.range)
+    expect(w?.cooldownMs).toBe(MANTLE_SWORD.weapon!.cooldownMs)
+  })
+
+  it('never lets the cap exceed the true scaled damage (min of the two)', () => {
+    // At zero lifetime the base (12) is already above the cap, so the cap always binds for the mantle sword.
+    const [w] = meleeWeapon(withMantleAndEaten(0))
+    expect(w?.damage).toBe(MANTLE_SWORD_MELEE_CAP)
+  })
+
+  it('does NOT cap any other weapon — only the mantle sword is held', () => {
+    expect(meleeWeapon(withWeapon('jawbreakerMace'))[0]?.damage).toBe(8) // mace unchanged
+    expect(meleeWeapon(withWeapon('ironSword'))[0]?.damage).toBe(5)
+    expect(meleeWeapon(withWeapon(null))).toEqual([BARE_HANDS])
+  })
+
+  it('the mantle sword swings at its FULL scaled damage in real-time combat (playerQuestWeapons, uncapped)', () => {
+    const big = withMantleAndEaten(9 * MANTLE_SWORD_SCALE_DIVISOR)
+    expect(playerQuestWeapons(big)[0]?.damage).toBe(MANTLE_SWORD.weapon!.damage + 3) // uncapped: 15
+    expect(meleeWeapon(big)[0]?.damage).toBe(MANTLE_SWORD_MELEE_CAP) // capped: 5
   })
 })

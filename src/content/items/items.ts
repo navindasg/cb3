@@ -274,20 +274,30 @@ export const CANDY_BOX_FIGUREHEAD: ItemDef = {
   saveFlag: 'candyBoxFigureheadOwned',
 }
 
-/** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
+/** The heirloom sword on grandma's mantle — taken down at last once the attic's wrapper unlocks it
+ * (§231/§288). Its saveFlag `mantleSwordTaken` is set by the attic grant (openAttic grants it alongside
+ * the wrapper); owning it auto-equips the weapon slot, activating the lifetime-candy scaling (see
+ * playerLoadout.mantleSwordDamage) — the "wrapper still scales" design intent, never stated.
+ *
+ * BALANCE HOLD (the pop-rock-pike precedent, DESIGN §5 + the boarding/star-eater grid-search contracts):
+ * the four DISCRETE telegraph fights (boarding melee, star-eater on-foot/core, the sour kraken) are tuned
+ * so all-lunge/all-strike LOSES for every forged blade at damage <= 5, strikes 1. This hero sword's raw
+ * weight (and its scaling) would let pure aggression brute past that read, so its cooldown is held at 400
+ * (strikes 1, NOT a double-strike) and playerLoadout caps its damage to the iron sword's (5) inside those
+ * discrete fights (meleeWeapon). Its full damage + scaling only bites in open REAL-TIME quest combat — the
+ * hero sword rewards eating, but the disciplined duels still demand the read. Grid-search-locked (see the
+ * boarding/star-eater balance tests, which include the mantle sword in the all-lunge-loses lists). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
   displayKey: 'item.mantleSword.name',
   descKey: 'item.mantleSword.desc',
   ascii: '|>',
-  saveFlag: 'mantleSwordTaken', // gated forever in Phase 1; the foreshadow flag below blocks it
+  saveFlag: 'mantleSwordTaken', // set by the attic grant (openAttic) once the wrapper unlocks it
   slot: 'weapon',
-  // Hero-tier stats so it is internally consistent the day it becomes takeable. Never reachable
-  // in Act 0 (no flow sets mantleSwordTaken), so these numbers affect no Act-0 balance.
-  weapon: { damage: 12, range: 2.5, cooldownMs: 300 },
+  weapon: { damage: 12, range: 2.5, cooldownMs: 400 },
 }
 
-/** Flag the world checks before letting the mantle sword be taken (never set in Act 0). */
+/** Flag the world checks before letting the mantle sword be taken (set by the wrapper's grant). */
 export const MANTLE_SWORD_UNLOCK_FLAG = 'mantleSwordUnlocked'
 
 export const ALL_ITEMS: readonly ItemDef[] = [

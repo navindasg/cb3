@@ -87,6 +87,8 @@ export interface GameText {
   'dialogue.grandma.spoonGift': string
   'dialogue.grandma.mantle1': string
   'dialogue.grandma.mantle2': string
+  'dialogue.grandma.mantleGiven1': string
+  'dialogue.grandma.mantleGiven2': string
   'dialogue.grandma.oldDays1': string
   'dialogue.grandma.oldDays2': string
   'dialogue.grandma.oldDays3': string

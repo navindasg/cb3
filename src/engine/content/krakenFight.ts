@@ -1,5 +1,5 @@
 import type { GameState } from '@/engine/types/GameState'
-import { playerQuestWeapons } from '@/content/items/playerLoadout'
+import { meleeWeapon } from '@/content/items/playerLoadout'
 import {
   KRAKEN_PLAYER_HP,
   TENTACLE_HP,
@@ -47,7 +47,7 @@ export interface KrakenState {
 
 /** Read your fighting hand off the equipped weapon (or bare hands). Pure. */
 export function deriveWeapon(state: GameState): FightWeapon {
-  const w = playerQuestWeapons(state)[0]!
+  const w = meleeWeapon(state)[0]!
   return {
     damage: w.damage,
     reach: w.range,

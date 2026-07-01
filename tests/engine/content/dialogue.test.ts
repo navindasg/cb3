@@ -22,6 +22,15 @@ describe('grandma dialogue selection', () => {
     const variant = selectVariant(GRANDMA_DIALOGUE, met)
     expect(variant?.id).toBe('mantleForeshadow')
   })
+
+  it('stops forbidding the sword once it is unlocked — the foreshadow hides, the given-line takes over (§288)', () => {
+    const unlocked: GameState = {
+      ...createDefaultSave(),
+      flags: { metGrandma: true, mantleSwordUnlocked: true },
+    }
+    const variant = selectVariant(GRANDMA_DIALOGUE, unlocked)
+    expect(variant?.id).toBe('mantleGiven') // not 'mantleForeshadow' — "Not yet" no longer persists
+  })
 })
 
 describe('astronomer dialogue selection', () => {

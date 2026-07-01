@@ -29,7 +29,8 @@ import {
   WRAPPER,
   GRANDMA_REAL_NAME,
 } from '@/content/letters'
-import { MANTLE_SWORD_UNLOCK_FLAG as ITEMS_UNLOCK_FLAG } from '@/content/items/items'
+import { MANTLE_SWORD_UNLOCK_FLAG as ITEMS_UNLOCK_FLAG, MANTLE_SWORD } from '@/content/items/items'
+import { playerQuestWeapons, mantleSwordDamage } from '@/content/items/playerLoadout'
 import type { GameState } from '@/engine/types/GameState'
 
 const base = (): GameState => createDefaultSave()
@@ -229,5 +230,40 @@ describe('openAttic — commit-once grant of the pogo stick, map fragment, and w
 
   it('the attic keepsakes are exactly [pogo stick, old map fragment, wrapper]', () => {
     expect(ATTIC_ITEMS.map((i) => i.id)).toEqual(['pogoStick', 'oldMapFragment', 'wrapper'])
+  })
+})
+
+// --- the wrapper cashes the heirloom sword (§231/§288): the render layer grants the sword alongside the ---
+// --- keepsakes ([...ATTIC_ITEMS, MANTLE_SWORD]); openAttic makes it owned + equipped end-to-end.       ---
+
+describe('openAttic grants the heirloom sword end-to-end (the §288 payoff is reachable, not a dead flag)', () => {
+  const atticItemsWithSword = [...ATTIC_ITEMS, MANTLE_SWORD] // exactly what the render layer passes
+  const unlocked = (): GameState => {
+    let s = base()
+    for (let i = 0; i < OLD_DAYS_THRESHOLD; i++) s = askAboutOldDays(s).state
+    return s
+  }
+
+  it('after the take-flow the mantle sword is owned AND equipped in the weapon slot', () => {
+    const result = openAttic(unlocked(), atticItemsWithSword)
+    expect(result.ok).toBe(true)
+    expect(result.state.ownedItems[MANTLE_SWORD.id]).toBe(true)
+    expect(result.state.equipped.weapon).toBe(MANTLE_SWORD.id) // grantItem auto-equips the weapon slot
+    expect(result.state.flags[MANTLE_SWORD.saveFlag]).toBe(true) // 'mantleSwordTaken' is now set
+    expect(result.state.flags[MANTLE_SWORD_UNLOCK_FLAG]).toBe(true) // the wrapper's unlock, same commit
+  })
+
+  it('once equipped, the mantle-sword scaling code path runs for real (not dead code)', () => {
+    const taken = openAttic({ ...unlocked(), lifetimeCandiesEaten: 9 * 10_000 }, atticItemsWithSword).state
+    const [w] = playerQuestWeapons(taken)
+    expect(w?.id).toBe(MANTLE_SWORD.id)
+    expect(w?.damage).toBe(mantleSwordDamage(taken.lifetimeCandiesEaten)) // the §288 lifetime scaling is live
+  })
+
+  it('a second take is still a no-op (SAME reference) — farm-proof even with the sword in the grant', () => {
+    const first = openAttic(unlocked(), atticItemsWithSword)
+    const second = openAttic(first.state, atticItemsWithSword)
+    expect(second.ok).toBe(false)
+    expect(second.state).toBe(first.state)
   })
 })

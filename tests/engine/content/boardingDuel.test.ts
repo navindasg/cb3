@@ -165,14 +165,24 @@ describe('the boarding melee — the balance contract', () => {
     // The pop rock pike is included on purpose: its damage is held at the iron sword's (its premium is
     // reach, which is irrelevant on foot), so a NEW premium weapon does not let all-lunge brute past the
     // read here — exactly the boundary that kept the pike at damage 5 (see items.ts POP_ROCK_PIKE).
-    for (const id of ['woodenSword', 'ironSword', 'popRockPike']) {
+    // The mantle sword is included too: it is a hero-tier scaling weapon (base damage 12), but its damage
+    // is HELD to the iron sword's (5) inside the discrete fights via meleeWeapon (MANTLE_SWORD_MELEE_CAP),
+    // so its raw weight/scaling does NOT let all-lunge brute past the read here (durable Inc-21 lesson: a
+    // new weapon must re-run this grid-search, not just be unit-tested — an uncapped mantle sword WINS).
+    for (const id of ['woodenSword', 'ironSword', 'popRockPike', 'mantleSword']) {
       const lost = playOut(createBoarding(withWeapon(id)), () => 'lunge')
       expect(boardingOutcome(lost)).toBe('lost')
     }
   })
 
+  it('the mantle sword all-lunge loses even at a huge lifetime (the melee cap holds regardless of scaling)', () => {
+    const glutton: GameState = { ...withWeapon('mantleSword'), lifetimeCandiesEaten: 1e9 }
+    const lost = playOut(createBoarding(glutton), () => 'lunge')
+    expect(boardingOutcome(lost)).toBe('lost')
+  })
+
   it('lets each forged blade win with clean reads', () => {
-    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike']) {
+    for (const id of ['woodenSword', 'ironSword', 'licoriceWhip', 'jawbreakerMace', 'popRockPike', 'mantleSword']) {
       expect(bestFinalHp(createBoarding(withWeapon(id)))).toBeGreaterThan(0)
     }
   })

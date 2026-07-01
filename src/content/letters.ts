@@ -84,8 +84,10 @@ export const CLIMBER_LETTERS: readonly LetterDef[] = [
 // --- grandma's attic (the old-days ×3 secret) ----------------------------------------------------
 // Ask Grandma about the old days three times and she goes quiet, then nods at the ladder to the attic.
 // Up there: a pogo stick that still works, an old map fragment of a climb that is not on any map — and,
-// wrapped in wax paper at the bottom of a trunk, a sword. She wrapped it herself, a long time ago. The
-// wrapper sets MANTLE_SWORD_UNLOCK_FLAG (cashing the mantle-sword foreshadow). None of these are gates.
+// wrapped in wax paper at the bottom of a trunk, a sword. She wrapped it herself, a long time ago. Taking
+// the wrapper unwraps the heirloom sword itself: the wrapper's grant sets MANTLE_SWORD_UNLOCK_FLAG and the
+// render layer grants the MANTLE_SWORD alongside it (openAttic is passed the sword as content data, so it
+// becomes owned + auto-equipped — cashing the mantle-sword foreshadow, §231/§288). None of these are gates.
 
 /** The pogo stick from the attic. Not equippable — a keepsake that, per the reveal, still works. */
 export const POGO_STICK: ItemDef = {
@@ -108,9 +110,11 @@ export const OLD_MAP_FRAGMENT: ItemDef = {
 /**
  * The wrapper — the wax paper the heirloom sword was wrapped in, folded and kept. Not equippable; a
  * keepsake. Owning it is the moment MANTLE_SWORD_UNLOCK_FLAG is set (grandma's blessing to take the
- * sword off the mantle at last). The mantle sword's damage scales off lifetimeCandiesEaten — the
- * "wrapper still scales" design intent, never stated (see content/items/playerLoadout). Its saveFlag
- * IS the unlock flag, so owning the wrapper and unlocking the sword are the same one-time event.
+ * sword off the mantle at last), and the attic grants the heirloom sword itself in the same commit (the
+ * render layer threads MANTLE_SWORD into openAttic). The mantle sword's damage scales off
+ * lifetimeCandiesEaten — the "wrapper still scales" design intent, never stated (see
+ * content/items/playerLoadout). Its saveFlag IS the unlock flag, so owning the wrapper and unlocking the
+ * sword are the same one-time event.
  */
 export const WRAPPER: ItemDef = {
   id: 'wrapper',

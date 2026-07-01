@@ -140,6 +140,11 @@ export function createTownScreens(ctx: TownContext): TownScreens {
 
   // --- the mailbox: milestone letters from the first climber (§30/§288) ------------------------
 
+  // Which letter's body is open on the mailbox screen right now (transient UI state, like the cauldron
+  // log — never persisted). Rendered AFTER the list inside showMailbox so a re-render (which starts with
+  // clearScreen) never wipes it: openLetter sets this, then re-renders, and the body is drawn from state.
+  let openLetterId: string | null = null
+
   function showMailbox(): void {
     ctx.clearScreen()
     heading('the mailbox', 'mailbox-screen')
@@ -156,12 +161,20 @@ export function createTownScreens(ctx: TownContext): TownScreens {
           ctx.button(label, `mailbox-letter-${letter.id}`, () => openLetter(letter)),
         )
       }
+      // The open letter's body, drawn after the list so re-rendering never clears it before it shows.
+      const open = openLetterId ? delivered.find((l) => l.id === openLetterId) : undefined
+      if (open) appendLetterBody(open)
     }
-    screen.appendChild(ctx.button('back to the village', 'mailbox-to-village', () => showVillage(), 0))
+    screen.appendChild(
+      ctx.button('back to the village', 'mailbox-to-village', () => {
+        openLetterId = null // forget the open letter so re-entering the mailbox starts on the list
+        showVillage()
+      }, 0),
+    )
   }
 
-  function openLetter(letter: LetterDef): void {
-    session.dispatch((s) => markLetterRead(s, letter))
+  /** Append `letter`'s body paragraph (the final letter's is signed with grandma's real name — §288). */
+  function appendLetterBody(letter: LetterDef): void {
     const body = doc.createElement('p')
     body.className = 'dialogue-line'
     body.setAttribute('data-testid', `letter-body-${letter.id}`)
@@ -169,6 +182,11 @@ export function createTownScreens(ctx: TownContext): TownScreens {
     // never say "I was the hero"; the signature does the work.
     body.textContent = letter.signed ? `${tk(letter.bodyKey)} ${GRANDMA_REAL_NAME}` : tk(letter.bodyKey)
     screen.appendChild(body)
+  }
+
+  function openLetter(letter: LetterDef): void {
+    session.dispatch((s) => markLetterRead(s, letter))
+    openLetterId = letter.id
     showMailbox()
   }
 

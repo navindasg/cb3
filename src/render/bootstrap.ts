@@ -35,7 +35,7 @@ import { ACT0_OVERWORLD } from '@/content/overworld'
 import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/flags'
 import { ACT0_SECRETS } from '@/content/secrets'
 import { inventoryView } from '@/content/items/inventoryView'
-import { WOODEN_SPOON, ITEM_MAP } from '@/content/items/items'
+import { WOODEN_SPOON, MANTLE_SWORD, ITEM_MAP } from '@/content/items/items'
 import {
   GRANDMA_DIALOGUE,
   GRANDMA_INTRO_VARIANT_ID,
@@ -504,17 +504,20 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     const blurb = doc.createElement('p')
     blurb.className = 'blurb'
     blurb.textContent = opened
-      ? 'Dust, a low roof, and the smell of old paper. The trunk stands open now; you have taken what was in it.'
+      ? 'Dust, a low roof, and the smell of old paper. The trunk stands open now; you have taken what was in it, and the mantle downstairs is bare.'
       : 'Dust, a low roof, and the smell of old paper. A pogo stick leans in one corner. A trunk sits under the window, its lid not quite shut. Inside, on top, a torn scrap of map. Beneath it, wrapped in wax paper, something the shape of a sword.'
     screen.appendChild(blurb)
 
     if (!opened) {
       screen.appendChild(
         button('take what is in the trunk', 'attic-take', () => {
-          const result = openAttic(session.getState(), ATTIC_ITEMS)
+          // The attic grant is the keepsakes + the heirloom sword itself (threaded as content data, ADR §3):
+          // taking the wrapper unwraps the sword. grantItem sets ownedItems.mantleSword + auto-equips it, so
+          // its lifetime-candy scaling goes live (held to the iron sword's damage inside the discrete fights).
+          const result = openAttic(session.getState(), [...ATTIC_ITEMS, MANTLE_SWORD])
           if (result.ok) {
             session.dispatch(() => result.state)
-            logText('You take the pogo stick, the old map fragment, and — after a moment — the wrapper. The sword over the mantle is yours to take now.')
+            logText('You take the pogo stick, the old map fragment, and — after a moment — the wrapper. Then you lift the heirloom sword down off the mantle. It is yours now.')
           }
           showAttic()
         }),

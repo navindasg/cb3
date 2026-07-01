@@ -24,12 +24,15 @@ describe('Act 0 item registry', () => {
     expect(after.flags['spoonOwned']).toBe(true)
   })
 
-  it('the mantle sword is foreshadowed but un-takeable in Act 0', () => {
-    // No Act 0 flow ever sets the unlock flag; the world gates the sword behind it.
+  it('the mantle sword is foreshadowed and un-takeable on a fresh save (the attic secret unlocks it later)', () => {
+    // On a fresh save nothing has set the unlock flag or granted the sword; the world gates it behind the
+    // attic's wrapper (the old-days ×3 secret). Once that is done the render layer grants it (see the
+    // mailbox test's end-to-end take-flow) — but until then it is only foreshadowed.
     const state = createDefaultSave()
     expect(state.flags[MANTLE_SWORD_UNLOCK_FLAG]).toBeUndefined()
     expect(state.ownedItems[MANTLE_SWORD.id]).toBeUndefined()
-    // It exists in the registry (so it can be SHOWN on the mantle) but is owned by nothing yet.
+    // It exists in the registry (so it can be SHOWN on the mantle, and granted by the attic) but is owned
+    // by nothing yet.
     expect(ITEM_MAP.get(MANTLE_SWORD.id)).toBe(MANTLE_SWORD)
   })
 })
