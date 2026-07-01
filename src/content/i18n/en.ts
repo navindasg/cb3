@@ -52,6 +52,8 @@ export const en: GameText = {
   'item.peppermintBathysphere.desc': 'A cold dark bead of a vessel: peppermint plates lashed over a mint core, every seam run with caramel until it is one sealed thing. It is built to be lowered into a star. It is sealed, and it is cold inside, which is the point; the sun is warm, which is the problem. The hatch is ready. You are not, quite.',
   'item.mantleSword.name': 'the heirloom sword',
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
+  'item.scholarsPamphlet.name': "a scholar's pamphlet",
+  'item.scholarsPamphlet.desc': 'A thin, water-stained pamphlet on the nature of starlight. The margins are full of a careful hand crossing out its own conclusions. Whoever wrote it stopped, mid-sentence, a long time ago.',
 
   // merchant lines
   'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
@@ -108,6 +110,12 @@ export const en: GameText = {
   'secret.fossilTwitch.reveal': 'The fossil twitches. Just once. You decide not to mention it.',
   'secret.wellInterest.reveal': 'A candy comes back up. With interest, somehow.',
   'secret.singleLollipopLeaf.reveal': 'The great leaf unfurls into a hammock. You rest.',
+  // the typed hidden-text-box words (CB2 homage) — each a tiny deadpan reward for curiosity.
+  'secret.starlight.reveal': 'A folded pamphlet slides out of nowhere and into your pocket. Someone was here before you.',
+  'secret.candyBox.reveal': 'You have 1 candy.',
+  'secret.aniwey.reveal': 'A small heart flickers in the corner of your eye. It has always been there.',
+  'secret.eclipse.reveal': 'Somewhere far off, the astronomer looks up sharply. "Where did you hear that word?"',
+  'secret.konami.reveal': 'A goldfish appears in the fishbowl helm. It regards you, and forgives you.',
 
   // rumors
   'rumor.mines': 'They say the mines below the field go down a very long way.',

@@ -1,13 +1,16 @@
 import type { GameState } from '@/engine/types/GameState'
 import type { ResourceKey } from '@/engine/types/GameState'
-import type { SecretDef } from '@/engine/types/defs'
+import type { ItemDef, SecretDef } from '@/engine/types/defs'
 import { addResource } from '@/engine/types/Resource'
+import { grantItem } from '@/engine/shop/purchase'
 
 // The secret runner (ADR §10 SecretDef). Secrets are the CB-series' hidden interactions —
 // the fossil that twitches when you feed it EXACTLY one candy, the well that pays interest
-// on thrown candies, the single-lollipop leaf. Each is a typed trigger; this engine matches
-// an interaction against a trigger and, on a hit, sets the flag and grants any reward. Pure
-// & immutable: on a miss it returns the SAME state reference so callers skip via Object.is.
+// on thrown candies, the single-lollipop leaf, and the CB2 hidden-text-box's typed words.
+// Each is a typed trigger; this engine matches an interaction against a trigger and, on a
+// hit, sets the flag, grants any reward or item, or (for a cosmetic secret) just returns a
+// reveal. Pure & immutable: on a miss it returns the SAME state reference so callers skip
+// via Object.is. ONE runner for every secret kind — typed words flow through it too.
 
 /** The interaction a player performs, matched against a SecretDef.trigger. */
 export type SecretInteraction =
@@ -17,6 +20,8 @@ export type SecretInteraction =
   | { readonly kind: 'throw'; readonly target: string; readonly count: number }
   /** Holding exactly the current balance while interacting (single-lollipop). */
   | { readonly kind: 'hold'; readonly resource: ResourceKey }
+  /** Typing a matched `word` (the hidden-text-box; the matcher normalizes keystrokes first). */
+  | { readonly kind: 'type'; readonly word: string }
 
 /** Whether `interaction` fires `secret`'s trigger. */
 export function triggerFires(secret: SecretDef, interaction: SecretInteraction, state: GameState): boolean {
@@ -39,6 +44,8 @@ export function triggerFires(secret: SecretDef, interaction: SecretInteraction, 
         interaction.resource === t.resource &&
         state[t.resource].current === t.count
       )
+    case 'type':
+      return interaction.kind === 'type' && interaction.word === t.word
   }
 }
 
@@ -52,21 +59,34 @@ export interface SecretResult {
 }
 
 /**
- * Evaluate `interaction` against `secret`. On a hit, set the secret's flag and add any reward
- * resource. A secret can only fire once: if its flag is already set, it is inert (no double
- * reward). Immutable; SAME state on a miss or an already-fired secret.
+ * Evaluate `interaction` against `secret`. On a hit, set the secret's flag and grant any reward /
+ * item; a COSMETIC secret ('candy box') skips the flag entirely and fires every time (its reveal is
+ * a harmless toast). A secret with `inertWhenFlag` set is silent once that flag is owned (eclipse
+ * after the grimoire). A secret can otherwise only fire once: if its setsFlag is already set, it is
+ * inert (no double reward). An `items` map is needed only for grantsItemId secrets. Immutable; SAME
+ * state on a miss, a spent secret, or an inert one.
  */
 export function fireSecret(
   state: GameState,
   secret: SecretDef,
   interaction: SecretInteraction,
+  items?: ReadonlyMap<string, ItemDef>,
 ): SecretResult {
-  if (state.flags[secret.setsFlag] === true) return { fired: false, state }
+  if (secret.inertWhenFlag && state.flags[secret.inertWhenFlag] === true) return { fired: false, state }
   if (!triggerFires(secret, interaction, state)) return { fired: false, state }
+
+  // Cosmetic secrets ('candy box') never touch state: no flag, no grant — just the reveal, every time.
+  if (secret.cosmetic) return { fired: true, state, revealKey: secret.revealKey }
+
+  if (state.flags[secret.setsFlag] === true) return { fired: false, state }
 
   let next: GameState = { ...state, flags: { ...state.flags, [secret.setsFlag]: true } }
   if (secret.reward) {
     next = { ...next, [secret.reward.resource]: addResource(next[secret.reward.resource], secret.reward.amount) }
+  }
+  if (secret.grantsItemId) {
+    const item = items?.get(secret.grantsItemId)
+    if (item) next = grantItem(next, item)
   }
   return { fired: true, state: next, revealKey: secret.revealKey }
 }
@@ -76,9 +96,10 @@ export function fireAny(
   state: GameState,
   secrets: readonly SecretDef[],
   interaction: SecretInteraction,
+  items?: ReadonlyMap<string, ItemDef>,
 ): SecretResult {
   for (const secret of secrets) {
-    const result = fireSecret(state, secret, interaction)
+    const result = fireSecret(state, secret, interaction, items)
     if (result.fired) return result
   }
   return { fired: false, state }

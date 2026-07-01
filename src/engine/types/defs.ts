@@ -289,6 +289,13 @@ export type SecretTrigger =
   | { readonly kind: 'throwAt'; readonly target: string }
   /** Possess exactly `count` of `resource` while interacting (single-lollipop). */
   | { readonly kind: 'holdExactly'; readonly resource: ResourceKey; readonly count: number }
+  /**
+   * The CB2 hidden-text-box: type a `word` (or the special 'konami' arrow sentinel). The render layer
+   * captures a rolling keystroke buffer; the pure matcher (engine/content/typedSecrets) suffix/window-
+   * matches the buffer against this word and, on a hit, feeds a { kind:'type', word } interaction to the
+   * SAME fireAny runner — one secret engine, no parallel system.
+   */
+  | { readonly kind: 'type'; readonly word: string }
 
 /** A hidden interaction: when its trigger fires, set a flag and optionally grant a reward. */
 export interface SecretDef {
@@ -300,6 +307,29 @@ export interface SecretDef {
   readonly revealKey: string
   /** Optional resource reward granted on firing. */
   readonly reward?: PriceLine
+  /**
+   * ItemDef.id granted on firing (via the shop's grantItem rails), e.g. the scholar's pamphlet for
+   * 'starlight'. Absent ⇒ no item. The item's own saveFlag marks ownership; setsFlag remains the
+   * secret's fire-once latch.
+   */
+  readonly grantsItemId?: string
+  /**
+   * A COSMETIC secret (the 'candy box' toast): it fires EVERY time, ignoring setsFlag entirely — no
+   * flag is read or written, nothing is granted, it just returns its revealKey for a harmless toast.
+   * Never persists, never blocks. Mutually exclusive with grantsItemId/reward (nothing to farm).
+   */
+  readonly cosmetic?: boolean
+  /**
+   * The secret is INERT once this flag is set (e.g. eclipse's astronomer line goes quiet once the black
+   * licorice grimoire is owned — you already know where eclipses come from). Absent ⇒ no such gate.
+   */
+  readonly inertWhenFlag?: string
+  /**
+   * A SESSION-ONLY tag (the 'aniwey' heart): the effect is a render-layer, non-persisted flourish. The
+   * secret still fires-once via setsFlag so the reveal shows once, but the flag lives only for this
+   * session (the render layer keeps it out of the save). Absent ⇒ a normal persisted flag.
+   */
+  readonly sessionOnly?: boolean
 }
 
 // --- Progressive reveal (Block F) ------------------------------------------

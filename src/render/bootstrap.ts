@@ -61,6 +61,7 @@ import { createQuestScreens, type QuestScreens } from '@/render/questScreens'
 import { STEP_MS } from '@/render/loopTiming'
 import { createEventLog, type EventLog } from '@/render/eventLog'
 import { createHotkeyLayer, acceleratorKey, underlinedLabel, type HotkeyLayer } from '@/render/hotkeys'
+import { createTypedSecretInput, type TypedSecretLayer } from '@/render/typedSecretInput'
 import { wireLifecycleEvents, wasDiscarded } from '@/render/lifecycleEvents'
 import { applyReducedMotion, markDecorative } from '@/render/a11y'
 import { parseAction } from '@/render/actionRouter'
@@ -194,6 +195,25 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
   const screen = doc.createElement('div')
   screen.className = 'screen'
   mainRoot.insertBefore(screen, eventLog.el)
+
+  // --- the CB2 hidden-text-box (typed secrets) ---------------------------------------------
+  // A rolling keystroke buffer that fires typed secrets through the shared secret runner. The
+  // 'aniwey' heart is a session-only ASCII flourish drawn in the corner (never persisted).
+  const heart = doc.createElement('span')
+  heart.className = 'aniwey-heart'
+  heart.setAttribute('aria-hidden', 'true')
+  heart.hidden = true
+  heart.textContent = '<3'
+  mainRoot.appendChild(heart)
+  const typedSecrets: TypedSecretLayer = createTypedSecretInput(doc, {
+    dispatch: session.dispatch,
+    getState: session.getState,
+    notify,
+    resolve: (key) => tk(key as GameTextKey),
+    onHeartRevealed: () => {
+      heart.hidden = false
+    },
+  })
 
   let map: OverworldRenderer | null = null
   // Screen-scoped teardown (effects, subscriptions, quest intervals + arena unmounts) cleared on
@@ -905,6 +925,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     startMoonWorm: quests.startMoonWorm,
     armSeed,
     log: logText,
+    // Drive the hidden-text-box matcher directly (inject a typed word, not raw keystrokes).
+    typeSecret: (word: string) => typedSecrets.type(word),
   }
 
   return {
@@ -917,6 +939,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       healthBar.dispose()
       bar.dispose()
       hotkeys.dispose()
+      typedSecrets.dispose()
+      heart.remove()
       devPanel?.dispose()
       clearScreen()
       if (toastTimer) clearTimeout(toastTimer)

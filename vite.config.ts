@@ -39,6 +39,9 @@ export default defineConfig({
         // predicate (engine/content/photosphere); the synthesis is verified by ear/Playwright, not units.
         'src/render/descentAudio.ts',
         'src/render/questScreens.ts',
+        // typedSecretInput.ts is the CB2 hidden-text-box's DOM keystroke capture (the DECISION — its
+        // word→effect matcher — is fully unit-tested in engine/content/typedSecrets). Thin glue, like hotkeys.
+        'src/render/typedSecretInput.ts',
         'src/render/devPanel.ts',
         // Overworld.ts is the responsive DOM shell: it lives off getBoundingClientRect/innerHeight
         // measurements that jsdom reports as 0, so its fit math is verified live (Playwright),

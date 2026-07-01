@@ -472,6 +472,21 @@ body.dark-run {
   transform: translateX(-50%) translateY(0);
 }
 
+/* The 'aniwey' typed-secret heart: a tiny pure-ASCII '<3' in the corner, session-only. A soft
+ * static glow (text-shadow, not the text — ADR §7.2), disabled under prefers-reduced-motion by
+ * virtue of being static (no animation). Unobtrusive; it just quietly appears once you type. */
+.aniwey-heart {
+  position: fixed;
+  bottom: 0.4rem;
+  right: 0.5rem;
+  z-index: 5;
+  font-size: 12px;
+  color: #ff6f91;
+  text-shadow: 0 0 4px #ff9ab0, 0 0 9px rgba(255, 111, 145, 0.6);
+  pointer-events: none;
+  user-select: none;
+}
+
 /* CB2 identity tell: a tiny fixed bottom-left version/credits line. */
 #version-number {
   position: fixed;

@@ -52,6 +52,8 @@ export interface GameText {
   'item.peppermintBathysphere.desc': string
   'item.mantleSword.name': string
   'item.mantleSword.desc': string
+  'item.scholarsPamphlet.name': string
+  'item.scholarsPamphlet.desc': string
 
   // --- shop / forge / observatory merchant lines ---
   'shop.leatherHat.thanks': string
@@ -107,6 +109,12 @@ export interface GameText {
   'secret.fossilTwitch.reveal': string
   'secret.wellInterest.reveal': string
   'secret.singleLollipopLeaf.reveal': string
+  // the typed hidden-text-box words (CB2 homage, §18)
+  'secret.starlight.reveal': string
+  'secret.candyBox.reveal': string
+  'secret.aniwey.reveal': string
+  'secret.eclipse.reveal': string
+  'secret.konami.reveal': string
 
   // --- tavern rumors (hints) ---
   'rumor.mines': string

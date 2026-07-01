@@ -1,4 +1,5 @@
 import type { ItemDef } from '@/engine/types/defs'
+import { SCHOLARS_PAMPHLET } from '@/content/typedSecrets'
 
 // Act 0 items as data (ADR §10 ItemDef). Content imports ONLY engine types. The wooden
 // spoon is grandma's heirloom gift (a weapon). The forge sells weapon upgrades. The
@@ -300,6 +301,9 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   PEPPERMINT_BATHYSPHERE,
   COTTON_CANDY_BALLOON,
   MANTLE_SWORD,
+  // The scholar's pamphlet lives with its typed secret (content/typedSecrets), but joins the registry
+  // here so the secret runner's grantItem can resolve it via ITEM_MAP.
+  SCHOLARS_PAMPHLET,
 ]
 
 /** The item registry the generic purchase handler consumes. */
