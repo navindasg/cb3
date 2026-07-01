@@ -340,6 +340,16 @@ pre {
   color: #f0cf8a;
   text-shadow: 0 0 3px #ffe6a8, 0 0 9px rgba(255, 214, 130, 0.45);
 }
+.glow-terminal {
+  /* The context window (§28): the maintenance-hatch terminal scrolling the game's own design notes. A dim
+   * green phosphor CRT — the developer's-computer homage — set on the game's night surface so it reads as a
+   * found screen, not the bright candy page. Render-layer only; the scroll machine is the tested engine. */
+  color: #7fdfa0;
+  background: #071108;
+  border: 1px solid #1c3a26;
+  padding: 0.6rem 1.1rem;
+  text-shadow: 0 0 2px #4dff9e, 0 0 8px rgba(77, 255, 158, 0.35);
+}
 .glow-star {
   /* Ending 3 (EAT IT): the night sky after the sun is eaten — cold pinpricks, not warm gold. The one
    * deliberate inversion of the all-white page (§204/§286/§367): the cool star-ink blue of the counter/

@@ -348,6 +348,16 @@ export const CANDY_BOX_FIGUREHEAD_FLAG = 'candyBoxFigureheadOwned'
 export const MOONPOPS_PLANTED_FLAG = 'moonpopsPlanted'
 
 /**
+ * Set the first time the moon's maintenance hatch is prised open (Phase 5 — the context window, §28). A
+ * one-way reveal latch: the hatch on the moon's far side is labelled "do not open (it's fine)"; opening it
+ * reveals the terminal that scrolls this game's own design notes / "system prompt" (the developer's-computer
+ * homage). engine/content/contextWindow.openHatch sets the SAME literal in lock-step (the moonStrata idiom,
+ * ADR §3 — the engine never imports this content value); the moon screen reads it to show the terminal entry
+ * forever after. Read-only exploration — nothing to farm. Houses the hallucination boss (§17, a later slice).
+ */
+export const CONTEXT_HATCH_OPENED_FLAG = 'contextHatchOpened'
+
+/**
  * Set the moment the cloud-wolf shear STREAK first reaches SHEAR_TO_REVEAL — the same cloud sheep sheared
  * seven times running (Phase 5 — hidden boss 1, DESIGN §17: "it was never a sheep"). LATCHED (monotonic): the
  * wolf stays revealed even after the streak resets (shearing a different sheep). engine/content/paddock

@@ -22,6 +22,7 @@ export default defineConfig({
         'src/render/townScreens.ts',
         'src/render/skyScreens.ts',
         'src/render/moonScreens.ts',
+        'src/render/contextWindowScreens.ts',
         'src/render/skyPortScreens.ts',
         'src/render/reefScreens.ts',
         'src/render/cometScreens.ts',

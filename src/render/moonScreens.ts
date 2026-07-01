@@ -47,6 +47,15 @@ import {
 } from '@/engine/content/gummyVat'
 import { skyPortOpen } from '@/engine/content/galleonCommission'
 import { plantMoonpop, moonpopsPlanted } from '@/engine/content/interactionBonuses'
+import { hatchOpened, openHatch } from '@/engine/content/contextWindow'
+import {
+  HATCH_HEADING,
+  HATCH_LABEL,
+  HATCH_CLOSED_BLURB,
+  HATCH_OPENED_BLURB,
+  OPEN_HATCH_LABEL,
+  ENTER_TERMINAL_LABEL,
+} from '@/content/moon/contextWindow'
 import {
   MOON_STRATA,
   MOON_PICKS,
@@ -132,6 +141,8 @@ export interface MoonContext {
   startMoonWorm(): void
   /** Cross to the sky port on the moon's far side (Act 2) — wired by the bootstrap. */
   showSkyPort(): void
+  /** Step into the context-window terminal behind the maintenance hatch (§28) — wired by the bootstrap. */
+  showContextWindow(): void
 }
 
 export interface MoonScreens {
@@ -182,6 +193,7 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       renderStratum(s)
       renderOutfitter(s)
       renderMoonpops(s)
+      renderHatch(s)
       renderLighthouse(s)
       renderWormTunnels(s)
       renderGummyVat(s)
@@ -549,6 +561,32 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       }
       session.dispatch(() => result.state)
       ctx.logText('You press a lollipop into the moon dust. It takes. Moonpops bloom, glowing softly — and the moon feels a little kinder.')
+      render()
+    }
+
+    /** The maintenance hatch (the §28 context window) — a service panel on the moon's far side labelled
+     * "do not open (it's fine)". Opening it (a one-way reveal flag) reveals the terminal that scrolls this
+     * game's own design notes. The engine owns the reveal flag; the terminal is its own screen. Pure
+     * exploration — read-only, never a gate. */
+    function renderHatch(s: GameState): void {
+      heading(HATCH_HEADING, 'moon-hatch-section')
+      if (hatchOpened(s)) {
+        paragraph(HATCH_OPENED_BLURB, 'blurb', 'moon-hatch-opened')
+        screen.appendChild(ctx.button(ENTER_TERMINAL_LABEL, 'moon-hatch-enter', () => ctx.showContextWindow()))
+        return
+      }
+      const stencil = doc.createElement('pre')
+      stencil.className = 'arena'
+      stencil.setAttribute('data-testid', 'moon-hatch-stencil')
+      stencil.textContent = ['+------------------------+', `|  ${HATCH_LABEL}  |`, '+------------------------+'].join('\n')
+      screen.appendChild(stencil)
+      paragraph(HATCH_CLOSED_BLURB, 'blurb', 'moon-hatch-closed')
+      screen.appendChild(ctx.button(OPEN_HATCH_LABEL, 'moon-hatch-open', () => doOpenHatch()))
+    }
+
+    function doOpenHatch(): void {
+      session.dispatch((st) => openHatch(st))
+      ctx.logText('The panel comes open with a sigh of stale air. Behind it: a terminal, running, and a cursor that blinks like it knows you.')
       render()
     }
 

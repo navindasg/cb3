@@ -67,6 +67,7 @@ import { createTownScreens, type TownScreens } from '@/render/townScreens'
 import { createReflectionScreens, type ReflectionScreens } from '@/render/reflectionScreens'
 import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
 import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
+import { createContextWindowScreens, type ContextWindowScreens } from '@/render/contextWindowScreens'
 import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScreens'
 import { createReefScreens, type ReefScreens } from '@/render/reefScreens'
 import { createCometScreens, type CometScreens } from '@/render/cometScreens'
@@ -829,6 +830,22 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     // The sky port lives on its own screen; cross to it from the moon's far side (a thunk because
     // skyport is created just below — it is only read at click time, by which point it is assigned).
     showSkyPort: () => skyport.showSkyPort(),
+    // The context-window terminal (§28) is its own screen, reached through the moon's maintenance hatch
+    // (a thunk: contextWindow is created just below — read only at click time, by which point assigned).
+    showContextWindow: () => contextWindow.showContextWindow(),
+  })
+
+  // The context-window terminal screen (Phase 5 — §28: the moon hatch's design-notes terminal). Same
+  // thin-wiring contract; the hatch-reveal flag + the pure scroll machine live in the tested engine
+  // (engine/content/contextWindow), routed back through showMoon.
+  const contextWindow: ContextWindowScreens = createContextWindowScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    showMoon: moon.showMoon,
   })
 
   // The sky-port screens (Act 2 — the shipwright's commission for the candied galleon, on the moon's
@@ -1062,6 +1079,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showCloudWolf: sky.showCloudWolf,
     showReflection: reflection.showReflection,
     showMoon: moon.showMoon,
+    showContextWindow: contextWindow.showContextWindow,
     showSkyPort: skyport.showSkyPort,
     showReef: reef.showReef,
     showComet: comet.showComet,
