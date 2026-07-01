@@ -84,13 +84,19 @@ export function createReflectionScreens(ctx: ReflectionContext): ReflectionScree
     let fight: ReflectionState | null = null
     let committed = false
     let drank = false
+    // True only on the FIRST win (the pin was actually granted). A rematch win (defeated already, potion re-brewed)
+    // grants nothing, so the victory blurb must not promise a pin cooling on the table that is already yours.
+    let looted = false
 
     function render(): void {
       ctx.clearScreen()
       const s = session.getState()
       heading('your reflection', 'reflection-screen')
 
-      if (reflectionDefeated(s)) {
+      // The calm empty room only when you have already won AND are not here to face yourself again. If you drank a
+      // fresh potion after your first win (the promised "company" — see the cold pot's rematch line), fall through
+      // to the fight: the reflection returns, loot-less (grantReflectionReward is flag-gated, so no re-loot).
+      if (reflectionDefeated(s) && !hasMirrorPotion(s) && !fight) {
         renderCalm()
       } else if (!hasMirrorPotion(s) && !fight) {
         // No potion in hand and no fight underway — nothing to face. (Shouldn't be reachable, but harmless.)
@@ -132,7 +138,9 @@ export function createReflectionScreens(ctx: ReflectionContext): ReflectionScree
       if (outcome === 'won') {
         if (!committed) commitVictory()
         paragraph(
-          'You read the last feint for what it was, and step inside it, and the thing that was you comes apart like breath on glass. Where it stood, a small pin lies cooling on the table. You beat yourself, which is either a great victory or no victory at all. You decide not to think about it too hard.',
+          looted
+            ? 'You read the last feint for what it was, and step inside it, and the thing that was you comes apart like breath on glass. Where it stood, a small pin lies cooling on the table. You beat yourself, which is either a great victory or no victory at all. You decide not to think about it too hard.'
+            : 'You read the last feint for what it was, and step inside it, and the thing that was you comes apart like breath on glass. It leaves nothing behind this time — you already took the pin, the first time you did this. You beat yourself again. The company, it turns out, was the point.',
           'blurb',
           'reflection-won',
         )
@@ -190,12 +198,17 @@ export function createReflectionScreens(ctx: ReflectionContext): ReflectionScree
 
     function commitVictory(): void {
       committed = true
+      // First win only grants (and logs) the pin; a rematch (already defeated) is loot-less, and `looted` gates
+      // both the victory blurb and the log line so neither promises a pin that is already in your pocket.
+      looted = !reflectionDefeated(session.getState())
       session.dispatch((s) => {
         if (reflectionDefeated(s)) return s // already looted — never twice
         return grantReflectionReward(s)
       })
       ctx.logText(
-        'You bested your reflection, and the paradox pin is yours. While you wear it you may keep two hats on at once — a small loophole in the rules of the world, won off yourself.',
+        looted
+          ? 'You bested your reflection, and the paradox pin is yours. While you wear it you may keep two hats on at once — a small loophole in the rules of the world, won off yourself.'
+          : 'You bested your reflection again. It brought no pin this time — only the strange company of yourself. You go back up the stairs a little less alone.',
       )
     }
 

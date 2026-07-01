@@ -4,6 +4,11 @@ import { setString } from '@/engine/state/reducers'
 import { spendResource } from '@/engine/types/Resource'
 import { gummyWormCount, gummyFusedCount, gummyMintFusedCount } from '@/engine/content/gummyVat'
 import { grantItem } from '@/engine/shop/purchase'
+// DELIBERATE, non-cargo-cult divergence from the kraken/boarding drop idiom (where the RENDER layer owns the
+// item-def import + the commit-once grant, and the engine sim is item-agnostic): here the brew/drink/grant/equip
+// reducers live in the engine ON PURPOSE so they stay pure-tested (reflectionScreens is coverage-excluded glue).
+// ItemDefs are CONFIG data (ADR §3 permits the engine to read content config), not content FLAG VALUES — flags
+// are still re-declared in lock-step below. Do NOT copy this into a fresh boss without the same testability reason.
 import { SUGAR_GLASS_SHARD, PARADOX_PIN, MIRROR_POTION, ITEM_MAP } from '@/content/items/items'
 import {
   REFLECTION_BASE_HP,
