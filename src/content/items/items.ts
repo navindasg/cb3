@@ -263,8 +263,8 @@ export const PEPPERMINT_BATHYSPHERE: ItemDef = {
 
 /** The secret aniwey-smiley figurehead (Phase 5 — name the galleon 'Candy Box', DESIGN §18) — the quiet
  * homage to Candy Box's author: a tiny carved smiley bolted to her bow, revealed only if you name her after
- * the game she descends from. Not equippable; owning it (the flag) confers a small flat luck bonus
- * (engine/content/interactionBonuses.figureheadLuckBonus) and draws the smiley on the ship's dock art. */
+ * the game she descends from. Not equippable and purely cosmetic (CB2-tradition flavor, no stat); owning it
+ * (the flag, engine/content/interactionBonuses.figureheadOwned) draws the smiley on the ship's dock art. */
 export const CANDY_BOX_FIGUREHEAD: ItemDef = {
   id: 'candyBoxFigurehead',
   displayKey: 'item.candyBoxFigurehead.name',

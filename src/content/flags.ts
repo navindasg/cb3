@@ -324,7 +324,7 @@ export const SUN_POKER_FOUND_FLAG = 'sunPokerFound'
 /**
  * Set when the galleon is named 'Candy Box' (Phase 5 — the figurehead secret, DESIGN §18) — the quiet
  * aniwey homage: the secret smiley figurehead is revealed on her bow, and the CANDY_BOX_FIGUREHEAD item is
- * granted (a small flat luck bonus, engine/content/interactionBonuses). The naming path feeds a nameEquals
+ * granted (purely cosmetic — the carved smiley on the dock art, no stat). The naming path feeds a nameEquals
  * secret that reads the stored galleon name case/space-normalized. engine/content/interactionBonuses
  * re-declares this literal in lock-step (the moonStrata idiom, ADR §3). A curiosity, never a gate.
  */
@@ -333,8 +333,8 @@ export const CANDY_BOX_FIGUREHEAD_FLAG = 'candyBoxFigureheadOwned'
 /**
  * Set when a single lollipop is planted on the moon (Phase 5 — the moonpops secret, DESIGN §18). The moon
  * screen's "plant a lollipop" button spends EXACTLY one lollipop and blooms moonpops: a render-layer glow
- * plus a small flat magic bonus (engine/content/interactionBonuses.plantMoonpop sets the SAME literal in
- * lock-step, the moonStrata idiom, ADR §3). A one-time bloom, flat (never compounding — nothing to farm).
+ * (purely cosmetic — no stat; engine/content/interactionBonuses.plantMoonpop sets the SAME literal in
+ * lock-step, the moonStrata idiom, ADR §3). A one-time bloom — nothing to farm.
  */
 export const MOONPOPS_PLANTED_FLAG = 'moonpopsPlanted'
 

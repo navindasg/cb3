@@ -515,8 +515,8 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
     }
 
     /** Moonpops (the §18 secret) — plant a single lollipop in the grey moon dust and it blooms into a soft,
-     * glowing garden (a render-layer glow + a small flat magic bonus, engine/content/interactionBonuses). A
-     * one-time bloom: once planted, the patch just glows. Costs exactly one lollipop; never blocks progress. */
+     * glowing garden (a render-layer glow; purely cosmetic, engine/content/interactionBonuses). A one-time
+     * bloom: once planted, the patch just glows. Costs exactly one lollipop; never blocks progress. */
     function renderMoonpops(s: GameState): void {
       heading('the grey dust', 'moon-moonpops-section')
       if (moonpopsPlanted(s)) {

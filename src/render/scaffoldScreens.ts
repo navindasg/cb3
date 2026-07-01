@@ -218,8 +218,9 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       art.textContent = sunArt(currentStage(s))
       screen.appendChild(art)
 
-      // The §18 sun-poke gag: a running-gag button with a hard stop. It stays after the reveal so the
-      // joke reads (once it has fired, poking does nothing more) — no farm, the reveal is a one-shot flag.
+      // The §18 sun-poke gag: a running-gag button with a hard stop. Once the secret fires, sunPokerFound
+      // latches and the button is gone (render runs right after the flag is set) — no farm, the reveal is a
+      // one-shot flag, and the deadpan "please stop poking the sun" is the last word.
       if (s.flags['sunPokerFound'] !== true) {
         screen.appendChild(ctx.button('poke the sun', 'scaffold-poke-sun', () => doPokeSun()))
       }

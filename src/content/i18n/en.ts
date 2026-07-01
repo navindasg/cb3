@@ -119,7 +119,7 @@ export const en: GameText = {
   'secret.eclipse.reveal': 'Somewhere far off, the astronomer looks up sharply. "Where did you hear that word?"',
   'secret.konami.reveal': 'A goldfish appears in the fishbowl helm. It regards you, and forgives you.',
   'secret.sunPoker.reveal': 'A voice from no particular direction, tired and enormous: "please stop poking the sun." You are now, officially, a sun poker.',
-  'secret.figurehead.reveal': 'You named her Candy Box. A small smiling face has appeared on her bow, carved by no one. It winks. She feels luckier already.',
+  'secret.figurehead.reveal': 'You named her Candy Box. A small smiling face has appeared on her bow, carved by no one. It winks. It seems glad to be sailing.',
 
   // rumors
   'rumor.mines': 'They say the mines below the field go down a very long way.',

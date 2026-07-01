@@ -3,12 +3,8 @@ import { createResource } from '@/engine/types/Resource'
 import {
   plantMoonpop,
   moonpopsPlanted,
-  moonpopMagicBonus,
-  MOONPOP_MAGIC_BONUS,
   MOONPOPS_PLANTED_FLAG,
   figureheadOwned,
-  figureheadLuckBonus,
-  FIGUREHEAD_LUCK_BONUS,
   CANDY_BOX_FIGUREHEAD_FLAG,
 } from '@/engine/content/interactionBonuses'
 import type { GameState } from '@/engine/types/GameState'
@@ -50,30 +46,27 @@ describe('plantMoonpop — spend exactly one lollipop, once', () => {
   })
 })
 
-describe('moonpop magic bonus — a flat, non-compounding nudge', () => {
-  it('is zero before planting', () => {
+describe('moonpops ownership — a one-time cosmetic bloom flag', () => {
+  it('is not planted before planting', () => {
     expect(moonpopsPlanted(createDefaultSave())).toBe(false)
-    expect(moonpopMagicBonus(createDefaultSave())).toBe(0)
   })
 
-  it('is the flat MOONPOP_MAGIC_BONUS once planted, and never more', () => {
+  it('is planted once bloomed, and stays planted (one-time, no re-bloom)', () => {
     const planted = plantMoonpop(withLollipops(5)).state
-    expect(moonpopMagicBonus(planted)).toBe(MOONPOP_MAGIC_BONUS)
-    // Planting is one-time; the bonus does not stack no matter what.
+    expect(moonpopsPlanted(planted)).toBe(true)
+    // Planting is one-time; a second attempt changes nothing.
     const again = plantMoonpop(planted)
-    expect(moonpopMagicBonus(again.state)).toBe(MOONPOP_MAGIC_BONUS)
+    expect(moonpopsPlanted(again.state)).toBe(true)
   })
 })
 
-describe('figurehead luck bonus — a flat, ownership-gated nudge', () => {
-  it('is zero when the figurehead is not owned', () => {
+describe('figurehead ownership — an ownership-gated cosmetic flag', () => {
+  it('is not owned by default', () => {
     expect(figureheadOwned(createDefaultSave())).toBe(false)
-    expect(figureheadLuckBonus(createDefaultSave())).toBe(0)
   })
 
-  it('is the flat FIGUREHEAD_LUCK_BONUS when owned', () => {
+  it('is owned once the flag is set', () => {
     const owned: GameState = { ...createDefaultSave(), flags: { [CANDY_BOX_FIGUREHEAD_FLAG]: true } }
     expect(figureheadOwned(owned)).toBe(true)
-    expect(figureheadLuckBonus(owned)).toBe(FIGUREHEAD_LUCK_BONUS)
   })
 })

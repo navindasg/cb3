@@ -249,7 +249,21 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
     }
 
     /** The dock once she is launched — the galleon waits, named, for her first voyage. */
-    function renderLaunched(s: GameState): void {
+    function renderLaunched(state: GameState): void {
+      // Reconcile the §18 figurehead for a save that was ALREADY named 'Candy Box' before this feature
+      // shipped: naming is a one-time gate (nameGalleon returns 'alreadyNamed' after commission), so those
+      // saves never passed through doName's fire. Fire the nameEquals secret against the stored name once on
+      // entry; farm-proof via the setsFlag once-latch (fireAny returns a same-ref miss once owned), it grants
+      // at most once. Mirrors the codebase's one-off-drop re-entry fix (storm-front/moon-worm, Increment 13).
+      let s = state
+      if (!figureheadOwned(s)) {
+        const rec = fireAny(s, BATCH_A_SECRETS, { kind: 'name', stringKey: GALLEON_NAME_KEY }, ITEM_MAP)
+        if (rec.fired && rec.revealKey) {
+          session.dispatch(() => rec.state)
+          ctx.logText(tk(rec.revealKey))
+          s = rec.state
+        }
+      }
       paragraph(
         `She stands finished in the slipway — ${galleonName(s)} — candied hull catching the starlight, sails furled and waiting. The shipwright nods at the dark beyond the port. "She'll carry you out there now. Wherever out there is."`,
         'blurb',

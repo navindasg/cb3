@@ -59,8 +59,8 @@ export const SUN_POKER: SecretDef = {
 
 /**
  * Name the galleon 'Candy Box' → the secret aniwey-smiley figurehead. The quiet homage to the game this one
- * descends from: named after Candy Box, she reveals a tiny carved smiley on her bow (a small flat luck
- * bonus, engine/content/interactionBonuses). The naming path feeds a nameEquals interaction that reads the
+ * descends from: named after Candy Box, she reveals a tiny carved smiley on her bow (purely cosmetic — the
+ * carved smiley on her dock art, no stat). The naming path feeds a nameEquals interaction that reads the
  * stored galleon name case/space-normalized, so 'candy box' / 'CANDY BOX' / 'Candy  Box' all count.
  */
 export const CANDY_BOX_FIGUREHEAD_SECRET: SecretDef = {
