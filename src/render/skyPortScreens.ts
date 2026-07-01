@@ -22,6 +22,15 @@ import {
   GALLEON_SAILS_KEY,
   type GalleonTrack,
 } from '@/content/ship/galleonUpgrade'
+import { fireAny } from '@/engine/content/secrets'
+import { BATCH_A_SECRETS } from '@/content/secrets'
+import { figureheadOwned } from '@/engine/content/interactionBonuses'
+import { GALLEON_NAME_KEY } from '@/content/ship/galleon'
+import { ITEM_MAP } from '@/content/items/items'
+import { t } from '@/content/i18n/en'
+import type { GameTextKey } from '@/content/i18n/schema'
+
+const tk = (key: string): string => t(key as GameTextKey)
 
 // The sky port (Act 2 — built on the moon's far side, DESIGN §13/§177). A wiring sub-module of the
 // DOM bootstrap, sibling to moonScreens/skyScreens: it owns NO game logic. The shipwright's commission
@@ -229,6 +238,13 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
       }
       session.dispatch(() => result.state)
       ctx.logText(`The keel is laid — ${galleonName(result.state)}. The dark is the next thing.`)
+      // The §18 figurehead secret: if she was named 'Candy Box', the aniwey-smiley appears on her bow.
+      // The nameEquals trigger reads the just-stored name from state; fire it against the fresh state.
+      const secret = fireAny(session.getState(), BATCH_A_SECRETS, { kind: 'name', stringKey: GALLEON_NAME_KEY }, ITEM_MAP)
+      if (secret.fired && secret.revealKey) {
+        session.dispatch(() => secret.state)
+        ctx.logText(tk(secret.revealKey))
+      }
       render()
     }
 
@@ -239,6 +255,16 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         'blurb',
         'skyport-launched',
       )
+      // The §18 figurehead: if she was named 'Candy Box', the aniwey-smiley rides her bow. Pure ASCII;
+      // the amber glow is the render layer's, the smiley the quiet homage.
+      if (figureheadOwned(s)) {
+        const smiley = doc.createElement('pre')
+        smiley.className = 'arena glow-sun'
+        smiley.setAttribute('data-testid', 'skyport-figurehead')
+        smiley.textContent = ["  __", " (:)", "  \\/"].join('\n')
+        screen.appendChild(smiley)
+        paragraph('A small smiling face rides her bow, carved by no one. It seems glad to be sailing.', 'blurb', 'skyport-figurehead-blurb')
+      }
       screen.appendChild(ctx.button('set sail for the rock candy reef', 'skyport-set-sail', () => ctx.showReef(), 0))
       // Once the dark has been sailed once, a comet crosses your bearings (Act 2 — "the comet passes").
       if (reefReached(s)) {

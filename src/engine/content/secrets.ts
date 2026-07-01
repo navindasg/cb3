@@ -22,6 +22,26 @@ export type SecretInteraction =
   | { readonly kind: 'hold'; readonly resource: ResourceKey }
   /** Typing a matched `word` (the hidden-text-box; the matcher normalizes keystrokes first). */
   | { readonly kind: 'type'; readonly word: string }
+  /**
+   * A running tally reached a threshold (the sun-poke gag). The render layer bumps a numbers counter
+   * (numbers[counterKey]) on each interaction and passes the fresh total; the trigger fires when the
+   * total is at least the required count (and, via the once-flag latch in fireSecret, exactly once).
+   */
+  | { readonly kind: 'count'; readonly counterKey: string; readonly count: number }
+  /**
+   * A named string equals a target value, case/space-normalized (the galleon-name figurehead). The
+   * value is READ FROM STATE (state.strings[stringKey]); the interaction only names WHICH string to
+   * check, so the secret cannot be spoofed by passing a value the player never actually set.
+   */
+  | { readonly kind: 'name'; readonly stringKey: string }
+
+/**
+ * Case/space-normalize a name for the nameEquals trigger: lowercased, whitespace runs collapsed to a
+ * single space, edges trimmed. So 'Candy  Box', ' candy box ', and 'CANDY BOX' all match 'candy box'.
+ */
+export function normalizeName(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, ' ').trim()
+}
 
 /** Whether `interaction` fires `secret`'s trigger. */
 export function triggerFires(secret: SecretDef, interaction: SecretInteraction, state: GameState): boolean {
@@ -46,6 +66,18 @@ export function triggerFires(secret: SecretDef, interaction: SecretInteraction, 
       )
     case 'type':
       return interaction.kind === 'type' && interaction.word === t.word
+    case 'countAtLeast':
+      return (
+        interaction.kind === 'count' &&
+        interaction.counterKey === t.counterKey &&
+        interaction.count >= t.count
+      )
+    case 'nameEquals':
+      return (
+        interaction.kind === 'name' &&
+        interaction.stringKey === t.stringKey &&
+        normalizeName(state.strings[t.stringKey] ?? '') === normalizeName(t.value)
+      )
   }
 }
 

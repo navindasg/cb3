@@ -261,6 +261,18 @@ export const PEPPERMINT_BATHYSPHERE: ItemDef = {
   saveFlag: 'bathysphereBuilt',
 }
 
+/** The secret aniwey-smiley figurehead (Phase 5 — name the galleon 'Candy Box', DESIGN §18) — the quiet
+ * homage to Candy Box's author: a tiny carved smiley bolted to her bow, revealed only if you name her after
+ * the game she descends from. Not equippable; owning it (the flag) confers a small flat luck bonus
+ * (engine/content/interactionBonuses.figureheadLuckBonus) and draws the smiley on the ship's dock art. */
+export const CANDY_BOX_FIGUREHEAD: ItemDef = {
+  id: 'candyBoxFigurehead',
+  displayKey: 'item.candyBoxFigurehead.name',
+  descKey: 'item.candyBoxFigurehead.desc',
+  ascii: ':)',
+  saveFlag: 'candyBoxFigureheadOwned',
+}
+
 /** The heirloom sword on grandma's mantle — foreshadowed, NOT yet takeable (no saveFlag grant). */
 export const MANTLE_SWORD: ItemDef = {
   id: 'mantleSword',
@@ -300,6 +312,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   GUMMY_PARROT,
   PEPPERMINT_BATHYSPHERE,
   COTTON_CANDY_BALLOON,
+  CANDY_BOX_FIGUREHEAD,
   MANTLE_SWORD,
   // The scholar's pamphlet lives with its typed secret (content/typedSecrets), but joins the registry
   // here so the secret runner's grantItem can resolve it via ITEM_MAP.

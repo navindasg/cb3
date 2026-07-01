@@ -46,6 +46,7 @@ import {
   growMintFusedGummy,
 } from '@/engine/content/gummyVat'
 import { skyPortOpen } from '@/engine/content/galleonCommission'
+import { plantMoonpop, moonpopsPlanted } from '@/engine/content/interactionBonuses'
 import {
   MOON_STRATA,
   MOON_PICKS,
@@ -180,6 +181,7 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
 
       renderStratum(s)
       renderOutfitter(s)
+      renderMoonpops(s)
       renderLighthouse(s)
       renderWormTunnels(s)
       renderGummyVat(s)
@@ -509,6 +511,44 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       }
       session.dispatch(() => result.state)
       ctx.logText(`The outfitter fits you with a ${pickName(moonPickTier(result.state))}.`)
+      render()
+    }
+
+    /** Moonpops (the §18 secret) — plant a single lollipop in the grey moon dust and it blooms into a soft,
+     * glowing garden (a render-layer glow + a small flat magic bonus, engine/content/interactionBonuses). A
+     * one-time bloom: once planted, the patch just glows. Costs exactly one lollipop; never blocks progress. */
+    function renderMoonpops(s: GameState): void {
+      heading('the grey dust', 'moon-moonpops-section')
+      if (moonpopsPlanted(s)) {
+        const bloom = doc.createElement('pre')
+        bloom.className = 'arena glow-moonpop'
+        bloom.setAttribute('data-testid', 'moon-moonpops-bloom')
+        bloom.textContent = [' .o. .o. .o.', '  |   |   | ', '~~~~~~~~~~~~~'].join('\n')
+        screen.appendChild(bloom)
+        paragraph(
+          'The moonpops bloom in the airless dust, glowing faintly. Nothing here should grow. They do it anyway.',
+          'blurb',
+          'moon-moonpops-blurb',
+        )
+        return
+      }
+      paragraph('Nothing grows in the grey moon dust. Still — you have a lollipop, and a hole to poke.', 'blurb', 'moon-moonpops-hint')
+      const plant = ctx.button('plant a lollipop', 'moon-plant-lollipop', () => doPlantMoonpop())
+      if (s.lollipops.current < 1) {
+        plant.disabled = true
+        plant.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(plant)
+    }
+
+    function doPlantMoonpop(): void {
+      const result = plantMoonpop(session.getState())
+      if (!result.ok) {
+        ctx.notify(result.reason === 'alreadyPlanted' ? 'The moonpops are already blooming.' : 'You need a lollipop to plant.')
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('You press a lollipop into the moon dust. It takes. Moonpops bloom, glowing softly — and the moon feels a little kinder.')
       render()
     }
 

@@ -54,6 +54,8 @@ export const en: GameText = {
   'item.mantleSword.desc': "It hangs over Grandma's mantle. Not yet. Not yet.",
   'item.scholarsPamphlet.name': "a scholar's pamphlet",
   'item.scholarsPamphlet.desc': 'A thin, water-stained pamphlet on the nature of starlight. The margins are full of a careful hand crossing out its own conclusions. Whoever wrote it stopped, mid-sentence, a long time ago.',
+  'item.candyBoxFigurehead.name': 'a smiling figurehead',
+  'item.candyBoxFigurehead.desc': 'A small carved smiley, bolted to the bow. It came with the name. Nobody at the yard admits to carving it, and it was already smiling when they looked. It seems to like being out here.',
 
   // merchant lines
   'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
@@ -116,6 +118,8 @@ export const en: GameText = {
   'secret.aniwey.reveal': 'A small heart flickers in the corner of your eye. It has always been there.',
   'secret.eclipse.reveal': 'Somewhere far off, the astronomer looks up sharply. "Where did you hear that word?"',
   'secret.konami.reveal': 'A goldfish appears in the fishbowl helm. It regards you, and forgives you.',
+  'secret.sunPoker.reveal': 'A voice from no particular direction, tired and enormous: "please stop poking the sun." You are now, officially, a sun poker.',
+  'secret.figurehead.reveal': 'You named her Candy Box. A small smiling face has appeared on her bow, carved by no one. It winks. She feels luckier already.',
 
   // rumors
   'rumor.mines': 'They say the mines below the field go down a very long way.',

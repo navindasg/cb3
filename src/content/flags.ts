@@ -313,6 +313,32 @@ export const STARS_RELIGHTING_FLAG = 'starsRelighting'
 export const STAR_COUNTER_FROZEN_FLAG = 'starCounterFrozen'
 
 /**
+ * Set when the sun is poked ten times (Phase 5 — the sun-poke secret, DESIGN §18). A running gag with a
+ * hard stop: the scaffold's sun art carries a "poke the sun" button; each poke bumps numbers.sunPokes and
+ * feeds a countAtLeast secret that fires ONCE at ten ('please stop poking the sun.') and confers the "sun
+ * poker" status. engine/content/secrets fires it via the once-flag latch; the render layer owns the counter.
+ * A curiosity that never blocks progress. The engine never imports this content value (ADR §3).
+ */
+export const SUN_POKER_FOUND_FLAG = 'sunPokerFound'
+
+/**
+ * Set when the galleon is named 'Candy Box' (Phase 5 — the figurehead secret, DESIGN §18) — the quiet
+ * aniwey homage: the secret smiley figurehead is revealed on her bow, and the CANDY_BOX_FIGUREHEAD item is
+ * granted (a small flat luck bonus, engine/content/interactionBonuses). The naming path feeds a nameEquals
+ * secret that reads the stored galleon name case/space-normalized. engine/content/interactionBonuses
+ * re-declares this literal in lock-step (the moonStrata idiom, ADR §3). A curiosity, never a gate.
+ */
+export const CANDY_BOX_FIGUREHEAD_FLAG = 'candyBoxFigureheadOwned'
+
+/**
+ * Set when a single lollipop is planted on the moon (Phase 5 — the moonpops secret, DESIGN §18). The moon
+ * screen's "plant a lollipop" button spends EXACTLY one lollipop and blooms moonpops: a render-layer glow
+ * plus a small flat magic bonus (engine/content/interactionBonuses.plantMoonpop sets the SAME literal in
+ * lock-step, the moonStrata idiom, ADR §3). A one-time bloom, flat (never compounding — nothing to farm).
+ */
+export const MOONPOPS_PLANTED_FLAG = 'moonpopsPlanted'
+
+/**
  * Set by ending 3 (EAT IT) — you eat the sun, and the NG+ DARK SAVE begins (DESIGN §204/§286/§367). The
  * inverted opening: a black screen, the night sky, "You have 8,100 stars," and the counter ticking DOWN from
  * 8100 (a fresh start in the SAME world, a light remix — NOT a second full game). engine/state/newGamePlus's

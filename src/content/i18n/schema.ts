@@ -54,6 +54,8 @@ export interface GameText {
   'item.mantleSword.desc': string
   'item.scholarsPamphlet.name': string
   'item.scholarsPamphlet.desc': string
+  'item.candyBoxFigurehead.name': string
+  'item.candyBoxFigurehead.desc': string
 
   // --- shop / forge / observatory merchant lines ---
   'shop.leatherHat.thanks': string
@@ -115,6 +117,9 @@ export interface GameText {
   'secret.aniwey.reveal': string
   'secret.eclipse.reveal': string
   'secret.konami.reveal': string
+  // Phase-5 interaction secrets, batch A (§18)
+  'secret.sunPoker.reveal': string
+  'secret.figurehead.reveal': string
 
   // --- tavern rumors (hints) ---
   'rumor.mines': string

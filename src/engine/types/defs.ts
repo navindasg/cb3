@@ -296,6 +296,18 @@ export type SecretTrigger =
    * SAME fireAny runner — one secret engine, no parallel system.
    */
   | { readonly kind: 'type'; readonly word: string }
+  /**
+   * A running tally reaches a threshold (the sun-poke gag: poke the sun `count` times). The render layer
+   * bumps numbers[counterKey] on each interaction and passes the fresh total; the trigger fires the
+   * instant the total is >= `count`, then the setsFlag once-latch keeps it from ever firing again.
+   */
+  | { readonly kind: 'countAtLeast'; readonly counterKey: string; readonly count: number }
+  /**
+   * A named string equals a target value, case/space-normalized (the galleon-name figurehead — name her
+   * 'Candy Box' and the secret smiley figurehead is revealed). The value is read from state.strings, so
+   * the check is honest: it only fires when the player really did set that name.
+   */
+  | { readonly kind: 'nameEquals'; readonly stringKey: string; readonly value: string }
 
 /** A hidden interaction: when its trigger fires, set a flag and optionally grant a reward. */
 export interface SecretDef {

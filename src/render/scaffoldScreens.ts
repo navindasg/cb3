@@ -83,6 +83,9 @@ import { ROCK_CANDY_PRODUCERS } from '@/content/producers/rockCandy'
 import { PEPPERMINT_PRODUCERS } from '@/content/producers/peppermint'
 import { productionRate } from '@/engine/loop/production'
 import { SUN_REACHED_FLAG } from '@/content/flags'
+import { fireAny } from '@/engine/content/secrets'
+import { BATCH_A_SECRETS, SUN_POKES_KEY } from '@/content/secrets'
+import { setNumber } from '@/engine/state/reducers'
 
 // The dyson scaffold (Act 3 — reach the sun, DESIGN §186/§188). A wiring sub-module of the DOM bootstrap,
 // sibling to skyPortScreens/cometScreens: it owns NO game logic. The 5-stage build machine (currentStage /
@@ -214,6 +217,25 @@ export function createScaffoldScreens(ctx: ScaffoldContext): ScaffoldScreens {
       art.setAttribute('data-testid', 'scaffold-sun')
       art.textContent = sunArt(currentStage(s))
       screen.appendChild(art)
+
+      // The §18 sun-poke gag: a running-gag button with a hard stop. It stays after the reveal so the
+      // joke reads (once it has fired, poking does nothing more) — no farm, the reveal is a one-shot flag.
+      if (s.flags['sunPokerFound'] !== true) {
+        screen.appendChild(ctx.button('poke the sun', 'scaffold-poke-sun', () => doPokeSun()))
+      }
+    }
+
+    /** Poke the sun: bump the poke tally and let the countAtLeast secret fire (once) at the tenth poke. */
+    function doPokeSun(): void {
+      const before = session.getState()
+      const pokes = (before.numbers[SUN_POKES_KEY] ?? 0) + 1
+      const bumped = setNumber(before, SUN_POKES_KEY, pokes)
+      const result = fireAny(bumped, BATCH_A_SECRETS, { kind: 'count', counterKey: SUN_POKES_KEY, count: pokes })
+      session.dispatch(() => result.state)
+      if (result.fired && result.revealKey) {
+        ctx.logText(tk(result.revealKey))
+        render()
+      }
     }
 
     /** The stage ledger — one line per stage, marking what is raised, what is next, what is far off. */
