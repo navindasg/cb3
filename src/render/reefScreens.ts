@@ -38,6 +38,7 @@ import {
   type Coord,
 } from '@/content/reef/driftField'
 import { REEF_DRIFT_CLEARED_FLAG } from '@/content/flags'
+import { deathEpitaph } from '@/render/deathEpitaph'
 
 // The rock candy reef (Act 2 — the first voyage, DESIGN §125/§178). A wiring sub-module of the DOM
 // bootstrap, sibling to skyPortScreens/moonScreens: it owns NO game logic. The crossing (plot-a-
@@ -223,7 +224,7 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
     function doFire(dir: Coord): void {
       if (!sim) return
       if (gumballs(session.getState()) <= 0) {
-        ctx.notify('You drift forever. A gummy alien waves politely. (You are out of gumballs — roll some more.)')
+        ctx.notify(`${deathEpitaph('reefDrift')} (You are out of gumballs — roll some more.)`)
         sim = respawnPlayer(sim)
         render()
         return

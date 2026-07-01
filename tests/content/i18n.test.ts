@@ -10,7 +10,8 @@ import { CAULDRON_RECIPES } from '@/content/recipes/cauldron'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
 import { ACT0_SECRETS } from '@/content/secrets'
 import { TAVERN_RUMORS } from '@/content/tavern/rumors'
-import { ALL_DEATH_MESSAGES } from '@/content/deathMessages'
+import { ALL_DEATH_MESSAGES, BESPOKE_DEATH_SOURCES } from '@/content/deathMessages'
+import { deathBlurb } from '@/engine/quest/deathBlurb'
 import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
 import { DRAGON_WORDS, DRAGON_SPEAKER_KEY } from '@/content/sun/caramelCore'
 
@@ -57,6 +58,14 @@ describe('en.ts locale completeness', () => {
     for (const r of TAVERN_RUMORS) expect(has(r.textKey), r.textKey).toBe(true)
     for (const d of ALL_DEATH_MESSAGES) {
       expect(has(d.message), d.message).toBe(true)
+    }
+  })
+
+  it('every bespoke death source resolves to its OWN non-generic line (§19 coverage)', () => {
+    for (const source of BESPOKE_DEATH_SOURCES) {
+      const key = deathBlurb(source, ALL_DEATH_MESSAGES)
+      expect(has(key), source).toBe(true)
+      expect(key, source).not.toBe('death.generic')
     }
   })
 

@@ -10,6 +10,7 @@ import { PADDOCK_CONFIG } from '@/content/sky/paddock'
 import { BALLOON_ENTRY } from '@/content/sky/balloon'
 import { ITEM_MAP } from '@/content/items/items'
 import { CLOUD_COMMONS_REACHED_FLAG, TOLL_GIANT_PAID_FLAG, BALLOON_BUILT_FLAG } from '@/content/flags'
+import { deathEpitaph } from '@/render/deathEpitaph'
 
 // The sky screens (Act 1 — the cumulus commons, the cloud village at the top of the beanstalk).
 // A wiring sub-module of the DOM bootstrap, sibling to townScreens: it owns NO game logic. Every
@@ -208,7 +209,7 @@ export function createSkyScreens(ctx: SkyContext): SkyScreens {
       screen.appendChild(pay)
       screen.appendChild(
         ctx.button('size up a fight', 'toll-giant-fight', () =>
-          ctx.notify('You measure the giant against yourself. This is not the day. (Fighting him comes later; for now, pay.)'),
+          ctx.notify(`${deathEpitaph('tollGiantLoss')} (Fighting him comes later; for now, pay.)`),
         ),
       )
     }

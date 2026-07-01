@@ -3,6 +3,7 @@ import { CollisionBox } from '@/engine/quest/collision'
 import { Entity, type Ability, type EntityInput, type Weapon } from '@/engine/quest/Entity'
 import { resolveCombat } from '@/engine/quest/combat'
 import { WaveScheduler } from '@/engine/quest/WaveScheduler'
+import { deathBlurb } from '@/engine/quest/deathBlurb'
 import type { PhysicsBounds, PhysicsDriver } from '@/engine/quest/physics/PhysicsDriver'
 import type {
   QuestDef,
@@ -293,10 +294,10 @@ export class Scene {
 
   /** Pick the death message for `source`, falling back to the 'generic' entry. */
   private pickDeath(source: string | undefined): DeathEvent {
-    const src = source ?? 'generic'
-    const exact = this.def.deathMessages.find((m) => m.source === src)
-    const chosen = exact ?? this.def.deathMessages.find((m) => m.source === 'generic')
-    return { source: src, message: chosen?.message ?? '' }
+    return {
+      source: source ?? 'generic',
+      message: deathBlurb(source, this.def.deathMessages),
+    }
   }
 
   private derive(

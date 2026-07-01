@@ -134,6 +134,21 @@ export interface GameText {
   'death.thunderheadDjinn': string
   'death.moonWorm': string
   'death.fall': string
+  'death.tollGiantLoss': string
+  'death.reefDrift': string
+  'death.sourbeardCannon': string
+  'death.sourbeardBoarding': string
+  'death.kraken': string
+  'death.sourDissolve': string
+  'death.sourPlanetFall': string
+  'death.sourRain': string
+  'death.mintLabyrinth': string
+  'death.frostWyrm': string
+  'death.photosphereHeat': string
+  'death.starEater': string
+  'death.stormMerge': string
+  'death.grandmaDuck': string
+  'death.voidWhale': string
   'death.generic': string
 
   // --- zones (map labels' display names) ---

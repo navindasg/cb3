@@ -31,6 +31,9 @@ export default defineConfig({
         'src/render/mintPlanetScreens.ts',
         'src/render/scaffoldScreens.ts',
         'src/render/finaleScreens.ts',
+        // deathEpitaph.ts is thin i18n-resolution glue over the tested deathBlurb picker + the
+        // content death table; it only turns a source into display text for the fight screens.
+        'src/render/deathEpitaph.ts',
         // render/descentAudio.ts is the game's ONLY Web Audio glue: feature-detected, lazy on a user
         // gesture, never constructed in jsdom/vitest. The DECISION to play is a pure tested engine
         // predicate (engine/content/photosphere); the synthesis is verified by ear/Playwright, not units.

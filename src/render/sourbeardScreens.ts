@@ -34,6 +34,7 @@ import {
 import { MAX_TURNS as BOARDING_MAX_TURNS } from '@/content/ship/boardingDuel'
 import { SOURBEARD_TRICORN, GUMMY_PARROT } from '@/content/items/items'
 import { SOURBEARD_BOARDED_FLAG } from '@/content/flags'
+import { deathEpitaph } from '@/render/deathEpitaph'
 import {
   GALLEON_TRACKS,
   GALLEON_HULL_KEY,
@@ -174,10 +175,11 @@ export function createSourbeardScreens(ctx: SourbeardContext): SourbeardScreens 
         return
       }
       if (outcome === 'lost') {
+        if (d.round < MAX_ROUNDS) paragraph(deathEpitaph('sourbeardCannon'), 'blurb', 'sourbeard-epitaph')
         paragraph(
           d.round >= MAX_ROUNDS
             ? 'Grappling lines whip across the gap and the Black Lollipop\'s crew swarm your rail — you took too long, and boarding is a fight for another day. You break off and limp home to refit.'
-            : 'A broadside catches you below the waterline and the candied hull buckles. You strike your colors and run for port, sugar streaming in your wake. Refit, and try him again.',
+            : 'You strike your colors and run for port, sugar streaming in your wake. Refit, and try him again.',
           'blurb',
           'sourbeard-lost',
         )
@@ -280,10 +282,11 @@ export function createSourbeardScreens(ctx: SourbeardContext): SourbeardScreens 
         return
       }
       if (outcome === 'lost') {
+        if (b.turn < BOARDING_MAX_TURNS) paragraph(deathEpitaph('sourbeardBoarding'), 'blurb', 'sourbeard-board-epitaph')
         paragraph(
           b.turn >= BOARDING_MAX_TURNS
             ? "Sourbeard's crew come boiling over the rail behind him and there are simply too many cutlasses; you are driven back to the mast, winded but alive. He tips his hat and withdraws. \"Catch your breath, confectioner. I will wait.\""
-            : 'Sourbeard reads your blade like a book and the flat of his cutlass takes you off your feet. He could finish it. He does not. "Up you get. I want you AWAKE for this." Catch your breath and square up again.',
+            : 'The flat of his cutlass takes you off your feet. He could finish it. He does not. "Up you get. I want you AWAKE for this." Catch your breath and square up again.',
           'blurb',
           'sourbeard-board-lost',
         )

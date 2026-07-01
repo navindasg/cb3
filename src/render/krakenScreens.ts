@@ -16,6 +16,7 @@ import {
 import { TENTACLE_HP, MAX_TURNS, KRAKEN_CANDY, KRAKEN_CHOCOLATE } from '@/content/planet/krakenFight'
 import { KRAKEN_CROWN } from '@/content/items/items'
 import { KRAKEN_DEFEATED_FLAG } from '@/content/flags'
+import { deathEpitaph } from '@/render/deathEpitaph'
 
 // The sour kraken (Act 2 — an optional tail, DESIGN §10/§181). A wiring sub-module of the DOM bootstrap,
 // sibling to sourbeardScreens/cometScreens: it owns NO game logic. The telegraph-and-sever fight
@@ -124,10 +125,11 @@ export function createKrakenScreens(ctx: KrakenContext): KrakenScreens {
         return
       }
       if (outcome === 'lost') {
+        paragraph(deathEpitaph(f.turn >= MAX_TURNS ? 'sourDissolve' : 'kraken'), 'blurb', 'kraken-epitaph')
         paragraph(
           f.turn >= MAX_TURNS
             ? 'The sour gas finally finds the seams of your gear and you are driven coughing back up the shell — not beaten, exactly, but not welcome. Refit and come down again.'
-            : 'An arm the size of a mainmast catches you square and folds you off the platform — the far one, the one you could never quite reach. You catch a lower shelf, gasping, gear streaming. Climb back up, breathe, and bring more reach — or learn to brace.',
+            : 'You catch a lower shelf, gasping, gear streaming. Climb back up, breathe, and bring more reach — or learn to brace.',
           'blurb',
           'kraken-lost',
         )

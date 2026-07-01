@@ -142,6 +142,7 @@ import {
 } from '@/content/sun/endings'
 import { projectedStars } from '@/engine/content/starCounter'
 import { t } from '@/content/i18n/en'
+import { deathEpitaph } from '@/render/deathEpitaph'
 import type { DescentAudio } from '@/render/descentAudio'
 
 // The finale screens (Act 4 — quest 11+, DESIGN §194/§196). A wiring sub-module of the DOM bootstrap,
@@ -325,6 +326,7 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
       }
       if (outcome === 'lost') {
         backdrop()
+        paragraph(deathEpitaph('photosphereHeat'), 'blurb', 'descent-epitaph')
         paragraph(d.coolant <= 0 ? DESCENT_COOLANT_OUT_BLURB : DESCENT_PLATING_OUT_BLURB, 'blurb', 'descent-lost')
         screen.appendChild(ctx.button(DESCENT_RETRY_LABEL, 'descent-retry', () => doRetry()))
         screen.appendChild(ctx.button('back to the scaffold', 'descent-to-scaffold', () => ctx.showScaffold(), 0))
@@ -767,6 +769,7 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
 
     function renderLost(): void {
       silhouette()
+      paragraph(deathEpitaph('starEater'), 'blurb', 'star-eater-epitaph')
       paragraph(STAR_EATER_LOST_BLURB, 'blurb', 'star-eater-lost')
       screen.appendChild(ctx.button(STAR_EATER_RETRY_LABEL, 'star-eater-retry', () => { reset(); render() }))
       screen.appendChild(ctx.button('back to the core', 'star-eater-to-core', () => showCaramelCore(), 0))

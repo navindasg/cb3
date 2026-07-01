@@ -28,6 +28,7 @@ import {
   MINT_HARVEST_BATCH,
   type LabyrinthRoom,
 } from '@/content/planet/mintPlanet'
+import { deathEpitaph } from '@/render/deathEpitaph'
 
 // The mint planet (Act 2 — quest 10, the act capstone, DESIGN §182/§184). A wiring sub-module of the DOM
 // bootstrap, sibling to the other Act-2 screens: it owns NO game logic. The ice labyrinth ("follow the
@@ -131,7 +132,7 @@ export function createMintPlanetScreens(ctx: MintPlanetContext): MintPlanetScree
       if (lab.room === before) return // no-op (bad index)
       // Any turn away from the deepening cold folds you back — "the labyrinth keeps you" (§356).
       if (!wasColdest) {
-        ctx.notify('The passage warms and doubles back on itself, and lets you out somewhere you have already been. The labyrinth keeps you. It was lonely.')
+        ctx.notify(`The passage warms and doubles back on itself, and lets you out somewhere you have already been. ${deathEpitaph('mintLabyrinth')}`)
       }
       render()
     }

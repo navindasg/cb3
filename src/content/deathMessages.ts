@@ -68,6 +68,109 @@ export const FALL_DEATH: DeathMessage = {
   message: 'death.fall',
 }
 
+// --- Act 1 zone losses -----------------------------------------------------
+// The toll-giant "not today" beat is a soft loss (you pay instead), but §19 wants
+// a line for every loss SOURCE; the bridge stays open, so this is flavor only.
+
+export const TOLL_GIANT_DEATH: DeathMessage = {
+  source: 'tollGiantLoss',
+  message: 'death.tollGiantLoss',
+}
+
+// --- Act 2 transient turn-based fights -------------------------------------
+
+/** The reef drift-strand — out of gumballs, drifting (the §19 sample, centralized off reefScreens). */
+export const REEF_DRIFT_DEATH: DeathMessage = {
+  source: 'reefDrift',
+  message: 'death.reefDrift',
+}
+
+/** Captain Sourbeard's broadside — a hull-buckling cannonball (§19 sample). */
+export const SOURBEARD_CANNON_DEATH: DeathMessage = {
+  source: 'sourbeardCannon',
+  message: 'death.sourbeardCannon',
+}
+
+/** Captain Sourbeard's boarding melee — read like a book, on foot. */
+export const SOURBEARD_BOARDING_DEATH: DeathMessage = {
+  source: 'sourbeardBoarding',
+  message: 'death.sourbeardBoarding',
+}
+
+/** The sour kraken — folded off the shell by an arm you could not reach. */
+export const KRAKEN_DEATH: DeathMessage = {
+  source: 'kraken',
+  message: 'death.kraken',
+}
+
+/** The sour planet's corrosive gas — dissolved, politely (§19 sample). */
+export const SOUR_DISSOLVE_DEATH: DeathMessage = {
+  source: 'sourDissolve',
+  message: 'death.sourDissolve',
+}
+
+/** Falling from a sour-shell platform into the haze below. */
+export const SOUR_PLANET_FALL_DEATH: DeathMessage = {
+  source: 'sourPlanetFall',
+  message: 'death.sourPlanetFall',
+}
+
+/** A wash of sour rain on the platforms — corrosive weather. */
+export const SOUR_RAIN_DEATH: DeathMessage = {
+  source: 'sourRain',
+  message: 'death.sourRain',
+}
+
+/** The mint planet's ice labyrinth — folded back on itself (§19 sample). */
+export const MINT_LABYRINTH_DEATH: DeathMessage = {
+  source: 'mintLabyrinth',
+  message: 'death.mintLabyrinth',
+}
+
+/** The frost wyrm's last cold exhale — it did not mean to. */
+export const FROST_WYRM_DEATH: DeathMessage = {
+  source: 'frostWyrm',
+  message: 'death.frostWyrm',
+}
+
+// --- Act 3-4 sun descent + the star-eater ----------------------------------
+
+/** The photosphere descent — coolant or plating gives out in the white heat (§19 sample: the sun declines). */
+export const PHOTOSPHERE_HEAT_DEATH: DeathMessage = {
+  source: 'photosphereHeat',
+  message: 'death.photosphereHeat',
+}
+
+/** The star-eater gets through — the cold long dark of it. */
+export const STAR_EATER_DEATH: DeathMessage = {
+  source: 'starEater',
+  message: 'death.starEater',
+}
+
+// --- storm + poignant generics ---------------------------------------------
+
+/** The storm front takes you in (§19 sample) — the on-foot climb has its own sprite/djinn lines; this is the merge. */
+export const STORM_MERGE_DEATH: DeathMessage = {
+  source: 'stormMerge',
+  message: 'death.stormMerge',
+}
+
+/** The understated grandma line (§19 sample) — the deadpan reminder she was the hero. */
+export const GRANDMA_DUCK_DEATH: DeathMessage = {
+  source: 'grandmaDuck',
+  message: 'death.grandmaDuck',
+}
+
+// --- Phase-5 hidden bosses (author now so later boss slices attach here) ----
+// These attach to the registry ahead of the boss increments (P5-06..P5-11) so a new
+// boss never ships an un-messaged death; each boss slice WIRES its already-authored line.
+
+/** The void whale did not even notice (§19 sample). */
+export const VOID_WHALE_DEATH: DeathMessage = {
+  source: 'voidWhale',
+  message: 'death.voidWhale',
+}
+
 export const GENERIC_DEATH: DeathMessage = {
   source: 'generic',
   message: 'death.generic',
@@ -88,5 +191,29 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   THUNDERHEAD_DJINN_DEATH,
   MOON_WORM_DEATH,
   FALL_DEATH,
+  TOLL_GIANT_DEATH,
+  REEF_DRIFT_DEATH,
+  SOURBEARD_CANNON_DEATH,
+  SOURBEARD_BOARDING_DEATH,
+  KRAKEN_DEATH,
+  SOUR_DISSOLVE_DEATH,
+  SOUR_PLANET_FALL_DEATH,
+  SOUR_RAIN_DEATH,
+  MINT_LABYRINTH_DEATH,
+  FROST_WYRM_DEATH,
+  PHOTOSPHERE_HEAT_DEATH,
+  STAR_EATER_DEATH,
+  STORM_MERGE_DEATH,
+  GRANDMA_DUCK_DEATH,
+  VOID_WHALE_DEATH,
   GENERIC_DEATH,
 ]
+
+/**
+ * The bespoke (non-generic) death SOURCES §19 requires across Acts 0-4 plus the Phase-5 bosses.
+ * The completeness test asserts each resolves to its OWN line (never the generic fallback), so a
+ * new loss source can never silently fall through to "You died. You feel fine about it."
+ */
+export const BESPOKE_DEATH_SOURCES: readonly string[] = ALL_DEATH_MESSAGES.filter(
+  (m) => m.source !== 'generic',
+).map((m) => m.source)
