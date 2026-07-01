@@ -53,4 +53,32 @@ export const FIZZY_LIFTING_SODA: RecipeDef = {
   },
 }
 
-export const CAULDRON_RECIPES: readonly RecipeDef[] = [SYRUP_OF_HEALTH, FIZZY_LIFTING_SODA]
+// Anti-gravity cola (Phase 5 — the §18 drift secret). A fizzy weirdness draught: THREE candies, then
+// stir (whisk it flat, no heat — the fizz is anti-gravity, and heat kills it). Naturally disjoint from
+// the two above: the syrup (listed first) demands a lollipop and the fizzy soda demands a heat before
+// the stir, so a heat-free, lollipop-free three-candy log satisfies neither and lands here. No resource
+// output; the worth is the flag the reef screen reads to offer the cola and invert the drift run.
+export const ANTIGRAV_COLA: RecipeDef = {
+  id: 'antiGravCola',
+  displayKey: 'recipe.antiGravCola.name',
+  output: null,
+  outputFlag: 'antiGravColaKnown',
+  matcher: {
+    kind: 'all',
+    specs: [
+      {
+        kind: 'inOrder',
+        steps: [
+          { kind: 'action', action: 'add', subject: 'candy' },
+          { kind: 'action', action: 'add', subject: 'candy' },
+          { kind: 'action', action: 'add', subject: 'candy' },
+          { kind: 'action', action: 'stir' },
+        ],
+      },
+      // No heat — heat kills the anti-gravity fizz. Keeps it disjoint from the fizzy soda for good.
+      { kind: 'exactlyOne', step: { kind: 'action', action: 'stir' } },
+    ],
+  },
+}
+
+export const CAULDRON_RECIPES: readonly RecipeDef[] = [SYRUP_OF_HEALTH, FIZZY_LIFTING_SODA, ANTIGRAV_COLA]

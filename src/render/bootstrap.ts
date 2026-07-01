@@ -769,6 +769,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     button,
     notify,
     logText,
+    onScreen,
     showMap,
     showSkyPort: skyport.showSkyPort,
     // The kraken is its own screen, descended into from the sour planet (a thunk: created just below).

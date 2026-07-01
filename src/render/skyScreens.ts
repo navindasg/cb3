@@ -4,7 +4,7 @@ import { t } from '@/content/i18n/en'
 import type { GameTextKey } from '@/content/i18n/schema'
 import { formatCount } from '@/engine/number/format'
 import { buyCloudSheep, cloudSheepCount, cloudSheepPrice } from '@/engine/content/paddock'
-import { payToll, TOLL_GIANT_COST } from '@/engine/content/tollGiant'
+import { payToll, TOLL_GIANT_COST, currentTollCost, hasTollMercy, takeTollLoss } from '@/engine/content/tollGiant'
 import { purchase, canPurchase } from '@/engine/shop/purchase'
 import { PADDOCK_CONFIG } from '@/content/sky/paddock'
 import { BALLOON_ENTRY } from '@/content/sky/balloon'
@@ -193,29 +193,47 @@ export function createSkyScreens(ctx: SkyContext): SkyScreens {
         return
       }
 
+      const cost = currentTollCost(s)
+      const mercy = hasTollMercy(s)
       paragraph(
-        `A giant sits across the only bridge upward, knitting. "${formatCount(TOLL_GIANT_COST)} candies to pass," he says pleasantly, "or you can try your luck. I'd pay, personally."`,
+        mercy
+          ? `The giant sits across the only bridge upward, still a little sheepish about the whole business. "${formatCount(cost)} candies," he says, softer than before. "Mate's rates."`
+          : `A giant sits across the only bridge upward, knitting. "${formatCount(TOLL_GIANT_COST)} candies to pass," he says pleasantly, "or you can try your luck. I'd pay, personally."`,
         'blurb',
+        mercy ? 'toll-giant-mercy' : undefined,
       )
       const pay = ctx.button(
-        `pay the toll (${formatCount(TOLL_GIANT_COST)} candies)`,
+        `pay the toll (${formatCount(cost)} candies)`,
         'pay-toll',
         () => payTollGiant(),
       )
-      if (s.candies.current < TOLL_GIANT_COST) {
+      if (s.candies.current < cost) {
         pay.disabled = true
         pay.classList.add('shop-unaffordable')
       }
       screen.appendChild(pay)
-      screen.appendChild(
-        ctx.button('size up a fight', 'toll-giant-fight', () =>
-          ctx.notify(`${deathEpitaph('tollGiantLoss')} (Fighting him comes later; for now, pay.)`),
-        ),
-      )
+      if (!mercy) {
+        screen.appendChild(ctx.button('size up a fight', 'toll-giant-fight', () => sizeUpFight()))
+      }
+    }
+
+    // Try your luck against the toll giant. You lose — he is a mountain that knits — but the FIRST loss
+    // earns his pity and a permanent 10% toll discount (the §18 mercy secret). A curiosity, never a gate:
+    // paying the full toll was always available. Losing again after the discount does nothing (SAME ref).
+    function sizeUpFight(): void {
+      const result = takeTollLoss(session.getState())
+      if (!result.ok) {
+        ctx.notify(`${deathEpitaph('tollGiantLoss')} (Fighting him comes later; for now, pay.)`)
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText(t('secret.tollMercy.reveal'))
+      render()
     }
 
     function payTollGiant(): void {
-      const result = payToll(session.getState(), TOLL_GIANT_COST, TOLL_GIANT_PAID_FLAG)
+      const cost = currentTollCost(session.getState())
+      const result = payToll(session.getState(), cost, TOLL_GIANT_PAID_FLAG)
       if (!result.ok) {
         ctx.notify(
           result.reason === 'alreadyPaid'

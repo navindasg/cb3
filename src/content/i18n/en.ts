@@ -103,6 +103,7 @@ export const en: GameText = {
   // recipes
   'recipe.syrupOfHealth.name': 'syrup of health',
   'recipe.fizzyLiftingSoda.name': 'fizzy lifting soda',
+  'recipe.antiGravCola.name': 'anti-gravity cola',
 
   // spells
   'spell.sugarBolt.name': 'sugar bolt',
@@ -120,6 +121,9 @@ export const en: GameText = {
   'secret.konami.reveal': 'A goldfish appears in the fishbowl helm. It regards you, and forgives you.',
   'secret.sunPoker.reveal': 'A voice from no particular direction, tired and enormous: "please stop poking the sun." You are now, officially, a sun poker.',
   'secret.figurehead.reveal': 'You named her Candy Box. A small smiling face has appeared on her bow, carved by no one. It winks. It seems glad to be sailing.',
+  'secret.tollMercy.reveal': 'The giant sets you down, unhurt, and looks genuinely sorry. "I did warn you." He knits a moment, then names a lower toll. "Call it a kindness. You did try." The bridge fee is 10% off, forever.',
+  'secret.sourMarinate.reveal': 'You stand in the sour rain and do not flinch for a full minute. The gummy folk gather to watch, deeply impressed and faintly concerned. "Well-marinated," the elder pronounces. It stings less now, and always will.',
+  'secret.antiGravCola.reveal': 'You crack the anti-gravity cola. It fizzes UP out of the bottle. Your stomach lurches, the reef turns over, and your controls flip. Cast off.',
 
   // rumors
   'rumor.mines': 'They say the mines below the field go down a very long way.',

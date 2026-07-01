@@ -18,6 +18,14 @@ const fizzyLog: readonly CauldronEntry[] = [
   { action: 'stir' },
 ]
 
+// anti-gravity cola (§18): THREE candies, then stir (no heat, no lollipop).
+const colaLog: readonly CauldronEntry[] = [
+  { action: 'add', subject: 'candy' },
+  { action: 'add', subject: 'candy' },
+  { action: 'add', subject: 'candy' },
+  { action: 'stir' },
+]
+
 describe('brew', () => {
   it('brews the matching recipe: adds the output and sets the output flag', () => {
     const state = createDefaultSave()
@@ -57,5 +65,24 @@ describe('brew', () => {
     expect(fromFizzy.recipe?.id).toBe('fizzyLiftingSoda')
     // The fizzy log (no lollipop) never satisfies the syrup recipe.
     expect(fromFizzy.state.flags['knowsSyrupOfHealth']).toBeUndefined()
+  })
+
+  it('brews the anti-gravity cola: sets its flag, no resource output (§18)', () => {
+    const result = brew(createDefaultSave(), colaLog, CAULDRON_RECIPES)
+    expect(result.brewed).toBe(true)
+    expect(result.recipe?.id).toBe('antiGravCola')
+    expect(result.state.flags['antiGravColaKnown']).toBe(true)
+    expect(result.recipe?.output).toBeNull()
+  })
+
+  it('keeps the cola disjoint from syrup + fizzy (no lollipop, no heat — three candies then stir)', () => {
+    const fromCola = brew(createDefaultSave(), colaLog, CAULDRON_RECIPES)
+    expect(fromCola.recipe?.id).toBe('antiGravCola')
+    // The cola log satisfies NEITHER the syrup (needs a lollipop) NOR the fizzy soda (needs a heat).
+    expect(fromCola.state.flags['knowsSyrupOfHealth']).toBeUndefined()
+    expect(fromCola.state.flags['fizzyLiftingSodaKnown']).toBeUndefined()
+    // And the fizzy log (2 candies + heat) never falls through to the cola.
+    const fromFizzy = brew(createDefaultSave(), fizzyLog, CAULDRON_RECIPES)
+    expect(fromFizzy.state.flags['antiGravColaKnown']).toBeUndefined()
   })
 })

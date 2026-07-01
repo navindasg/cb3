@@ -5,6 +5,7 @@ import {
   driftStep,
   respawnPlayer,
   bestFireDir,
+  aimDir,
   type DriftState,
 } from '@/engine/content/driftReef'
 import {
@@ -18,6 +19,7 @@ import {
   DRIFT_BURST_STEPS,
   DRIFT_DT,
   PLAYER_START,
+  ANTIGRAV_ASTEROID,
 } from '@/content/reef/driftField'
 import { Vec2 } from '@/engine/quest/Vec2'
 
@@ -143,6 +145,76 @@ describe('the drift sim — respawn + the real field is clearable', () => {
       const dir = bestFireDir(s, FIRE_DIRS)
       // If nothing is lined up, fire any direction to drift and re-aim next shot.
       s = fireDrift(s, (dir ?? FIRE_DIRS[0]!).vec).state
+      for (let k = 0; k < DRIFT_BURST_STEPS; k++) s = driftStep(s, DRIFT_DT)
+      shots++
+    }
+    expect(driftCleared(s)).toBe(true)
+  })
+})
+
+describe('the drift sim — anti-gravity cola (§18: invert + hidden asteroid)', () => {
+  it('createDrift adds ONE extra hidden asteroid only under anti-grav', () => {
+    const sober = createDrift(DRIFT_SEEDS)
+    const cola = createDrift(DRIFT_SEEDS, true)
+    expect(cola.asteroids.length).toBe(sober.asteroids.length + 1)
+    // The hidden rock sits where the field never normally spawns.
+    const hidden = cola.asteroids.find((a) => a.pos.equals(new Vec2(ANTIGRAV_ASTEROID.pos.x, ANTIGRAV_ASTEROID.pos.y)))
+    expect(hidden).toBeDefined()
+    expect(hidden!.size).toBe(ANTIGRAV_ASTEROID.size)
+    // ids stay unique + nextId accounts for the extra seed.
+    expect(cola.nextId).toBe(DRIFT_SEEDS.length + 1)
+    const ids = new Set(cola.asteroids.map((a) => a.id))
+    expect(ids.size).toBe(cola.asteroids.length)
+  })
+
+  it('createDrift(seeds) with no flag is unchanged (default sober)', () => {
+    expect(createDrift(DRIFT_SEEDS).asteroids.length).toBe(DRIFT_SEEDS.length)
+  })
+
+  it('aimDir negates the direction only when inverting', () => {
+    expect(aimDir({ x: 0, y: -1 }, false)).toEqual({ x: 0, y: -1 })
+    expect(aimDir({ x: 0, y: -1 }, true)).toEqual({ x: -0, y: 1 })
+    expect(aimDir({ x: 1, y: 0 }, true)).toEqual({ x: -1, y: -0 })
+  })
+
+  it('inverted fire shoots the OPPOSITE way: pressing UP under cola breaks a rock BELOW you', () => {
+    // A single rock sitting straight BELOW the pod; sober, pressing UP would miss it entirely.
+    const below: DriftState = {
+      player: { pos: new Vec2(14, 8), vel: Vec2.ZERO },
+      asteroids: [{ id: 0, pos: new Vec2(14, 13), vel: Vec2.ZERO, size: 0 }],
+      nextId: 1,
+    }
+    const sober = fireDrift(below, UP, false)
+    expect(sober.hit).toBe(false) // sober UP flies up, away from the rock below
+    const cola = fireDrift(below, UP, true)
+    expect(cola.hit).toBe(true) // inverted UP flies DOWN into the rock
+  })
+
+  it('inverted fire recoils you the opposite way of the INVERTED shot (i.e. same way you pressed)', () => {
+    const empty: DriftState = { player: { pos: new Vec2(14, 8), vel: Vec2.ZERO }, asteroids: [], nextId: 0 }
+    // Sober UP = shot up, recoil down (+y). Inverted UP = shot DOWN, recoil UP (-y).
+    expect(fireDrift(empty, UP, false).state.player.vel.y).toBeCloseTo(RECOIL)
+    expect(fireDrift(empty, UP, true).state.player.vel.y).toBeCloseTo(-RECOIL)
+  })
+
+  it('bestFireDir points at the button whose INVERTED ray lands the hit under cola', () => {
+    // Rock straight below: the button that hits under cola is UP (its inverted ray flies down).
+    const below: DriftState = {
+      player: { pos: new Vec2(14, 8), vel: Vec2.ZERO },
+      asteroids: [{ id: 0, pos: new Vec2(14, 13), vel: Vec2.ZERO, size: 0 }],
+      nextId: 1,
+    }
+    expect(bestFireDir(below, FIRE_DIRS, false)?.id).toBe('s') // sober: aim DOWN
+    expect(bestFireDir(below, FIRE_DIRS, true)?.id).toBe('n') // cola: press UP (fires down)
+  })
+
+  it('the anti-grav field (incl. the hidden rock) still clears within a bounded shot budget', () => {
+    let s = createDrift(DRIFT_SEEDS, true)
+    let shots = 0
+    const BUDGET = 500
+    while (!driftCleared(s) && shots < BUDGET) {
+      const dir = bestFireDir(s, FIRE_DIRS, true)
+      s = fireDrift(s, (dir ?? FIRE_DIRS[0]!).vec, true).state
       for (let k = 0; k < DRIFT_BURST_STEPS; k++) s = driftStep(s, DRIFT_DT)
       shots++
     }

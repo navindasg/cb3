@@ -102,6 +102,7 @@ export interface GameText {
   // --- recipes ---
   'recipe.syrupOfHealth.name': string
   'recipe.fizzyLiftingSoda.name': string
+  'recipe.antiGravCola.name': string
 
   // --- spells ---
   'spell.sugarBolt.name': string
@@ -120,6 +121,10 @@ export interface GameText {
   // Phase-5 interaction secrets, batch A (§18)
   'secret.sunPoker.reveal': string
   'secret.figurehead.reveal': string
+  // Phase-5 interaction secrets, batch B (§18)
+  'secret.tollMercy.reveal': string
+  'secret.sourMarinate.reveal': string
+  'secret.antiGravCola.reveal': string
 
   // --- tavern rumors (hints) ---
   'rumor.mines': string

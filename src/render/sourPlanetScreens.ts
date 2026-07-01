@@ -6,7 +6,12 @@ import {
   learnFusion,
   canTradeSour,
   tradeSour,
+  observeSourDwell,
+  sourMarinated,
+  sourDwellMs,
+  SOUR_MARINATE_MS,
 } from '@/engine/content/sourPlanet'
+import { t } from '@/content/i18n/en'
 import { SOUR_TRADE_CANDY_COST, SOUR_TRADE_BATCH } from '@/content/planet/sourPlanet'
 import { KRAKEN_DEFEATED_FLAG } from '@/content/flags'
 
@@ -25,6 +30,8 @@ export interface SourPlanetContext {
   button(label: string, testid: string, onClick: () => void, accelIndex?: number): HTMLButtonElement
   notify(text: string): void
   logText(text: string): void
+  /** Register a teardown run on the next screen switch (the marinate dwell interval). */
+  onScreen(dispose: () => void): void
   /** Return to the overworld map. */
   showMap(): void
   /** Return to the sky port (the galleon's home berth). */
@@ -57,6 +64,20 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
   }
 
   function showSourPlanet(): void {
+    // The marinate dwell interval. render() calls clearScreen(), which fires ALL screen disposers, so an
+    // interval registered once would die on the first internal re-render. Instead render() re-arms it each
+    // pass (clearing any prior timer + registering a fresh teardown); the LAST teardown — from the final
+    // render before a genuine screen switch — is the one clearScreen fires, so exactly one interval is live.
+    let dwellTimer: ReturnType<typeof setInterval> | null = null
+    function armMarinateTick(): void {
+      if (dwellTimer !== null) clearInterval(dwellTimer)
+      dwellTimer = setInterval(marinateTick, 1000)
+      ctx.onScreen(() => {
+        if (dwellTimer !== null) clearInterval(dwellTimer)
+        dwellTimer = null
+      })
+    }
+
     function render(): void {
       ctx.clearScreen()
       const s = session.getState()
@@ -71,8 +92,32 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
       if (!flavorFusionLearned(s)) renderFirstContact()
       else renderTrade(s)
 
+      renderMarinate(s)
+
       screen.appendChild(ctx.button('back to the sky port', 'sour-to-skyport', () => ctx.showSkyPort(), 0))
       screen.appendChild(ctx.button('back to the map', 'sour-to-map', () => ctx.showMap()))
+      armMarinateTick()
+    }
+
+    // The sour-rain marinate (§18): stand here unarmoured and the corrosion slowly, permanently toughens
+    // you — 'well-marinated', +1 sour resist, once. The engine's observeSourDwell is offline-safe on
+    // accumulatedGameTimeMs; we only surface it (a bare, deadpan status) and let the tick below advance it.
+    function renderMarinate(s: GameState): void {
+      if (sourMarinated(s)) {
+        paragraph(
+          'You are well-marinated. The sour rain, which harrows everything else here, merely greets you.',
+          'blurb',
+          'sour-marinated',
+        )
+        return
+      }
+      if (s.equipped.armour !== null) return // armoured: the rain finds no purchase; nothing to show.
+      const secs = Math.floor(sourDwellMs(s) / 1000)
+      paragraph(
+        `You are standing, unarmoured, in the sour rain. It stings. (${secs}s / ${SOUR_MARINATE_MS / 1000}s — the gummy folk seem to be counting.)`,
+        'blurb',
+        'sour-dwell',
+      )
     }
 
     function renderFirstContact(): void {
@@ -138,6 +183,18 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
       }
       session.dispatch(() => result.state)
       ctx.logText(`The gummy folk decant ${SOUR_TRADE_BATCH} sour essence into your hold. The elder waves off your thanks.`)
+      render()
+    }
+
+    // Advance the marinate dwell once a second while the screen is open. observeSourDwell is pure and
+    // offline-safe (it reads accumulatedGameTimeMs, so time spent backgrounded still counts); this only
+    // dispatches it and re-renders on the tick that finally earns the marinate. The dwell-progress
+    // paragraph is refreshed each tick too (render re-arms the timer), so the counter visibly climbs.
+    function marinateTick(): void {
+      const before = session.getState()
+      const result = observeSourDwell(before)
+      if (result.state !== before) session.dispatch(() => result.state)
+      if (result.marinated) ctx.logText(t('secret.sourMarinate.reveal'))
       render()
     }
 

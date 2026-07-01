@@ -1,5 +1,13 @@
 import { createDefaultSave } from '@/engine/state/defaultSave'
-import { payToll, TOLL_GIANT_COST } from '@/engine/content/tollGiant'
+import {
+  payToll,
+  TOLL_GIANT_COST,
+  takeTollLoss,
+  currentTollCost,
+  hasTollMercy,
+  TOLL_MERCY_FLAG,
+  TOLL_MERCY_DISCOUNT,
+} from '@/engine/content/tollGiant'
 import type { GameState } from '@/engine/types/GameState'
 
 const FLAG = 'tollGiantPaid'
@@ -40,5 +48,59 @@ describe('the toll giant', () => {
     payToll(before, TOLL_GIANT_COST, FLAG)
     expect(before.candies.current).toBe(TOLL_GIANT_COST)
     expect(before.flags[FLAG]).toBeUndefined()
+  })
+})
+
+describe('the toll giant — the mercy secret (§18)', () => {
+  it('starts at the full toll, no mercy', () => {
+    const s = createDefaultSave()
+    expect(hasTollMercy(s)).toBe(false)
+    expect(currentTollCost(s)).toBe(TOLL_GIANT_COST)
+  })
+
+  it('losing on purpose earns the mercy flag once', () => {
+    const s = createDefaultSave()
+    const result = takeTollLoss(s)
+    expect(result.ok).toBe(true)
+    expect(result.state.flags[TOLL_MERCY_FLAG]).toBe(true)
+    expect(hasTollMercy(result.state)).toBe(true)
+  })
+
+  it('applies exactly a 10% discount, floored to a whole candy', () => {
+    const merciful = takeTollLoss(createDefaultSave()).state
+    expect(TOLL_MERCY_DISCOUNT).toBe(0.1)
+    expect(currentTollCost(merciful)).toBe(Math.floor(TOLL_GIANT_COST * 0.9))
+    expect(currentTollCost(merciful)).toBe(90_000)
+  })
+
+  it('respects a custom base toll when discounting', () => {
+    const merciful = takeTollLoss(createDefaultSave()).state
+    expect(currentTollCost(merciful, 999)).toBe(Math.floor(999 * 0.9)) // 899, floored
+  })
+
+  it('is a no-op (same reference) once mercy is already granted — nothing to farm', () => {
+    const first = takeTollLoss(createDefaultSave())
+    const second = takeTollLoss(first.state)
+    expect(second.ok).toBe(false)
+    expect(second.state).toBe(first.state)
+  })
+
+  it('does not mutate the input state when granting mercy', () => {
+    const before = createDefaultSave()
+    takeTollLoss(before)
+    expect(before.flags[TOLL_MERCY_FLAG]).toBeUndefined()
+  })
+
+  it('a merciful player pays the discounted toll through payToll', () => {
+    const merciful: GameState = {
+      ...takeTollLoss(createDefaultSave()).state,
+      candies: { current: 90_000, lifetimeAccumulated: 90_000, historicalMax: 90_000 },
+    }
+    const cost = currentTollCost(merciful)
+    // At the full toll this pile (90k) would be unaffordable; at mate's-rates it exactly covers it.
+    const paid = payToll(merciful, cost, FLAG)
+    expect(paid.ok).toBe(true)
+    expect(paid.state.candies.current).toBe(0)
+    expect(paid.state.flags[FLAG]).toBe(true)
   })
 })

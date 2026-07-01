@@ -35,6 +35,15 @@ export const FIZZY_LIFTING_SODA_FLAG = 'fizzyLiftingSodaKnown'
 /** Set on storm-front victory (the thunderhead djinn falls). */
 export const STORM_FRONT_CLEARED_FLAG = 'stormFrontCleared'
 
+/**
+ * Set when the anti-gravity cola is brewed (the cauldron — Phase 5, §18). A curiosity draught: drink it
+ * before a reef drift run and your fire controls INVERT while a fourth, hidden asteroid appears. The
+ * recipe's outputFlag; the reef screen reads it to offer the cola and, once drunk (a session-only run
+ * flag it manages itself), inverts the drift sim. A curiosity, never a gate. The engine never imports
+ * this content value (ADR §3) — the drift sim takes the invert as a plain argument.
+ */
+export const ANTIGRAV_COLA_FLAG = 'antiGravColaKnown'
+
 /** Set when the cotton-candy balloon is built (the item's saveFlag); reveals the jawbreaker moon. */
 export const BALLOON_BUILT_FLAG = 'balloonBuilt'
 

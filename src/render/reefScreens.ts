@@ -37,7 +37,8 @@ import {
   GUMBALL_CRAFT_BATCH,
   type Coord,
 } from '@/content/reef/driftField'
-import { REEF_DRIFT_CLEARED_FLAG } from '@/content/flags'
+import { REEF_DRIFT_CLEARED_FLAG, ANTIGRAV_COLA_FLAG } from '@/content/flags'
+import { t } from '@/content/i18n/en'
 import { deathEpitaph } from '@/render/deathEpitaph'
 
 // The rock candy reef (Act 2 — the first voyage, DESIGN §125/§178). A wiring sub-module of the DOM
@@ -114,6 +115,10 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
     // The drift sim is transient to this visit; the haul is held until a full clear commits it.
     let sim: DriftState | null = null
     let haul = 0
+    // Anti-gravity cola (§18): a session-only, per-RUN toggle — drunk before a run it inverts the fire
+    // controls and reveals a hidden fourth asteroid. Never persisted (like the sim itself); it only
+    // matters until this field clears. Applied by threading it into the drift sim as a plain argument.
+    let colaActive = false
 
     function render(): void {
       ctx.clearScreen()
@@ -182,15 +187,29 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
         return
       }
 
-      if (!sim) sim = createDrift(DRIFT_SEEDS)
+      // The anti-gravity cola (§18): offered ONLY before the field is laid in (no sim yet), and only if
+      // the recipe is known. Drinking it arms the per-run invert + hidden asteroid; the field is then
+      // created under it. Once the run is underway (sim exists) the choice is locked for this run.
+      if (!sim && s.flags[ANTIGRAV_COLA_FLAG] === true && !colaActive) {
+        paragraph(
+          'A bottle of that upward-falling cola rolls in your kit. You could crack it before you cast off — the reef would turn inside out, and things you have never seen would drift into reach.',
+          'blurb',
+          'reef-cola-offer',
+        )
+        screen.appendChild(ctx.button('drink the anti-gravity cola', 'reef-drink-cola', () => doDrinkCola()))
+      }
+
+      if (!sim) sim = createDrift(DRIFT_SEEDS, colaActive)
 
       paragraph(
-        'Zero gravity. The gumball cannon is your only engine — every shot you fire shoves the pod the opposite way. Break the asteroids; mind your drift, and mind your ammo.',
+        colaActive
+          ? 'Zero gravity, and the cola has the whole reef standing on its head. Your controls are INVERTED — fire up to be shoved up, shoot down. Somewhere out there, a rock that should not exist.'
+          : 'Zero gravity. The gumball cannon is your only engine — every shot you fire shoves the pod the opposite way. Break the asteroids; mind your drift, and mind your ammo.',
         'blurb',
         'reef-drift-blurb',
       )
       paragraph(
-        `gumballs: ${gumballs(s)}    rock candy in the hold (banked when clear): ${haul}    rocks left: ${sim.asteroids.length}`,
+        `gumballs: ${gumballs(s)}    rock candy in the hold (banked when clear): ${haul}    rocks left: ${sim.asteroids.length}${colaActive ? '    [ANTI-GRAV: controls inverted]' : ''}`,
         'blurb',
         'reef-hud',
       )
@@ -203,7 +222,7 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
 
       // The aim hint: prose for the player, plus a machine-readable data-aim (the dir id) so the e2e
       // can follow it without parsing prose.
-      const hint = bestFireDir(sim, FIRE_DIRS)
+      const hint = bestFireDir(sim, FIRE_DIRS, colaActive)
       const hintP = doc.createElement('p')
       hintP.className = 'blurb'
       hintP.setAttribute('data-testid', 'reef-hint')
@@ -231,7 +250,7 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
       }
       session.dispatch((s) => setNumber(s, GUMBALLS_KEY, gumballs(s) - 1))
 
-      const fired = fireDrift(sim, dir)
+      const fired = fireDrift(sim, dir, colaActive)
       sim = fired.state
       if (fired.hit) haul += fired.gained
       for (let k = 0; k < DRIFT_BURST_STEPS; k++) sim = driftStep(sim, DRIFT_DT)
@@ -240,6 +259,16 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
         session.dispatch((s) => setFlag({ ...s, rockCandy: addResource(s.rockCandy, haul) }, REEF_DRIFT_CLEARED_FLAG))
         ctx.logText(`The last asteroid breaks apart. ${formatCount(haul)} rock candy, secured in the hold.`)
       }
+      render()
+    }
+
+    // Drink the anti-gravity cola before casting off (§18). A per-run, session-only toggle: it inverts
+    // the controls and lets createDrift add the hidden fourth asteroid. Only offered while no run is
+    // underway, so it can never be drunk mid-field; it costs nothing but the surprise. Not persisted.
+    function doDrinkCola(): void {
+      if (sim) return // a run is already underway — too late to change the physics
+      colaActive = true
+      ctx.logText(t('secret.antiGravCola.reveal'))
       render()
     }
 
