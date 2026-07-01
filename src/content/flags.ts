@@ -397,6 +397,16 @@ export const PARADOX_PIN_OWNED_FLAG = 'paradoxPinOwned'
 export const HAT_TWO_KEY = 'hatTwo'
 
 /**
+ * Set when the hallucination is beaten behind the context window's second panel (Phase 5 — hidden boss 3,
+ * DESIGN §17/§28). Commit-once (the kraken/boarding idiom): it blocks re-granting the fourth-wall fragment and
+ * retires the fight. The hallucination sim (engine/content/hallucination) is TRANSIENT and never persists — it
+ * fights with FAKE UI (counterfeit buttons, false damage numbers, a lying HP bar), but the LIES never change what
+ * is true, so the honest fight resolves and the screen sets this flag on the win. engine/content/hallucination
+ * re-declares this literal in lock-step (the moonStrata idiom, ADR §3). A one-off boss + a one-off drop.
+ */
+export const HALLUCINATION_DEFEATED_FLAG = 'hallucinationDefeated'
+
+/**
  * Set when the WOLF-WOOL CLOAK is worn (its saveFlag). Read by the storm front to know the storm's charge can
  * no longer find you — a LATE reward that retroactively trivializes an early climb (the curiosity payoff,
  * §17). The cloak IS the storm-immunity: its saveFlag doubles as this flag (one truth, no duplication). The

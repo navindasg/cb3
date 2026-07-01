@@ -64,6 +64,8 @@ export interface GameText {
   'item.mirrorPotion.desc': string
   'item.paradoxPin.name': string
   'item.paradoxPin.desc': string
+  'item.fourthWallFragment.name': string
+  'item.fourthWallFragment.desc': string
   'item.pogoStick.name': string
   'item.pogoStick.desc': string
   'item.oldMapFragment.name': string
@@ -195,6 +197,7 @@ export interface GameText {
   'death.cloudWolf': string
   'death.voidWhale': string
   'death.reflection': string
+  'death.hallucination': string
   'death.generic': string
 
   // --- zones (map labels' display names) ---

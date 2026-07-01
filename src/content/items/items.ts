@@ -325,6 +325,21 @@ export const PARADOX_PIN: ItemDef = {
   saveFlag: 'paradoxPinOwned',
 }
 
+/** The fourth-wall fragment (Phase 5 — the hallucination's drop, hidden boss 3, DESIGN §17/§18/§28). A shard of
+ * the thing's counterfeit interface, prised loose when it came apart: a chip of not-quite-glass that still, faintly,
+ * draws a small button no bigger than a fingernail — a button that does nothing, that was never real, that you
+ * cannot stop yourself from pressing. Not equippable; a keepsake item-flag. Its "one real secret per day" effect
+ * (DESIGN §18 — the fragment quietly points you at a genuine hidden thing you have not found) is DEFERRED: no such
+ * system exists yet, so for now it banks as a trophy, like the acorn / kraken crown. Won by out-reading the fight's
+ * lies — you kept your head when the UI was lying to your face, and the fragment is the proof. */
+export const FOURTH_WALL_FRAGMENT: ItemDef = {
+  id: 'fourthWallFragment',
+  displayKey: 'item.fourthWallFragment.name',
+  descKey: 'item.fourthWallFragment.desc',
+  ascii: '][',
+  saveFlag: 'fourthWallFragmentOwned',
+}
+
 /** The heirloom sword on grandma's mantle — taken down at last once the attic's wrapper unlocks it
  * (§231/§288). Its saveFlag `mantleSwordTaken` is set by the attic grant (openAttic grants it alongside
  * the wrapper); owning it auto-equips the weapon slot, activating the lifetime-candy scaling (see
@@ -379,6 +394,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   SUGAR_GLASS_SHARD,
   MIRROR_POTION,
   PARADOX_PIN,
+  FOURTH_WALL_FRAGMENT,
   MANTLE_SWORD,
   // The scholar's pamphlet lives with its typed secret (content/typedSecrets), but joins the registry
   // here so the secret runner's grantItem can resolve it via ITEM_MAP.

@@ -845,6 +845,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     clearScreen,
     button,
     notify,
+    logText,
     showMoon: moon.showMoon,
   })
 

@@ -134,8 +134,10 @@ export const CONTEXT_WINDOW_LINES: readonly string[] = [
 ]
 
 /**
- * A stub the terminal shows in place of the hallucination's entry, until that boss ships (§17, the next
- * slice). Signposts the second panel without opening it — soft-lock-free, a curiosity only.
+ * SUPERSEDED (Phase 5 — hidden boss 3 shipped): the stub the terminal showed while the hallucination was still
+ * sealed. The second panel now OPENS (content/moon/hallucination.SECOND_PANEL_BLURB is the live copy, and the
+ * screen wires the fight behind it). Kept as banked data (a harmless string on the passthroughs) so nothing that
+ * still references it breaks; the terminal no longer draws it. A curiosity, never a gate.
  */
 export const SECOND_PANEL_STUB =
   'A second panel is set into the back wall, smaller, unlabelled. Something breathes behind it, unevenly, and does not want to be looked at directly. It is not fine. It is also, for now, sealed — you cannot get it open. Whatever leaves the notes open is not ready to meet you yet.'

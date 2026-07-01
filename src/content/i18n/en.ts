@@ -70,6 +70,8 @@ export const en: GameText = {
   'item.mirrorPotion.desc': 'A cold, still draught the exact colour of your own eyes. It does not steam, and it does not settle. Drink it and you will not be alone in the room. You are fairly sure you know who the other one will be.',
   'item.paradoxPin.name': 'the paradox pin',
   'item.paradoxPin.desc': 'A small pin of two little mirrors set facing each other, so that each is full of the other, forever, going nowhere. Won off the thing that was you. While you wear it the ordinary rule that a person may wear only one hat quietly stops applying. Wear two. Who is going to stop you.',
+  'item.fourthWallFragment.name': 'a fourth-wall fragment',
+  'item.fourthWallFragment.desc': 'A shard of the thing that came apart behind the second panel — a chip of not-quite-glass, cool and a little slippery, that still faintly draws a tiny button in one corner. The button does nothing. It was never real. You press it anyway, every time you look at it, and it does nothing, every time. You are keeping it because it lied to your face and you won regardless. That seemed worth a souvenir.',
 
   // merchant lines
   'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
@@ -195,6 +197,7 @@ export const en: GameText = {
   'death.cloudWolf': 'It was never a sheep. You knew that, at the end.',
   'death.voidWhale': 'The void whale did not even notice. Somehow that is worse.',
   'death.reflection': 'It fought exactly the way you fight, only it did not blink. You should think about that. You wake at the cauldron.',
+  'death.hallucination': 'You believed the numbers. The numbers were lying. The last thing you see is a button that was never there, blinking, waiting to be pressed.',
   'death.generic': 'You died. You feel fine about it. You respawn.',
 
   // zones

@@ -171,6 +171,12 @@ export const REFLECTION_DEATH: DeathMessage = {
   message: 'death.reflection',
 }
 
+/** The hallucination — you believed the numbers, and the numbers were lying (Phase 5, hidden boss 3, §17/§28). */
+export const HALLUCINATION_DEATH: DeathMessage = {
+  source: 'hallucination',
+  message: 'death.hallucination',
+}
+
 export const GENERIC_DEATH: DeathMessage = {
   source: 'generic',
   message: 'death.generic',
@@ -205,6 +211,7 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   CLOUD_WOLF_DEATH,
   VOID_WHALE_DEATH,
   REFLECTION_DEATH,
+  HALLUCINATION_DEATH,
   GENERIC_DEATH,
 ]
 
