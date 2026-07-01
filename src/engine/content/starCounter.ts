@@ -84,10 +84,13 @@ export function eclipseUntilMs(state: GameState): number {
 }
 
 /** Whether the sky is currently eclipsed — the descent is paused (accumulated time has not yet reached the
- * eclipse's end). Ending 2's permanent freeze takes precedence (frozen wins), but under an ordinary descent an
- * active eclipse holds it. Pure. */
+ * eclipse's end). Ending 2's permanent freeze takes precedence (frozen wins), and ending 1's relight is inert
+ * to it too: the eclipse only ever pauses the DOWN-tick, it must never hold back the RETURNING light (the one
+ * hopeful up-tick), so an eclipse stamped before the relight began is a no-op once relighting. Under an ordinary
+ * descent an active eclipse holds it. Pure. */
 export function eclipsed(state: GameState): boolean {
   if (frozen(state)) return false
+  if (relighting(state)) return false
   return state.accumulatedGameTimeMs < eclipseUntilMs(state)
 }
 

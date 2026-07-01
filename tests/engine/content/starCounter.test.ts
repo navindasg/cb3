@@ -383,6 +383,21 @@ describe('the eclipse — a temporary, drift-free pause of the descent', () => {
     expect(eclipsed(stamped)).toBe(false)
   })
 
+  it('ending 1 (relighting) beats an eclipse: an active shadow never pauses the returning up-tick', () => {
+    // A shadow stamped before the relight began must NOT hold back the one hopeful up-tick (the eclipse only
+    // ever pauses the DOWN-tick — the documented invariant). With starsRelighting set the count climbs normally
+    // even mid-eclipse-window.
+    const base = relighting({ accumulatedGameTimeMs: 100 * MS_PER_STAR, starsRemaining: 4000 })
+    const stamped: GameState = {
+      ...base,
+      numbers: { ...base.numbers, [ECLIPSE_UNTIL_KEY]: 1e18, telescopeBoughtAtMs: 100 * MS_PER_STAR },
+    }
+    expect(eclipsed(stamped)).toBe(false)
+    // Three base-intervals into the (irrelevant) shadow: the sky has relit three stars, not frozen at 4000.
+    const later = { ...stamped, accumulatedGameTimeMs: 103 * MS_PER_STAR }
+    expect(projectedStars(later)).toBe(4003)
+  })
+
   it('casting without the telescope (never revealed) is a SAME-ref no-op', () => {
     const s = createDefaultSave()
     expect(castEclipse(s)).toBe(s)
