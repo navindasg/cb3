@@ -26,6 +26,8 @@ import {
 import { STARTING_STARS } from '@/engine/content/starCounter'
 import { addResource } from '@/engine/types/Resource'
 import { createDefaultSave } from '@/engine/state/defaultSave'
+import { beginDarkSave } from '@/engine/state/newGamePlus'
+import { chooseHatch } from '@/engine/content/endings'
 import type { GameState } from '@/engine/types/GameState'
 
 /** A post-game save (an ending chosen) holding `stardust`, no fossil ignited yet. */
@@ -84,10 +86,29 @@ describe('canAwakenFossil — post-game only, 1000 stardust', () => {
     expect(canAwakenFossil(s)).toBe(false)
   })
 
-  it('is reachable in NG+ (stardust persists across the dark save)', () => {
-    // NG+ carries stardust; a post-ending dark-run state with the hoard can still relight the fossil.
-    const s = postGame(FOSSIL_STAR_COST, { nGPlusRun: 1, flags: { darkRun: true } })
-    expect(canAwakenFossil(s)).toBe(true)
+  it('is SHUT on a fresh dark save — beginDarkSave leaves endingChosen unset AND resets stardust to 0', () => {
+    // The true post-EAT gate state: chooseEat -> beginDarkSave starts from createDefaultSave() and carries
+    // forward ONLY the lifetime totals + run counter — it does NOT carry stardust (reset to 0) and does NOT
+    // stamp endingChosen (the §287 dark run must reach its own choice again). So the epilogue is NOT reachable
+    // on a fresh dark save; both gate conditions fail (no ending chosen AND 0 stardust). Not a soft-lock — the
+    // comet/star-sea faucets stay live to re-earn stardust, and re-beating the star-eater re-opens the choice.
+    const fresh = beginDarkSave(postGame(FOSSIL_STAR_COST, { starsRemaining: 5000 }))
+    expect(typeof fresh.strings[ENDING_CHOSEN_FLAG]).not.toBe('string')
+    expect(fresh.stardust.current).toBe(0)
+    expect(canAwakenFossil(fresh)).toBe(false)
+  })
+
+  it('is reachable in a RE-COMPLETED dark run: re-earn stardust + re-choose an ending, then it opens', () => {
+    // The genuinely-reachable dark-run path (NOT carryover): replay the dark loop, re-earn 1000 stardust via the
+    // still-live faucets, re-beat the star-eater and re-choose an ending (chooseHatch re-sets endingChosen) —
+    // THEN the fossil accepts the stardust. Modelled by igniting on a dark save that has re-earned both.
+    const relit = chooseHatch({
+      ...beginDarkSave(postGame(FOSSIL_STAR_COST, { starsRemaining: 5000 })),
+      stardust: addResource(createDefaultSave().stardust, FOSSIL_STAR_COST),
+    })
+    expect(typeof relit.strings[ENDING_CHOSEN_FLAG]).toBe('string') // re-chosen in the dark run
+    expect(relit.flags['darkRun']).toBe(true) // still the dark run
+    expect(canAwakenFossil(relit)).toBe(true)
   })
 })
 
@@ -160,8 +181,18 @@ describe('igniteFossilStar — the +1 tick (commit-once, spends the stardust)', 
     expect(after.starsRemaining - before.starsRemaining).toBe(1)
   })
 
-  it('reachable in NG+: the ignite works on a dark-run post-ending state', () => {
-    const before = postGame(FOSSIL_STAR_COST, { nGPlusRun: 1, starsRemaining: 3000, flags: { darkRun: true } })
+  it('fires in a RE-COMPLETED dark run: the ignite works on a re-earned + re-chosen dark-run state', () => {
+    // A dark run reaches the epilogue by RE-EARNING stardust and RE-choosing an ending (chooseHatch), NOT by
+    // carryover — beginDarkSave never emits an ended dark save with a stardust hoard. This models that genuinely
+    // -reachable state (dark save + re-earned 1000 stardust + re-chosen ending) and asserts the ignite fires on it.
+    const darkSave = beginDarkSave({ ...createDefaultSave(), nGPlusRun: 0 }) // endingChosen unset, stardust 0
+    const before = chooseHatch({
+      ...darkSave,
+      stardust: addResource(darkSave.stardust, FOSSIL_STAR_COST), // re-earned via the still-live faucets
+      starsRemaining: 3000,
+    })
+    expect(before.flags['darkRun']).toBe(true)
+    expect(before.nGPlusRun).toBe(1) // beginDarkSave bumped the run counter
     const after = igniteFossilStar(before)
     expect(after.starsRemaining).toBe(3001)
     expect(after.nGPlusRun).toBe(1) // NG+ scaffold untouched
