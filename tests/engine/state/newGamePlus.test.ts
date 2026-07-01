@@ -4,8 +4,10 @@ import {
   THE_DARK_OPENING_STARS,
 } from '@/engine/state/newGamePlus'
 import {
+  canChoose,
   canEatSun,
   chooseEat,
+  chooseHatch,
   chosenEnding,
   endingChosen,
 } from '@/engine/content/endings'
@@ -14,7 +16,6 @@ import { CURRENT_SCHEMA_VERSION } from '@/engine/types/GameState'
 import {
   STAR_EATER_DEFEATED_FLAG,
   ENDING_CHOSEN_FLAG,
-  ENDING_EAT,
   DARK_RUN_FLAG,
 } from '@/content/flags'
 import { EAT_IT_THRESHOLD } from '@/content/sun/endings'
@@ -65,19 +66,23 @@ describe('canEatSun — ending 3 gate (starEaterDefeated && !endingChosen && lif
   })
 })
 
-describe('chooseEat — commit-once + records the eat (the dark save begins)', () => {
-  it('records endingChosen=eat + the darkRun flag in one dispatch', () => {
+describe('chooseEat — begins the fresh dark save (the light game ends)', () => {
+  it('returns the dark save: the darkRun flag set, endingChosen left UNSET (the §287 relight path)', () => {
     const dark = chooseEat(victory())
-    expect(dark.strings[ENDING_CHOSEN_FLAG]).toBe(ENDING_EAT)
-    expect(chosenEnding(dark)).toBe('eat')
     expect(dark.flags[DARK_RUN_FLAG]).toBe(true)
+    // endingChosen is deliberately NOT stamped onto the dark save, so the dark run can re-beat the eater and
+    // reach its own choice again to relight the counter toward 8128 (newGamePlus.darkRunComplete, §287/§367).
+    expect(dark.strings[ENDING_CHOSEN_FLAG]).toBeUndefined()
+    expect(chosenEnding(dark)).toBeNull()
+    expect(endingChosen(dark)).toBe(false)
   })
 
-  it('is a SAME-reference no-op once any ending is already chosen (the dark save can never re-roll)', () => {
-    const once = chooseEat(victory())
-    expect(chooseEat(once)).toBe(once)
-    // The committed dark save still reads endingChosen=eat, so a stray re-entry is gated.
-    expect(endingChosen(once)).toBe(true)
+  it('the dark save is still farm-proof despite endingChosen unset — canEatSun/canChoose shut on it', () => {
+    const dark = chooseEat(victory())
+    // The fresh dark save carries starEaterDefeated=false, so both gates are already shut on it regardless of
+    // endingChosen — no ending can be re-triggered until the dark run itself re-beats the eater.
+    expect(canEatSun(dark)).toBe(false)
+    expect(dark.flags[STAR_EATER_DEFEATED_FLAG]).toBeUndefined()
   })
 })
 
@@ -174,6 +179,36 @@ describe('darkRunComplete — the §367 secret completion (the counter carried b
     const light = { ...createDefaultSave(), starsRemaining: STARTING_STARS }
     expect(darkRunComplete(light)).toBe(false)
   })
+
+  // The §287/§367 completion must be REACHABLE THROUGH PLAY, not only via a manually-patched starsRemaining.
+  // This drives the whole path: eat the sun -> the dark save -> replay the dark loop and re-beat the eater
+  // (re-set starEaterDefeated) -> the dark run's own choice re-opens -> pick 'let it hatch' -> accumulate time
+  // -> the counter relights UP past 8128 -> darkRunComplete === true. If chooseEat ever re-stamped endingChosen
+  // onto the dark save (locking the choice forever), canChoose would stay false and this would go unreachable.
+  it('is REACHABLE through play: eat -> dark run -> re-beat eater -> hatch -> relight up to >= 8128', () => {
+    // 1) Eat the sun: the fresh dark save opens at 8100, the choice shut (starEaterDefeated=false).
+    const dark = chooseEat(victory())
+    expect(darkRunComplete(dark)).toBe(false)
+    expect(canChoose(dark)).toBe(false)
+
+    // 2) Replay the dark loop and re-beat the star-eater — the dark run's OWN choice re-opens (endingChosen was
+    //    left unset, so canChoose = starEaterDefeated && !endingChosen is true again).
+    const reWon = { ...dark, flags: { ...dark.flags, [STAR_EATER_DEFEATED_FLAG]: true } }
+    expect(canChoose(reWon)).toBe(true)
+
+    // 3) Choose 'let it hatch' inside the dark run — sets starsRelighting, the counter will now tick UP.
+    const relit = chooseHatch(reWon)
+    expect(chosenEnding(relit)).toBe('hatch')
+
+    // 4) Let enough accumulated game time pass for the relight to carry 8100 back up past the full sky (8128).
+    //    A fresh dark save has no dyson-stage flags (multiplier 1), so each star is exactly MS_PER_STAR.
+    const later = { ...relit, accumulatedGameTimeMs: 40 * MS_PER_STAR }
+    const reconciled = reconcileStars(later)
+    expect(reconciled.starsRemaining).toBe(STARTING_STARS) // relight clamps at 8128
+
+    // 5) The secret completion is satisfied — not dead code.
+    expect(darkRunComplete(reconciled)).toBe(true)
+  })
 })
 
 describe('the CRITICAL round-trip — beginDarkSave -> export -> import -> migrate(v8) -> validate', () => {
@@ -193,8 +228,8 @@ describe('the CRITICAL round-trip — beginDarkSave -> export -> import -> migra
 
     const loaded = result.envelope.state
     // The inverted opening survives (flags/numbers/strings ride the z.record passthroughs). beginDarkSave sets
-    // the darkRun flag + the telescope stamp; the endingChosen='eat' string is stamped by chooseEat (its wrapper)
-    // — asserted in the full-eat-path round-trip below.
+    // the darkRun flag + the telescope stamp; endingChosen is left UNSET (chooseEat does not stamp it — the §287
+    // relight path) — asserted in the full-eat-path round-trip below.
     expect(loaded.starsRemaining).toBe(8100)
     expect(loaded.flags[DARK_RUN_FLAG]).toBe(true)
     expect(loaded.flags['telescopeOwned']).toBe(true)
@@ -222,16 +257,18 @@ describe('the CRITICAL round-trip — beginDarkSave -> export -> import -> migra
     expect(projectedStars(later)).toBe(8095)
   })
 
-  it('the full eat path (chooseEat) round-trips too — the committed dark save loads back gated', () => {
+  it('the full eat path (chooseEat) round-trips too — the fresh dark save loads back farm-proof', () => {
     const dark = chooseEat(victory({ lifetimeCandiesEaten: EAT_IT_THRESHOLD + 5 }))
     const result = importSave(encodeSave(makeEnvelope(dark, 0)))
     expect(result.ok).toBe(true)
     if (!result.ok) return
     const loaded = result.envelope.state
-    // endingChosen='eat' + darkRun carried forward, so a stray re-entry on the dark save is still gated.
-    expect(loaded.strings[ENDING_CHOSEN_FLAG]).toBe(ENDING_EAT)
+    // The darkRun flag survives; endingChosen is UNSET (the §287 relight path). The eat gate is still shut on the
+    // loaded dark save because it carries starEaterDefeated=false — not because endingChosen is stamped.
     expect(loaded.flags[DARK_RUN_FLAG]).toBe(true)
-    expect(canEatSun(loaded)).toBe(false) // commit-once: the eat gate is shut on the dark save
+    expect(loaded.strings[ENDING_CHOSEN_FLAG]).toBeUndefined()
+    expect(loaded.flags[STAR_EATER_DEFEATED_FLAG]).toBeUndefined()
+    expect(canEatSun(loaded)).toBe(false)
     expect(loaded.starsRemaining).toBe(8100)
   })
 })

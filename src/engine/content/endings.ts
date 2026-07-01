@@ -16,15 +16,18 @@ import { EAT_IT_THRESHOLD } from '@/content/sun/endings'
 //    UP toward 8128 — the only up-tick in the whole game, the sky slowly refilling (§200/§202).
 //  - ending 2 (FEED THE SUN): sets endingChosen='feed' + the starCounterFrozen flag AND zeroes candies.current
 //    (sacrifice the literal save hoard, §203) in the SAME dispatch; the counter freezes forever (§201).
-//  - ending 3 (EAT IT): sets endingChosen='eat' + the darkRun flag, then begins the NG+ DARK SAVE in the SAME
-//    dispatch (§204/§286/§367) — a fresh, inverted, fully-loadable state (engine/state/newGamePlus.beginDarkSave)
-//    that opens on "You have 8,100 stars" and ticks DOWN. Offered only once lifetimeCandiesEaten > EAT_IT_THRESHOLD
-//    (§22-open content config). This ENDS the game (and starts the next loop). The secret completion (§367) is
-//    carrying the counter back to 8128 (newGamePlus.darkRunComplete).
+//  - ending 3 (EAT IT): returns the fresh NG+ DARK SAVE built by newGamePlus.beginDarkSave (§204/§286/§367) — a
+//    fresh, inverted, fully-loadable state that opens on "You have 8,100 stars" and ticks DOWN, carrying the
+//    darkRun flag (beginDarkSave sets it) but NOT endingChosen. Offered only once lifetimeCandiesEaten >
+//    EAT_IT_THRESHOLD (§22-open content config). This ENDS the light game and starts the next loop. Leaving
+//    endingChosen UNSET is deliberate: the dark run must be able to reach its own choice again to relight the
+//    counter to 8128 — the §287/§367 secret completion (newGamePlus.darkRunComplete). Farm-proofing is intact
+//    because the dark save's starEaterDefeated=false already shuts canChoose/canEatSun.
 //
 // The engine reads no content FLAG value: it re-declares the ending-choice + branch-flag literals in lock-step
 // with content/flags' ENDING_CHOSEN_FLAG / ENDING_HATCH / ENDING_FEED / ENDING_EAT / STARS_RELIGHTING_FLAG /
-// STAR_COUNTER_FROZEN_FLAG / DARK_RUN_FLAG (the moonStrata idiom, ADR §3). It MAY import content CONFIG data
+// STAR_COUNTER_FROZEN_FLAG (the moonStrata idiom, ADR §3; ending 3's darkRun flag is owned by newGamePlus,
+// which chooseEat returns from). It MAY import content CONFIG data
 // (EAT_IT_THRESHOLD) and engine siblings (newGamePlus.beginDarkSave).
 //
 // Ending 4 (the fossil-star epilogue, DESIGN §309/§16.4) is DEFERRED + signposted as polish: it would read
@@ -44,8 +47,8 @@ const STARS_RELIGHTING_FLAG = 'starsRelighting'
 /** content/flags.STAR_COUNTER_FROZEN_FLAG — ending 2: the descent stops forever. */
 const STAR_COUNTER_FROZEN_FLAG = 'starCounterFrozen'
 
-/** content/flags.DARK_RUN_FLAG — ending 3: the NG+ dark save (the §367 inverted opening / light remix). */
-const DARK_RUN_FLAG = 'darkRun'
+// (ending 3's darkRun flag is owned + set by engine/state/newGamePlus.beginDarkSave, which chooseEat returns
+//  directly; it is intentionally NOT re-stamped here — see chooseEat.)
 
 /** The three terminal endings the player may choose ('hatch' | 'feed' | 'eat'). */
 export type Ending = 'hatch' | 'feed' | 'eat'
@@ -133,31 +136,27 @@ export function chooseFeed(state: GameState): GameState {
 // --- ending 3: EAT IT (the NG+ dark save — the round-trip that ENDS the game) ---------------------------
 
 /**
- * Choose ending 3 (EAT IT): you eat the sun, and the NG+ DARK SAVE begins (§204/§286/§367). In ONE atomic
- * dispatch this records the choice (endingChosen='eat') AND the §367 inversion (the darkRun flag) AND begins a
- * fresh, inverted, fully-loadable dark save (engine/state/newGamePlus.beginDarkSave): a black-screen restart in
+ * Choose ending 3 (EAT IT): you eat the sun, and the NG+ DARK SAVE begins (§204/§286/§367). Returns the fresh,
+ * inverted, fully-loadable dark save built by engine/state/newGamePlus.beginDarkSave: a black-screen restart in
  * the SAME world, opening on "You have 8,100 stars," the counter ticking DOWN from 8100 (the inverted opening,
- * a light remix — NOT a second full game). Lifetime stats survive (grandma's wrapper still scales). A no-op
- * returning the SAME reference once any ending is already chosen — it can never re-fire / re-roll the dark save.
+ * a light remix — NOT a second full game). Lifetime stats survive (grandma's wrapper still scales). beginDarkSave
+ * already sets the §367 darkRun flag. A no-op returning the SAME reference once any ending is already chosen — it
+ * can never re-fire / re-roll the dark save.
  *
- * The implementation order matters for commit-once: we latch the choice on the PREVIOUS state first (so the gate
- * reads 'eat' as committed), but the RETURNED state is the fresh dark save built by beginDarkSave — which carries
- * the darkRun flag + the endingChosen='eat' string forward so a stray re-entry on the dark save is still gated
- * (endingChosen holds). beginDarkSave starts from a fresh default + carries lifetime + sets darkRun, then we
- * stamp endingChosen='eat' onto THAT so the commit-once read holds on the new state too.
+ * We DELIBERATELY do NOT stamp endingChosen='eat' onto the dark save. The dark run must be able to reach its own
+ * choice again: a player who replays the dark loop to the star-eater and re-beats it (re-setting starEaterDefeated)
+ * gets canChoose back, can pick 'let it hatch', and relight the counter toward 8128 — the §287/§367 SECRET
+ * COMPLETION (newGamePlus.darkRunComplete). Stamping 'eat' forward would lock endingChosen forever and make that
+ * completion unreachable. Farm-proofing is unaffected: the fresh dark save carries starEaterDefeated=false, so
+ * canChoose (= starEaterDefeated && !endingChosen) and canEatSun are ALREADY shut on it regardless of endingChosen.
  */
 export function chooseEat(state: GameState): GameState {
   if (endingChosen(state)) return state
-  // The eaten sun: a brand-new dark save (fresh default + carried lifetime + the inverted opening), with the
-  // choice + the §367 flag latched onto it so the commit-once gate (endingChosen) holds on the dark save itself
-  // and no ending can be re-triggered / the dark save re-rolled. beginDarkSave already sets darkRun; we add the
-  // ending string here so chosenEnding(dark) === 'eat' (the screen reads it; the choice is terminal).
-  const dark = beginDarkSave(state)
-  return {
-    ...dark,
-    strings: { ...dark.strings, [ENDING_CHOSEN_KEY]: ENDING_EAT },
-    flags: { ...dark.flags, [DARK_RUN_FLAG]: true },
-  }
+  // The eaten sun: a brand-new dark save (fresh default + carried lifetime + the inverted 8100 opening + the §367
+  // darkRun flag, all set by beginDarkSave). endingChosen is intentionally LEFT UNSET on the dark save so the dark
+  // run can reach its own choice again and relight the counter (the §287 secret completion). Commit-once still
+  // holds on THIS state: the guard above returns SAME-ref for any re-entry on an already-chosen state.
+  return beginDarkSave(state)
 }
 
 /**

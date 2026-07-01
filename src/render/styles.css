@@ -340,6 +340,32 @@ pre {
   color: #f0cf8a;
   text-shadow: 0 0 3px #ffe6a8, 0 0 9px rgba(255, 214, 130, 0.45);
 }
+.glow-star {
+  /* Ending 3 (EAT IT): the night sky after the sun is eaten — cold pinpricks, not warm gold. The one
+   * deliberate inversion of the all-white page (§204/§286/§367): the cool star-ink blue of the counter/
+   * moonpop family, so "cold pinpricks of every star" actually reads cold. NEVER .glow-sun (that is the
+   * blazing photosphere). Pairs with the .night-sky dark surface below. */
+  color: #cfe8ff;
+  text-shadow: 0 0 2px #7fb4ff, 0 0 8px rgba(77, 141, 255, 0.55);
+}
+
+/* Ending 3's night-sky surface: the dark inversion of the white page. Scattered cold stars on the same
+ * #0e1430 night the beanstalk arena uses (the game's established night palette), so the eat ending + the
+ * §367 dark opener are visually inverted, not just re-lettered. Render-layer only. */
+.night-sky {
+  display: inline-block;
+  text-align: left;
+  padding: 0.8rem 2rem;
+  background: #0e1430;
+  border: 1px solid #2a3566;
+}
+
+/* The dark run (§367): a body-level cold framing gated on the darkRun flag, so the inverted opening reads
+ * as the night, not the day. The white page turns to the cold night sky; ink turns to cool star-blue. */
+body.dark-run {
+  color: #8f9bc4;
+  background: #0e1430;
+}
 
 /* The pulsing overlay is a separate, absolutely-positioned layer that animates OPACITY
  * only (the static glow class above carries the colour/shadow). contain:paint isolates it. */

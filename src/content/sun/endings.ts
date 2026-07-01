@@ -2,8 +2,9 @@
 // terminal-state engines (engine/content/endings, engine/content/starCounter) read. This is the series-
 // tradition finite, poignant ending: you have driven the star-eater off, the egg is whole, the light holds —
 // and now you choose what to do with the thing under the sun. The choice is terminal (commit-once); each
-// option is its own quiet gut-punch. The voice is melancholy turning to awe; pure ASCII, the glow is CSS
-// (.glow-sun). §22-open tuning.
+// option is its own quiet gut-punch. The voice is melancholy turning to awe; pure ASCII, the glow is CSS — warm
+// .glow-sun/.glow-egg for the choice + the hatch/feed scenes, but ending 3's night sky inverts to the cold
+// .glow-star on the dark .night-sky surface (the one deliberate visual inversion of the white page). §22-open tuning.
 //
 //  - ending 1 (LET IT HATCH): the poignant default. You let the dragon out. The sun goes dark; the dragon
 //    ascends BURNING, and one by one it relights the stars the dyson scaffold ate. The counter ticks UP for
@@ -170,7 +171,9 @@ export const EAT_BLURB =
 
 /**
  * The ending-3 terminal ASCII — the night sky after the sun is eaten: scattered stars on black, the sky the
- * dark run opens onto. The glow is .glow-sun (cold and far now, not warm). Pure ASCII; the dots are the 8,100.
+ * dark run opens onto. Rendered on the dark .night-sky surface with the cold .glow-star ink (NOT the warm
+ * .glow-sun photosphere) — the one deliberate visual inversion of the all-white page (§204/§286/§367). Pure
+ * ASCII; the dots are the 8,100.
  */
 export const EAT_ART = [
   '   .        .   *      .       .     *    .',

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
 
-// The finale choice/ending screens, recursion-guard regression (Act 4 — the choice + endings 1 & 2). It
+// The finale choice/ending screens, recursion-guard regression (Act 4 — the choice + all three endings). It
 // proves the showChoice() <-> showEnding() pair TERMINATES for every committed endingChosen value — not just
-// the renderable hatch/feed scenes, but the deferred 'eat' (wired next slice) and a corrupt/forward-compat
-// junk string. Both rode the strings z.record passthrough, so either could already be present in a save; the
-// old code bounced showChoice -> showEnding -> showChoice forever and hung the tab. Each case here renders a
+// the hatch/feed scenes, but a committed 'eat' (the terminal night-sky re-entry scene) and a corrupt/forward-
+// compat junk string. Both rode the strings z.record passthrough, so either could already be present in a save;
+// the old code bounced showChoice -> showEnding -> showChoice forever and hung the tab. Each case here renders a
 // terminal scene + a working "back to the map" button; a recursive hang would throw a RangeError out of
 // page.evaluate (or time the assertion out), so a green run is the proof there is no recursion. Click-driven
 // and deterministic — the committed ending is granted via the test hook (no real fight needed for this path).
@@ -22,30 +22,35 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear())
 })
 
-test("the choice/ending screens terminate on a committed 'eat' (deferred) — no showChoice<->showEnding recursion", async ({
+test("the choice/ending screens terminate on a committed 'eat' — the night-sky re-entry, no showChoice<->showEnding recursion", async ({
   page,
 }) => {
   await page.goto('/')
   await page.getByTestId('ack-opener').click()
 
-  // A save whose star-eater is beaten AND that already carries the deferred 'eat' ending committed (the
-  // engine's chooseEat ships and writes this; it also rides the strings passthrough, so a forward-compat
-  // save could already hold it).
+  // A save whose star-eater is beaten AND that carries the 'eat' ending committed (the endingChosen string
+  // rides the passthrough, so a forward-compat / re-routed dark save could hold it). In the normal flow the
+  // eat path reboots straight into the inverted §367 opener; this exercises the DEFENSIVE re-entry — a
+  // committed 'eat' routed back through the choice/ending screens must render the terminal night-sky scene.
   await setEndingChosen(page, 'eat')
 
-  // showChoice() must hop to showEnding(), which must render the deferred notice TERMINALLY (never bounce
-  // back to the choice). If it recursed this evaluate would throw / hang.
+  // showChoice() must hop to showEnding(), which must render the eat scene TERMINALLY (never bounce back to
+  // the choice). If it recursed this evaluate would throw / hang.
   await page.evaluate(() => (window as any).__cb3.showChoice())
-  await expect(page.getByTestId('ending-eat-deferred')).toBeVisible()
+  await expect(page.getByTestId('ending-art')).toBeVisible()
+  await expect(page.getByTestId('ending-eat-opening')).toBeVisible()
   await expect(page.getByTestId('ending-to-map')).toBeVisible()
 
   // Entering showEnding() directly is equally terminal.
   await page.evaluate(() => (window as any).__cb3.showEnding())
-  await expect(page.getByTestId('ending-eat-deferred')).toBeVisible()
+  await expect(page.getByTestId('ending-art')).toBeVisible()
+
+  // The night sky is drawn COLD (the §367 inversion), not the warm .glow-sun photosphere.
+  await expect(page.getByTestId('ending-art')).toHaveClass(/glow-star/)
 
   // The only route off it is back to the map — and it works.
   await page.getByTestId('ending-to-map').click()
-  await expect(page.getByTestId('ending-eat-deferred')).toHaveCount(0)
+  await expect(page.getByTestId('ending-art')).toHaveCount(0)
 })
 
 test('the choice/ending screens terminate on a CORRUPT endingChosen string — a safe terminal fallback, no recursion', async ({

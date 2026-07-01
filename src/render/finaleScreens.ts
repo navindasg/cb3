@@ -922,8 +922,10 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     ctx.clearScreen()
     heading(EAT_HEADING, 'ending-screen')
 
+    // The one deliberate visual inversion (§204/§286/§367): the night sky on the dark surface, cold star ink —
+    // NOT the warm .glow-sun photosphere. The whole game was white; the ending goes dark.
     const art = doc.createElement('pre')
-    art.className = 'arena glow-sun'
+    art.className = 'night-sky glow-star'
     art.setAttribute('data-testid', 'ending-art')
     art.setAttribute('data-ending', 'eat')
     art.textContent = EAT_ART
@@ -983,8 +985,9 @@ export function createFinaleScreens(ctx: FinaleContext): FinaleScreens {
     // (the recursion guard). The only route out is to look at the (dark) map.
     if (ending === 'eat') {
       heading(EAT_HEADING, 'ending-screen')
+      // The §367 inversion, same as commitEat: the cold night sky, never the warm .glow-sun.
       const eatArt = doc.createElement('pre')
-      eatArt.className = 'arena glow-sun'
+      eatArt.className = 'night-sky glow-star'
       eatArt.setAttribute('data-testid', 'ending-art')
       eatArt.setAttribute('data-ending', 'eat')
       eatArt.textContent = EAT_ART

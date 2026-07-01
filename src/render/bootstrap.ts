@@ -252,9 +252,13 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     // "You have 8,100 stars," the sky already falling — in the SAME world as a light remix, NOT a second game.
     // The light run opens on the series' first line, "You have 1 candy." Read the darkRun flag the dark save set.
     const dark = session.getState().flags['darkRun'] === true
+    // The §367 inversion is VISUAL as well as textual: on the dark save the page turns to the cold night sky
+    // (a body class the CSS gates on) and the opener glyph glows cold-star blue, not warm sun-gold. The light
+    // run keeps the warm candy/sun glow on the white page.
+    doc.body.classList.toggle('dark-run', dark)
     const art = doc.createElement('pre')
     art.textContent = ' . \n( )\n `—`'
-    art.classList.add('glow-sun')
+    art.classList.add(dark ? 'glow-star' : 'glow-sun')
     markDecorative(art)
     screen.appendChild(art)
     const line = doc.createElement('p')

@@ -73,9 +73,12 @@ export function beginDarkSave(prev: GameState): GameState {
 }
 
 /**
- * The §367 secret completion: a dark run whose counter has been carried all the way back UP to the full sky
- * (8128). Reachable ONLY by bringing a relight forward into the dark loop (the up-tick is the hatch ending's
- * gift) — signposted, not a routine win. A tiny derived predicate; strict darkRun === true. Pure.
+ * The §287/§367 secret completion: a dark run whose counter has been carried all the way back UP to the full sky
+ * (8128). Reachable — not dead code — because chooseEat leaves endingChosen UNSET on the dark save: a player who
+ * replays the dark loop to the star-eater and re-beats it (re-setting starEaterDefeated) can reach the choice
+ * again, pick 'let it hatch' (which sets starsRelighting), and let the counter tick UP toward 8128 (the only
+ * up-tick in the game). Signposted, not a routine win — the long way round, in the dark. A tiny derived
+ * predicate; strict darkRun === true. Pure.
  */
 export function darkRunComplete(state: GameState): boolean {
   return state.flags[DARK_RUN_FLAG] === true && state.starsRemaining >= STARTING_STARS

@@ -16,6 +16,7 @@ import {
   ENDING_EAT,
   STARS_RELIGHTING_FLAG,
   STAR_COUNTER_FROZEN_FLAG,
+  DARK_RUN_FLAG,
 } from '@/content/flags'
 import { EAT_IT_THRESHOLD } from '@/content/sun/endings'
 import { addResource } from '@/engine/types/Resource'
@@ -47,6 +48,8 @@ describe('the choice — canChoose gate (starEaterDefeated && !endingChosen)', (
   it('closes once an ending has been chosen (commit-once, terminal)', () => {
     expect(canChoose(chooseHatch(won()))).toBe(false)
     expect(canChoose(chooseFeed(won()))).toBe(false)
+    // Eat returns the fresh dark save (starEaterDefeated cleared), so the light choice is shut on it too — the
+    // dark run must re-beat the eater before its OWN choice can re-open (the §287 secret-completion path).
     expect(canChoose(chooseEat(won()))).toBe(false)
   })
 })
@@ -57,10 +60,13 @@ describe('endingChosen / chosenEnding readers', () => {
     expect(chosenEnding(won())).toBeNull()
   })
 
-  it('reflects the committed ending string', () => {
+  it('reflects the committed ending string (hatch/feed stamp it; eat begins a fresh dark save instead)', () => {
     expect(chosenEnding(chooseHatch(won()))).toBe('hatch')
     expect(chosenEnding(chooseFeed(won()))).toBe('feed')
-    expect(chosenEnding(chooseEat(won()))).toBe('eat')
+    // Eat does NOT stamp endingChosen — it returns the fresh dark save (endingChosen left UNSET so the dark run
+    // can reach its own choice again for the §287 relight). The dark save is identified by the darkRun flag.
+    expect(chosenEnding(chooseEat(won()))).toBeNull()
+    expect(chooseEat(won()).flags[DARK_RUN_FLAG]).toBe(true)
     expect(endingChosen(chooseHatch(won()))).toBe(true)
   })
 
@@ -144,14 +150,18 @@ describe('ending 2 — FEED THE SUN (zero the hoard, freeze the counter)', () =>
   })
 })
 
-describe('ending 3 — EAT IT (records the eat; the NG+ dark save lives in newGamePlus.test)', () => {
-  it('records endingChosen=eat (the dark save round-trip is covered in newGamePlus.test)', () => {
-    expect(chosenEnding(chooseEat(won()))).toBe('eat')
+describe('ending 3 — EAT IT (begins the NG+ dark save; the round-trip lives in newGamePlus.test)', () => {
+  it('returns the fresh dark save — the darkRun flag set, endingChosen left UNSET (the §287 relight path)', () => {
+    const dark = chooseEat(won())
+    expect(dark.flags[DARK_RUN_FLAG]).toBe(true)
+    // endingChosen is deliberately NOT stamped, so the dark run can re-beat the eater and reach its own choice.
+    expect(endingChosen(dark)).toBe(false)
+    expect(chosenEnding(dark)).toBeNull()
   })
 
-  it('is a SAME-reference no-op once any ending is already chosen', () => {
-    const once = chooseEat(won())
-    expect(chooseEat(once)).toBe(once)
+  it('is a SAME-reference no-op once a NON-eat ending is already committed (endingChosen holds)', () => {
+    const fed = chooseFeed(won())
+    expect(chooseEat(fed)).toBe(fed)
   })
 })
 
@@ -159,7 +169,9 @@ describe('chooseEnding dispatcher', () => {
   it('routes to each ending', () => {
     expect(chosenEnding(chooseEnding(won(), 'hatch'))).toBe('hatch')
     expect(chosenEnding(chooseEnding(won(), 'feed'))).toBe('feed')
-    expect(chosenEnding(chooseEnding(won(), 'eat'))).toBe('eat')
+    // 'eat' routes to chooseEat -> the fresh dark save (darkRun set, endingChosen left unset).
+    expect(chooseEnding(won(), 'eat').flags[DARK_RUN_FLAG]).toBe(true)
+    expect(chosenEnding(chooseEnding(won(), 'eat'))).toBeNull()
   })
 
   it('feed via the dispatcher zeroes the hoard + freezes', () => {
