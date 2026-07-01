@@ -205,6 +205,7 @@ export const en: GameText = {
   'death.mintLabyrinth': 'The labyrinth keeps you. It was lonely.',
   'death.photosphereHeat': 'The sun politely declines your visit.',
   'death.starEater': 'The cold long dark of it closes over the light. There is a silence with no bottom.',
+  'death.fossilStar': 'The newborn star slips your grip and goes up without you. That was always the point. You wake in the quiet chamber, warm.',
   'death.stormMerge': 'You are now part of the storm. The storm says thanks.',
   'death.grandmaDuck': 'Grandma would have ducked.',
   'death.cloudWolf': 'It was never a sheep. You knew that, at the end.',

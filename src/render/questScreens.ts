@@ -14,6 +14,40 @@ import { createEntityFactory } from '@/engine/content/entityFactory'
 import { spellAbilities } from '@/engine/content/spells'
 import { applyQuestWin } from '@/engine/quest/questRewards'
 import { fireAny } from '@/engine/content/secrets'
+import {
+  canAwakenFossil,
+  fossilStarIgnited,
+  igniteFossilStar,
+  createNewbornFight,
+  resolveNewborn,
+  newbornOutcome,
+  type NewbornState,
+  type NewbornAction,
+} from '@/engine/content/fossilStar'
+import {
+  FOSSIL_STAR_COST,
+  FOSSIL_STAR_HEADING,
+  FOSSIL_STAR_BLURB,
+  FOSSIL_STAR_IGNITE_LABEL,
+  FOSSIL_STAR_SHORT_NOTE,
+  FOSSIL_STAR_IGNITE_BLURB,
+  FOSSIL_STAR_CHOICE_BLURB,
+  FOSSIL_STAR_FIGHT_LABEL,
+  FOSSIL_STAR_STEP_BACK_LABEL,
+  NEWBORN_HEADING,
+  NEWBORN_INTRO_BLURB,
+  NEWBORN_HP,
+  NEWBORN_PLAYER_HP,
+  NEWBORN_WON_BLURB,
+  NEWBORN_LOST_BLURB,
+  NEWBORN_RETRY_LABEL,
+  NEWBORN_TO_BOOKEND_LABEL,
+  MINES_BOOKEND_HEADING,
+  MINES_BOOKEND_BLURB,
+  MINES_BOOKEND_ART,
+  MINES_BOOKEND_DONE_LABEL,
+} from '@/content/mines/fossilStar'
+import { deathEpitaph } from '@/render/deathEpitaph'
 import { createArenaRenderer } from '@/render/ArenaRenderer'
 import { toArenaModel } from '@/engine/content/arenaView'
 import { BEANSTALK_BACKDROP, FOREST_BACKDROP, MINES_BACKDROP, MOUNTAIN_BACKDROP, CELLAR_BACKDROP, STORM_FRONT_BACKDROP, WORM_TUNNEL_BACKDROP } from '@/render/arenaBackdrop'
@@ -141,6 +175,12 @@ export interface QuestScreens {
   startMountain(): void
   startCellar(): void
   startMoonWorm(): void
+  /**
+   * The fossil chamber at the bottom of the mines — the Act-0 feed-one-candy secret, and (post-game, once an
+   * ending is chosen) the ending-4 fossil-star epilogue: relight the fossil with 1000 stardust, the optional
+   * newborn-star dance, and the glowing-ceiling bookend. Exposed for the __cb3 e2e hook.
+   */
+  showFossilChamber(): void
 }
 
 /** Wire the Act 0 quest screens over a bootstrap host. */
@@ -360,9 +400,28 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
   }
 
   // --- the fossil chamber (the bottom of the mines; the feed-exactly-1-candy secret) ----------
+  // POST-GAME (Phase 5 — ending 4, DESIGN §309/§16.4): once an ending is chosen, the fossil the game opened
+  // on is revealed to have been a dead star all along, and 1000 stardust relights it (the ONLY up-tick besides
+  // ending 1). The ignite + the +1 tick are the tested pure engine (fossilStar.igniteFossilStar, commit-once);
+  // the optional newborn-star dance is a transient sim (never persisted — the shipDuel idiom); the glowing-
+  // ceiling bookend is the game's last image. All soft-lock-free: stepping back (or never igniting) is always
+  // allowed, and the branch never appears on the main spine (canAwakenFossil is post-game-only). Coverage-
+  // excluded thin wiring over the tested engine + content.
 
   function showFossilChamber(): void {
     ctx.clearScreen()
+    const state = session.getState()
+    // Post-game, already relit: the calm aftermath — the fossil warm, the ceiling glowing far above.
+    if (fossilStarIgnited(state)) {
+      renderFossilStarAftermath()
+      return
+    }
+    // Post-game, an ending chosen: the fossil stirs (the ignite gate). Otherwise the Act-0 fossil, unchanged.
+    if (typeof state.strings['endingChosen'] === 'string') {
+      renderFossilStarGate()
+      return
+    }
+
     const title = doc.createElement('h2')
     title.textContent = 'the fossil chamber'
     title.setAttribute('data-testid', 'fossil-chamber')
@@ -395,6 +454,185 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
     session.dispatch(() => next)
     if (result.fired && result.revealKey) ctx.logText(tk(result.revealKey))
     else ctx.notify('The fossil accepts the candy and does nothing. As fossils do.')
+  }
+
+  // --- ending 4: the fossil-star epilogue (post-game only) --------------------------------------
+
+  /** A small helper — a paragraph appended to the screen. */
+  function fossilParagraph(text: string, testid: string): void {
+    const p = doc.createElement('p')
+    p.className = 'blurb'
+    p.setAttribute('data-testid', testid)
+    p.textContent = text
+    screen.appendChild(p)
+  }
+
+  /** The fossil, warmer now, glowing gold — the relit-star art (a warm echo of the cold Act-0 fossil). */
+  function fossilStarArt(): void {
+    const art = doc.createElement('pre')
+    art.className = 'arena glow-sun'
+    art.setAttribute('data-testid', 'fossil-star-art')
+    art.textContent = '   _*_\n  /(*)\\\n  \\_*_/'
+    screen.appendChild(art)
+  }
+
+  /** The post-game ignite gate: the fossil stirs; 1000 stardust would relight it. */
+  function renderFossilStarGate(): void {
+    const state = session.getState()
+    const title = doc.createElement('h2')
+    title.textContent = FOSSIL_STAR_HEADING
+    title.setAttribute('data-testid', 'fossil-star-gate')
+    screen.appendChild(title)
+
+    fossilStarArt()
+    fossilParagraph(FOSSIL_STAR_BLURB, 'fossil-star-blurb')
+
+    const ready = canAwakenFossil(state)
+    const ignite = ctx.button(FOSSIL_STAR_IGNITE_LABEL, 'fossil-star-ignite', () => igniteFossil(), 0)
+    if (!ready) {
+      ignite.disabled = true
+      ignite.classList.add('shop-unaffordable')
+    }
+    screen.appendChild(ignite)
+
+    // The stardust readout — what it wants, what you have (the soft-lock-free gate, shown).
+    fossilParagraph(
+      `stardust ${state.stardust.current.toLocaleString()} / ${FOSSIL_STAR_COST.toLocaleString()}`,
+      'fossil-star-reserves',
+    )
+    if (!ready) fossilParagraph(FOSSIL_STAR_SHORT_NOTE, 'fossil-star-short')
+
+    screen.appendChild(ctx.button('back to the map', 'fossil-to-map', () => ctx.showMap(), 0))
+  }
+
+  /**
+   * Ignite the fossil: dispatch igniteFossilStar (the atomic 1000-stardust spend + the +1 tick + the commit-
+   * once flag — SAME-ref if not affordable). Only proceeds when the spend actually took; then routes to the
+   * choice. Farm-proof: a re-entry lands on the aftermath (fossilStarIgnited), never a re-ignitable gate.
+   */
+  function igniteFossil(): void {
+    if (!canAwakenFossil(session.getState())) return
+    session.dispatch((s) => igniteFossilStar(s))
+    if (fossilStarIgnited(session.getState())) {
+      ctx.logText('You relit the fossil in the sugar mines. A new star is trying to be born.')
+      renderFossilStarChoice()
+    }
+  }
+
+  /** The choice after igniting: hold the newborn a while (a costless dance), or step back and let it go up. */
+  function renderFossilStarChoice(): void {
+    ctx.clearScreen()
+    const title = doc.createElement('h2')
+    title.textContent = FOSSIL_STAR_HEADING
+    title.setAttribute('data-testid', 'fossil-star-choice')
+    screen.appendChild(title)
+
+    fossilStarArt()
+    fossilParagraph(FOSSIL_STAR_IGNITE_BLURB, 'fossil-star-ignited')
+    fossilParagraph(FOSSIL_STAR_CHOICE_BLURB, 'fossil-star-choice-blurb')
+
+    screen.appendChild(ctx.button(FOSSIL_STAR_FIGHT_LABEL, 'fossil-star-fight', () => startNewbornFight(), 0))
+    screen.appendChild(ctx.button(FOSSIL_STAR_STEP_BACK_LABEL, 'fossil-star-step-back', () => showMinesBookend(), 0))
+  }
+
+  /**
+   * The optional newborn-star dance — a transient STRIKE/STEADY bout over the equipped hand weapon (the
+   * fossilStar sim). It NEVER persists and NEVER gates the tick (the +1 is already committed); it is pure
+   * flavor, a last dance. Both a win and a loss route to the bookend (the star went up either way).
+   */
+  function startNewbornFight(): void {
+    let fight: NewbornState = createNewbornFight(session.getState())
+
+    function render(): void {
+      ctx.clearScreen()
+      const title = doc.createElement('h2')
+      title.textContent = NEWBORN_HEADING
+      title.setAttribute('data-testid', 'newborn-fight')
+      screen.appendChild(title)
+
+      const outcome = newbornOutcome(fight)
+      if (outcome === 'won') {
+        fossilStarArt()
+        fossilParagraph(NEWBORN_WON_BLURB, 'newborn-won')
+        screen.appendChild(ctx.button(NEWBORN_TO_BOOKEND_LABEL, 'newborn-to-bookend', () => showMinesBookend(), 0))
+        return
+      }
+      if (outcome === 'lost') {
+        fossilStarArt()
+        fossilParagraph(deathEpitaph('fossilStar'), 'newborn-epitaph')
+        fossilParagraph(NEWBORN_LOST_BLURB, 'newborn-lost')
+        // Both paths reach the sky — the loss is costless, so it routes onward to the bookend, not a wall. A
+        // retry is offered only for the dance itself (the fossil is quiet; the star is already up).
+        screen.appendChild(ctx.button(NEWBORN_TO_BOOKEND_LABEL, 'newborn-to-bookend', () => showMinesBookend(), 0))
+        screen.appendChild(ctx.button(NEWBORN_RETRY_LABEL, 'newborn-retry', () => { fight = createNewbornFight(session.getState()); render() }, 0))
+        return
+      }
+
+      fossilStarArt()
+      fossilParagraph(NEWBORN_INTRO_BLURB, 'newborn-intro')
+
+      const pre = doc.createElement('pre')
+      pre.className = 'arena'
+      pre.setAttribute('data-testid', 'newborn-gauges')
+      pre.setAttribute('data-your-hp', String(Math.max(0, Math.ceil(fight.yourHp))))
+      pre.setAttribute('data-star-hp', String(Math.max(0, Math.ceil(fight.starHp))))
+      pre.setAttribute('data-turn', String(fight.turn))
+      pre.textContent = [
+        `you  ${fossilGauge(fight.yourHp, NEWBORN_PLAYER_HP)} ${Math.max(0, Math.ceil(fight.yourHp))}`,
+        `star ${fossilGauge(fight.starHp, NEWBORN_HP)} ${Math.max(0, Math.ceil(fight.starHp))}`,
+      ].join('\n')
+      screen.appendChild(pre)
+
+      screen.appendChild(ctx.button('strike (eat the flare)', 'newborn-strike', () => newbornTurn('strike'), 0))
+      screen.appendChild(ctx.button('steady (shield the flare)', 'newborn-steady', () => newbornTurn('steady'), 0))
+    }
+
+    function newbornTurn(action: NewbornAction): void {
+      fight = resolveNewborn(fight, action)
+      render()
+    }
+
+    render()
+  }
+
+  /** A pure-ASCII gauge bar, e.g. [#####-----]. */
+  function fossilGauge(cur: number, max: number, width = 10): string {
+    const filled = Math.max(0, Math.min(width, Math.round((cur / max) * width)))
+    return `[${'#'.repeat(filled)}${'-'.repeat(width - filled)}]`
+  }
+
+  /** The bookend: the first dungeon's ceiling, glowing — the game's last image (either choice reaches here). */
+  function showMinesBookend(): void {
+    ctx.clearScreen()
+    const title = doc.createElement('h2')
+    title.textContent = MINES_BOOKEND_HEADING
+    title.setAttribute('data-testid', 'mines-bookend')
+    screen.appendChild(title)
+
+    const art = doc.createElement('pre')
+    art.className = 'arena glow-sun'
+    art.setAttribute('data-testid', 'mines-bookend-art')
+    art.textContent = MINES_BOOKEND_ART
+    screen.appendChild(art)
+
+    fossilParagraph(MINES_BOOKEND_BLURB, 'mines-bookend-blurb')
+    screen.appendChild(ctx.button(MINES_BOOKEND_DONE_LABEL, 'bookend-done', () => ctx.showMap(), 0))
+  }
+
+  /** Post-game re-entry once relit: the fossil warm, the ceiling glowing — the calm aftermath (farm-proof). */
+  function renderFossilStarAftermath(): void {
+    const title = doc.createElement('h2')
+    title.textContent = FOSSIL_STAR_HEADING
+    title.setAttribute('data-testid', 'fossil-star-aftermath')
+    screen.appendChild(title)
+
+    fossilStarArt()
+    fossilParagraph(
+      'The fossil is a star again, small and warm and quiet in the rock. Far up the beanstalk, the sky is one light fuller than it was. It has been here the whole time. So have you.',
+      'fossil-star-aftermath-blurb',
+    )
+    screen.appendChild(ctx.button('look up', 'fossil-to-bookend', () => showMinesBookend(), 0))
+    screen.appendChild(ctx.button('back to the map', 'fossil-to-map', () => ctx.showMap(), 0))
   }
 
   // --- the generic vertical climb quest (the beanstalk / the storm front) --------------------
@@ -595,5 +833,5 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
     })
   }
 
-  return { startForest, startClimb, startStormFront, startMineGate, startMines, startMountain, startCellar, startMoonWorm }
+  return { startForest, startClimb, startStormFront, startMineGate, startMines, startMountain, startCellar, startMoonWorm, showFossilChamber }
 }

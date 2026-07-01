@@ -135,6 +135,12 @@ export const STAR_EATER_DEATH: DeathMessage = {
   message: 'death.starEater',
 }
 
+/** The newborn star slips your grip (ending 4, the fossil-star dance) — a soft, costless loss; it still went up. */
+export const FOSSIL_STAR_DEATH: DeathMessage = {
+  source: 'fossilStar',
+  message: 'death.fossilStar',
+}
+
 // --- storm + poignant generics ---------------------------------------------
 
 /** The storm front takes you in (§19 sample) — the on-foot climb has its own sprite/djinn lines; this is the merge. */
@@ -206,6 +212,7 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   MINT_LABYRINTH_DEATH,
   PHOTOSPHERE_HEAT_DEATH,
   STAR_EATER_DEATH,
+  FOSSIL_STAR_DEATH,
   STORM_MERGE_DEATH,
   GRANDMA_DUCK_DEATH,
   CLOUD_WOLF_DEATH,

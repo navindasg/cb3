@@ -203,6 +203,7 @@ export interface GameText {
   'death.mintLabyrinth': string
   'death.photosphereHeat': string
   'death.starEater': string
+  'death.fossilStar': string
   'death.stormMerge': string
   'death.grandmaDuck': string
   'death.cloudWolf': string

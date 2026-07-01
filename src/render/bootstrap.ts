@@ -1119,6 +1119,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     startMountain: quests.startMountain,
     startCellar: quests.startCellar,
     startMoonWorm: quests.startMoonWorm,
+    showFossilChamber: quests.showFossilChamber,
     armSeed,
     log: logText,
     // Drive the hidden-text-box matcher directly (inject a typed word, not raw keystrokes).

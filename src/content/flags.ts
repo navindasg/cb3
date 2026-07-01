@@ -322,6 +322,17 @@ export const STARS_RELIGHTING_FLAG = 'starsRelighting'
 export const STAR_COUNTER_FROZEN_FLAG = 'starCounterFrozen'
 
 /**
+ * Set when the sugar-mines fossil is relit post-game with 1000 stardust (Phase 5 — ending 4, the fossil-star
+ * epilogue, DESIGN §309/§16.4). The secret epilogue, reachable ONLY once an ending is chosen, so it can never
+ * block the main spine. Set commit-once IN THE SAME DISPATCH that spends the stardust and ticks starsRemaining
+ * UP by one (the ONLY up-tick besides ending 1's relight — clamped at STARTING_STARS): a second ignite is a
+ * SAME-reference no-op (no double star, no double spend — farm-proof). engine/content/fossilStar reads/sets
+ * the SAME literal in lock-step (the moonStrata idiom — the engine never imports this content value, ADR §3).
+ * No schema bump (a flag rides the flags z.record).
+ */
+export const FOSSIL_STAR_IGNITED_FLAG = 'fossilStarIgnited'
+
+/**
  * Set when the sun is poked ten times (Phase 5 — the sun-poke secret, DESIGN §18). A running gag with a
  * hard stop: the scaffold's sun art carries a "poke the sun" button; each poke bumps numbers.sunPokes and
  * feeds a countAtLeast secret that fires ONCE at ten ('please stop poking the sun.') and confers the "sun
