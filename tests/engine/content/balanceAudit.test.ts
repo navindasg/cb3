@@ -131,8 +131,9 @@ describe('balance audit — no soft-lock (every gate reachable in faucet order)'
     for (const r of RESOURCE_KEYS) {
       const hasFaucet = passivelySourcedResources().has(r) || activelySourcedResources().has(r)
       const inLedger = FAUCET_ACT[r] !== undefined
-      // chocolate + lollipops are quest/economy currencies with no producer/active-faucet in this audit's
-      // sense but ARE obtainable (quest rewards / thrown-candy); they carry an act so gates on them resolve.
+      // chocolate + lollipops are quest/economy currencies (squirrel riddles / cellar drop + thrown-candy);
+      // they now carry ACTIVE_FAUCETS entries so isResourceObtainable is true for them and a future gate that
+      // priced them can't false-fire the no-orphan sweep. Each also carries a FAUCET_ACT so gates resolve.
       if (hasFaucet) {
         expect(inLedger, `${r} has a faucet but no FAUCET_ACT entry`).toBe(true)
       }
@@ -179,11 +180,20 @@ describe('balance audit — the §5 wealth curve (orders of magnitude climb by a
     expect(orderOfMagnitude(0)).toBe(-Infinity) // a gate set that draws no candies
   })
 
-  it('the peak candy cost strictly climbs from Act 1 through Act 3', () => {
+  it('the peak candy cost climbs monotonically by order of magnitude from Act 1 through Act 3', () => {
+    // Each act draws candies (a real, positive peak — no gap that would let a lower act masquerade as the
+    // higher one), and the decades climb monotonically: Act 1 (the ironbark hull, ~3e5) <= Act 2 (the
+    // jawbreaker hull, ~1.5e6) <= Act 3 (the dyson descent, ~1e12). Directly compared, no fallback masking.
     const act1 = peakCandyCost(gatesForAct(1))
     const act2 = peakCandyCost(gatesForAct(2))
     const act3 = peakCandyCost(gatesForAct(3))
-    expect(orderOfMagnitude(act3)).toBeGreaterThan(orderOfMagnitude(act2 || act1))
+    expect(act1).toBeGreaterThan(0)
+    expect(act2).toBeGreaterThan(0)
+    expect(act3).toBeGreaterThan(0)
+    expect(orderOfMagnitude(act1)).toBeLessThanOrEqual(orderOfMagnitude(act2))
+    expect(orderOfMagnitude(act2)).toBeLessThanOrEqual(orderOfMagnitude(act3))
+    // And the span is a real climb, not a flat line: Act 3 is orders above Act 1 (the flattened-curve guard).
+    expect(orderOfMagnitude(act3)).toBeGreaterThan(orderOfMagnitude(act1))
     // Act 3 is the ~1e12 decade (the dyson descent port); assert it sits in the trillions band.
     expect(orderOfMagnitude(act3)).toBeGreaterThanOrEqual(11)
     expect(orderOfMagnitude(act3)).toBeLessThanOrEqual(13)

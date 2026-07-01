@@ -15,11 +15,28 @@ import { SHOP_ENTRIES } from '@/content/shops/shop'
 import { BALLOON_ENTRY } from '@/content/sky/balloon'
 import { GALLEON_COMMISSION } from '@/content/ship/galleon'
 import { MOON_PICKS } from '@/content/moon/strata'
+import { OBSERVATORY_ENTRIES } from '@/content/shops/observatory'
+import { HERMIT_SHOP } from '@/content/void/voidWhale'
+import { DESCENT_COST } from '@/content/sun/photosphere'
 import {
   CONDENSER_ROCK_CANDY_COST,
   CONDENSER_CANDY_COST,
+  MINT_HARVEST_CANDY_COST,
   PEPPERMINT_GATE_AMOUNT,
 } from '@/content/planet/mintPlanet'
+import { SOUR_TRADE_CANDY_COST } from '@/content/planet/sourPlanet'
+import {
+  GUMMY_CANDY_COST,
+  GUMMY_LICORICE_COST,
+  GUMMY_FUSED_CANDY_COST,
+  GUMMY_FUSED_LICORICE_COST,
+  GUMMY_FUSED_SOUR_COST,
+  GUMMY_MINT_FUSED_CANDY_COST,
+  GUMMY_MINT_FUSED_LICORICE_COST,
+  GUMMY_MINT_FUSED_MINT_COST,
+  WORK_CREW_CANDY_COST,
+  WORK_CREW_LICORICE_COST,
+} from '@/content/gummy/molds'
 import { BATHYSPHERE_PRICE } from '@/content/sun/bathysphere'
 import {
   SOLAR_COLLECTOR_CANDY_COST,
@@ -92,6 +109,10 @@ export const ACTIVE_FAUCETS: readonly ActiveFaucet[] = [
   { resource: 'popRocks', where: 'render/cometScreens catch dispatch (comet catch reward)' },
   // stardust: shaken loose alongside pop rocks on the same comet catch (before the star-sea trawlers).
   { resource: 'stardust', where: 'render/cometScreens catch dispatch (comet catch reward)' },
+  // chocolate: won from the space squirrel's riddles (content/reef/squirrel.chocolateReward) + quest drops.
+  { resource: 'chocolate', where: 'engine/content/squirrel riddle rewards (chocolateReward on each solve)' },
+  // lollipops: dropped by the gummy-worm cellar quest (onWinDrops) + the Act-0 thrown-candy field economy.
+  { resource: 'lollipops', where: 'content/quests/gummyWormCellar onWinDrops + the thrown-candy field economy' },
 ]
 
 /** Every resource with an active (manual/drop) faucet. */
@@ -146,10 +167,25 @@ export const FAUCET_ACT: Readonly<Record<ResourceKey, number>> = {
 
 /** The ordered spine gates, gathered from the real cost constants (the audit walks these). */
 export const SPINE_GATES: readonly Gate[] = [
-  // Act 1 — the galleon hull to tier 3 (half the Act-2 gate). Rock candy (moon) + candies.
+  // Act 1 — the galleon hull to tier 2 (ironbark), fitted on Act-1 income before the reef. Rock candy + candies.
+  // The Act-1 representative candy gate (~3e5): earned from the sky/moon economy, below the Act-2 sinks.
+  {
+    id: 'galleonHullT2',
+    act: 1,
+    cost: galleonTierCost('galleonHull', 2),
+  },
+  // Act 2 — the shipwright's commission that opens the voyage (the §177 fee + materials). Candies + rock
+  // candy + licorice + cotton candy, all Act-1 resources spent at the Act-1 -> Act-2 boundary.
+  {
+    id: 'galleonCommission',
+    act: 2,
+    cost: GALLEON_COMMISSION.map((c) => ({ resource: c.resource, amount: c.amount })),
+  },
+  // Act 2 — the galleon hull to tier 3 (jawbreaker-plated): the §184 Act-2 gate half (engine/content/actGate
+  // .act2GateCleared reads exactly this hull tier). Rock candy (moon) + candies (~1.5e6, the Act-2 candy peak).
   {
     id: 'galleonHullT3',
-    act: 1,
+    act: 2,
     cost: galleonTierCost('galleonHull', 3),
   },
   // Act 2 — the §184 gate: 10,000 peppermint banked (mint planet) alongside the tier-3 hull.
@@ -220,18 +256,43 @@ function galleonTierCost(trackKey: string, tier: number): readonly PriceLine[] {
 // Every priced ShopEntry / forge entry / galleon tier / pick tier, flattened to its cost lines. The audit
 // sweeps these to assert NO priced thing anywhere in the game draws a resource with no faucet at all.
 
-/** Flatten every priced content entry to its cost lines (shops, forge, galleon tiers, pick tiers, dyson,
- * the mint/sun costs). The gate chain above is the ordered subset the reachability walk uses; this is the
- * EXHAUSTIVE sweep for the "obtainable resource" invariant. */
+/** Flatten every priced content entry to its cost lines. The gate chain above is the ordered subset the
+ * reachability walk uses; this is the EXHAUSTIVE sweep for the "obtainable resource" invariant — it covers
+ * EVERY registry anywhere in the game where the player pays a resource to buy/build/trade/descend: the two
+ * shops (village + observatory), the hermit's belly-shop, the forge, the balloon, the galleon commission +
+ * upgrade tiers, the moon picks, the gummy vat (molds + fused molds + work-crews), the sour trade, the mint
+ * harvest + condenser, the photosphere descent, the spine gates, and the fossil-star epilogue. If a future
+ * edit prices a new thing in a resource with no faucet, it lands in this sweep and fails the no-orphan test. */
 export function allPricedCostLines(): readonly PriceLine[] {
   const lines: PriceLine[] = []
   for (const e of SHOP_ENTRIES) lines.push(...e.price)
+  for (const e of OBSERVATORY_ENTRIES) lines.push(...e.price)
+  for (const e of HERMIT_SHOP) lines.push(...e.price)
   for (const e of FORGE_ENTRIES) lines.push(...e.price)
   lines.push(...BALLOON_ENTRY.price)
   // the galleon commission is CommissionLine[] (resource + amount + part); take only the price shape.
   for (const c of GALLEON_COMMISSION) lines.push({ resource: c.resource, amount: c.amount })
   for (const track of GALLEON_TRACKS) for (const t of track.tiers) if (t.price) lines.push(...t.price)
   for (const t of MOON_PICKS) lines.push(...t.price)
+  // the gummy vat — growing a burrower (worm, sour-fused, mint-fused) + hiring a work-crew.
+  lines.push({ resource: 'candies', amount: GUMMY_CANDY_COST })
+  lines.push({ resource: 'licorice', amount: GUMMY_LICORICE_COST })
+  lines.push({ resource: 'candies', amount: GUMMY_FUSED_CANDY_COST })
+  lines.push({ resource: 'licorice', amount: GUMMY_FUSED_LICORICE_COST })
+  lines.push({ resource: 'sour', amount: GUMMY_FUSED_SOUR_COST })
+  lines.push({ resource: 'candies', amount: GUMMY_MINT_FUSED_CANDY_COST })
+  lines.push({ resource: 'licorice', amount: GUMMY_MINT_FUSED_LICORICE_COST })
+  lines.push({ resource: 'mint', amount: GUMMY_MINT_FUSED_MINT_COST })
+  lines.push({ resource: 'candies', amount: WORK_CREW_CANDY_COST })
+  lines.push({ resource: 'licorice', amount: WORK_CREW_LICORICE_COST })
+  // the planet trades — sour essence (sour planet) + mint essence (mint planet), both candy-fed.
+  lines.push({ resource: 'candies', amount: SOUR_TRADE_CANDY_COST })
+  lines.push({ resource: 'candies', amount: MINT_HARVEST_CANDY_COST })
+  // the peppermint condenser (rock candy + candies) — the module constants directly, not only via SPINE_GATES.
+  lines.push({ resource: 'rockCandy', amount: CONDENSER_ROCK_CANDY_COST })
+  lines.push({ resource: 'candies', amount: CONDENSER_CANDY_COST })
+  // the Act-4 photosphere descent (mint coolant + peppermint plating), spent in full on descent start.
+  lines.push(...DESCENT_COST)
   for (const g of SPINE_GATES) lines.push(...g.cost)
   lines.push(...FOSSIL_STAR_GATE.cost)
   return lines
