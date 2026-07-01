@@ -8,6 +8,8 @@ import { GRANDMA_DIALOGUE } from '@/content/dialogue/grandma'
 import { ASTRONOMER_DIALOGUE } from '@/content/dialogue/astronomer'
 import { CAULDRON_RECIPES } from '@/content/recipes/cauldron'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
+import { BLACK_GRIMOIRE_SPELLS } from '@/content/spells/blackGrimoire'
+import { HERMIT_SHOP } from '@/content/void/voidWhale'
 import { ACT0_SECRETS } from '@/content/secrets'
 import { TAVERN_RUMORS } from '@/content/tavern/rumors'
 import { ALL_DEATH_MESSAGES, BESPOKE_DEATH_SOURCES } from '@/content/deathMessages'
@@ -39,7 +41,7 @@ describe('en.ts locale completeness', () => {
   })
 
   it('every shop/forge/observatory speech key exists', () => {
-    for (const entry of [...SHOP_ENTRIES, ...FORGE_ENTRIES, ...OBSERVATORY_ENTRIES]) {
+    for (const entry of [...SHOP_ENTRIES, ...FORGE_ENTRIES, ...OBSERVATORY_ENTRIES, ...HERMIT_SHOP]) {
       expect(has(entry.speechKey), entry.speechKey).toBe(true)
     }
   })
@@ -55,7 +57,7 @@ describe('en.ts locale completeness', () => {
 
   it('every recipe / spell / secret / rumor / death key exists', () => {
     for (const r of CAULDRON_RECIPES) expect(has(r.displayKey), r.displayKey).toBe(true)
-    for (const s of GRIMOIRE_SPELLS) expect(has(s.displayKey), s.displayKey).toBe(true)
+    for (const s of [...GRIMOIRE_SPELLS, ...BLACK_GRIMOIRE_SPELLS]) expect(has(s.displayKey), s.displayKey).toBe(true)
     for (const s of ACT0_SECRETS) expect(has(s.revealKey), s.revealKey).toBe(true)
     for (const r of TAVERN_RUMORS) expect(has(r.textKey), r.textKey).toBe(true)
     for (const d of ALL_DEATH_MESSAGES) {

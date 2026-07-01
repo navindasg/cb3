@@ -88,6 +88,8 @@ export interface SkyPortContext {
   showMintPlanet(): void
   /** Set sail for the sun & the dyson scaffold (Act 3) — wired by the bootstrap. */
   showScaffold(): void
+  /** Sail to the empty coordinate the acorn whispers — the void whale (Phase 5, §17) — wired by the bootstrap. */
+  showVoidWhale(): void
 }
 
 export interface SkyPortScreens {
@@ -295,6 +297,11 @@ export function createSkyPortScreens(ctx: SkyPortContext): SkyPortScreens {
         screen.appendChild(ctx.button('sail to the sour planet', 'skyport-to-sour', () => ctx.showSourPlanet()))
         // ...and a white world of ice turns slow and cold beyond it (Act 2 — the mint planet, quest 10).
         screen.appendChild(ctx.button('sail to the mint planet', 'skyport-to-mint', () => ctx.showMintPlanet()))
+        // ...and, once the acorn of knowledge whispers a coordinate that points at nothing, a course out to the
+        // empty dark opens up (Phase 5 — the void whale, hidden boss 4, §17). A curiosity, never a gate.
+        if (s.flags['acornOfKnowledgeOwned'] === true) {
+          screen.appendChild(ctx.button('sail to the empty coordinate', 'skyport-to-void', () => ctx.showVoidWhale()))
+        }
       }
       // Once the Act-2 gate is cleared (hull t3 + 10k peppermint), the sun itself is in reach — the
       // shipwright says nothing about it; the dark has gone quiet (Act 3 — the dyson scaffold, §186).

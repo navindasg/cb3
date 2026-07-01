@@ -72,6 +72,12 @@ export const en: GameText = {
   'item.paradoxPin.desc': 'A small pin of two little mirrors set facing each other, so that each is full of the other, forever, going nowhere. Won off the thing that was you. While you wear it the ordinary rule that a person may wear only one hat quietly stops applying. Wear two. Who is going to stop you.',
   'item.fourthWallFragment.name': 'a fourth-wall fragment',
   'item.fourthWallFragment.desc': 'A shard of the thing that came apart behind the second panel — a chip of not-quite-glass, cool and a little slippery, that still faintly draws a tiny button in one corner. The button does nothing. It was never real. You press it anyway, every time you look at it, and it does nothing, every time. You are keeping it because it lied to your face and you won regardless. That seemed worth a souvenir.',
+  'item.hermitGloves.name': "the hermit's gloves",
+  'item.hermitGloves.desc': 'A pair of gloves the hermit stitched over more years than he will say, out of something he will not name, in the belly of a whale, in the dark. They are the finest gloves you have ever put on. Your hands are warm for the first time since you left the moon. He is glad someone is wearing them out where it is cold.',
+  'item.blackLicoriceGrimoire.name': 'the black licorice grimoire',
+  'item.blackLicoriceGrimoire.desc': 'A slim book bound in black licorice, dry and dark and faintly bitter to the touch. Its spells are few and strange: a blink through the dark, a bolt that melts what it lands on, and one that is not a fight at all — it draws a shadow across the sky and, for a while, the stars stop falling. The hermit read it to nothing but the whale for a long time. He would like it read to someone.',
+  'item.voidPearl.name': 'a void pearl',
+  'item.voidPearl.desc': 'A cold, dark bead the whale had swallowed somewhere and forgotten. It is worn perfectly smooth, though there is nothing out here to have worn it. Won from the one fight you did not have to have. You are not sure why you kept it. It weighs almost nothing, and it is very slightly colder than the room.',
 
   // merchant lines
   'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
@@ -86,6 +92,9 @@ export const en: GameText = {
   'obs.beginnerGrimoire.thanks': 'Magic is mostly reading. Here is the reading.',
   'obs.telescope.thanks': 'There. Now you can see them all. All eight thousand of them.',
   'obs.sugarGlassShard.thanks': "An offcut. Grind a lens and you make a hundred of these. Careful holding it to the light — it is very honest. Take it, take it.",
+  // the void whale's hermit (§17/§22 — unnamed). He trades to be polite; he would rather you took them and left.
+  'void.hermitGloves.thanks': "Take them. They are yours. I have no hands but these to make them for, and I have plenty of both — time and hands. Go on. Somewhere it is cold, and they are for the cold.",
+  'void.grimoire.thanks': "The book, then. Good. It should be read to someone. Only — the eclipse, mind. It stops the sky falling for a while. Not for long. Nothing does, for long. But a while is a while. Now go. Really. I mean it kindly.",
 
   // speakers
   'speaker.grandma': 'Grandma',
@@ -140,6 +149,10 @@ export const en: GameText = {
   // spells
   'spell.sugarBolt.name': 'sugar bolt',
   'spell.sweetWard.name': 'sweet ward',
+  // the black licorice grimoire (the void whale's hermit) — eclipse is the world spell; the other two are lore.
+  'spell.voidStep.name': 'void step',
+  'spell.melt.name': 'melt',
+  'spell.eclipse.name': 'eclipse',
 
   // secrets
   'secret.fossilTwitch.reveal': 'The fossil twitches. Just once. You decide not to mention it.',

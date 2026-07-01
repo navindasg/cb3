@@ -7,9 +7,14 @@ import {
   reconcileStars,
   starDescentMultiplier,
   effectiveMsPerStar,
+  castEclipse,
+  eclipsed,
+  eclipseUntilMs,
+  ECLIPSE_UNTIL_KEY,
 } from '@/engine/content/starCounter'
 import { STAGE_ACCEL } from '@/content/sun/observationDeck'
-import { DYSON_STAGE_DONE_FLAGS } from '@/content/flags'
+import { ECLIPSE_DURATION_MS } from '@/content/void/voidWhale'
+import { DYSON_STAGE_DONE_FLAGS, STAR_COUNTER_FROZEN_FLAG } from '@/content/flags'
 import type { GameState } from '@/engine/types/GameState'
 
 function telescopeOwned(over: Partial<GameState> = {}): GameState {
@@ -307,5 +312,79 @@ describe('ending 1 — LET IT HATCH relights the stars (projectedStars / reconci
 
   it('the counter is visible while relighting (the refilling sky shows)', () => {
     expect(starCounterVisible(relighting())).toBe(true)
+  })
+})
+
+// The eclipse (Phase 5 — the black licorice grimoire's world spell, the void whale's hermit, §17/§18). A
+// TEMPORARY, drift-free pause of the descent: while the shadow is up the count holds, and when it lifts the
+// descent resumes exactly where it left off, having lost no stars to the paused window.
+describe('the eclipse — a temporary, drift-free pause of the descent', () => {
+  it('casting eclipse stamps the shadow-until and re-anchors, and reports eclipsed while it holds', () => {
+    const s = telescopeOwned({ accumulatedGameTimeMs: 100 * MS_PER_STAR, starsRemaining: 5000 })
+    expect(eclipsed(s)).toBe(false)
+    const cast = castEclipse(s)
+    expect(eclipseUntilMs(cast)).toBe(100 * MS_PER_STAR + ECLIPSE_DURATION_MS)
+    expect(cast.numbers[ECLIPSE_UNTIL_KEY]).toBe(100 * MS_PER_STAR + ECLIPSE_DURATION_MS)
+    expect(cast.numbers['telescopeBoughtAtMs']).toBe(100 * MS_PER_STAR) // re-anchored to now
+    expect(eclipsed(cast)).toBe(true)
+  })
+
+  it('holds the count still while the shadow is up (projectedStars unmoved through the window)', () => {
+    const s = castEclipse(telescopeOwned({ accumulatedGameTimeMs: 100 * MS_PER_STAR, starsRemaining: 5000 }))
+    const before = projectedStars(s)
+    expect(before).toBe(5000)
+    // Advance time WITHIN the eclipse window (half its duration) — no stars fall.
+    const mid = { ...s, accumulatedGameTimeMs: s.accumulatedGameTimeMs + ECLIPSE_DURATION_MS / 2 }
+    expect(eclipsed(mid)).toBe(true)
+    expect(projectedStars(mid)).toBe(5000)
+    // reconcile mid-eclipse re-anchors forward but removes NO stars.
+    const reconciled = reconcileStars(mid)
+    expect(reconciled.starsRemaining).toBe(5000)
+    expect(reconciled.numbers['telescopeBoughtAtMs']).toBe(mid.accumulatedGameTimeMs)
+  })
+
+  it('resumes DRIFT-FREE once the shadow lifts — the paused window is never charged as elapsed', () => {
+    // Cast at t0; reconcile through the window; then advance one base-interval PAST the eclipse end.
+    const t0 = 100 * MS_PER_STAR
+    let s = castEclipse(telescopeOwned({ accumulatedGameTimeMs: t0, starsRemaining: 5000 }))
+    // Reconcile a couple of times inside the window (offline-catchup style), advancing time each pass.
+    s = { ...s, accumulatedGameTimeMs: t0 + ECLIPSE_DURATION_MS / 3 }
+    s = reconcileStars(s)
+    s = { ...s, accumulatedGameTimeMs: t0 + (2 * ECLIPSE_DURATION_MS) / 3 }
+    s = reconcileStars(s)
+    expect(s.starsRemaining).toBe(5000) // nothing lost in the shadow
+    // Now step to exactly one base-interval AFTER the eclipse ends.
+    s = { ...s, accumulatedGameTimeMs: t0 + ECLIPSE_DURATION_MS + MS_PER_STAR }
+    expect(eclipsed(s)).toBe(false)
+    // Exactly ONE star should have fallen since the shadow lifted (not the whole paused window's worth).
+    expect(projectedStars(s)).toBe(4999)
+    s = reconcileStars(s)
+    expect(s.starsRemaining).toBe(4999)
+  })
+
+  it('a re-cast during an active eclipse EXTENDS the shadow from now (a fresh shadow, not stacked)', () => {
+    const t0 = 100 * MS_PER_STAR
+    const first = castEclipse(telescopeOwned({ accumulatedGameTimeMs: t0, starsRemaining: 5000 }))
+    // Re-cast a third of the way through — the new end is (now + duration), measured from the re-cast.
+    const later = { ...first, accumulatedGameTimeMs: t0 + ECLIPSE_DURATION_MS / 3 }
+    const second = castEclipse(later)
+    expect(eclipseUntilMs(second)).toBe(t0 + ECLIPSE_DURATION_MS / 3 + ECLIPSE_DURATION_MS)
+  })
+
+  it('ending 2 (permanent freeze) beats an eclipse: castEclipse is a SAME-ref no-op, eclipsed is false', () => {
+    const base = telescopeOwned({ accumulatedGameTimeMs: 100 * MS_PER_STAR, starsRemaining: 5000 })
+    const frozen: GameState = { ...base, flags: { ...base.flags, [STAR_COUNTER_FROZEN_FLAG]: true } }
+    expect(castEclipse(frozen)).toBe(frozen)
+    // even a stamped eclipse-until does not make a frozen sky "eclipsed" (frozen wins outright)
+    const stamped: GameState = {
+      ...frozen,
+      numbers: { ...frozen.numbers, [ECLIPSE_UNTIL_KEY]: 1e18 },
+    }
+    expect(eclipsed(stamped)).toBe(false)
+  })
+
+  it('casting without the telescope (never revealed) is a SAME-ref no-op', () => {
+    const s = createDefaultSave()
+    expect(castEclipse(s)).toBe(s)
   })
 })

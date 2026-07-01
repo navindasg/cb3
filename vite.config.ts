@@ -31,6 +31,7 @@ export default defineConfig({
         'src/render/krakenScreens.ts',
         'src/render/reflectionScreens.ts',
         'src/render/mintPlanetScreens.ts',
+        'src/render/voidWhaleScreens.ts',
         'src/render/scaffoldScreens.ts',
         'src/render/finaleScreens.ts',
         // deathEpitaph.ts is thin i18n-resolution glue over the tested deathBlurb picker + the

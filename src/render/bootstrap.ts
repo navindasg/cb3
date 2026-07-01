@@ -75,6 +75,7 @@ import { createSourbeardScreens, type SourbeardScreens } from '@/render/sourbear
 import { createSourPlanetScreens, type SourPlanetScreens } from '@/render/sourPlanetScreens'
 import { createKrakenScreens, type KrakenScreens } from '@/render/krakenScreens'
 import { createMintPlanetScreens, type MintPlanetScreens } from '@/render/mintPlanetScreens'
+import { createVoidWhaleScreens, type VoidWhaleScreens } from '@/render/voidWhaleScreens'
 import { createScaffoldScreens, type ScaffoldScreens } from '@/render/scaffoldScreens'
 import { createFinaleScreens, type FinaleScreens } from '@/render/finaleScreens'
 import { createDescentAudio } from '@/render/descentAudio'
@@ -875,6 +876,9 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     // The dyson scaffold is its own screen, reached once the Act-2 gate is cleared (a thunk: the
     // scaffold is created just below — read only at click time, by which point it is assigned).
     showScaffold: () => scaffold.showScaffold(),
+    // The void whale is its own screen, reached by sailing to the empty coordinate the acorn whispers
+    // (Phase 5, §17 — a thunk: voidWhale is created just below, read only at click time).
+    showVoidWhale: () => voidWhale.showVoidWhale(),
   })
 
   // The reef screens (Act 2 — the first voyage: plot a course out to the rock candy reef, then break
@@ -973,6 +977,21 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     notify,
     logText,
     showMap,
+    showSkyPort: skyport.showSkyPort,
+  })
+
+  // The void-whale screen (Phase 5 — hidden boss 4, §17: the acorn's empty coordinate, the hermit's shop +
+  // the black grimoire + the OPTIONAL fight). Same thin-wiring contract; the crossing / the fight / the shop
+  // grants / the eclipse world-spell live in the tested engine (engine/content/voidWhale + starCounter).
+  // Routed back through showSkyPort (you sailed from the galleon's berth). Leaving is always allowed.
+  const voidWhale: VoidWhaleScreens = createVoidWhaleScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
     showSkyPort: skyport.showSkyPort,
   })
 
@@ -1084,6 +1103,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showSkyPort: skyport.showSkyPort,
     showReef: reef.showReef,
     showComet: comet.showComet,
+    showVoidWhale: voidWhale.showVoidWhale,
     showScaffold: scaffold.showScaffold,
     showDescentPort: finale.showDescentPort,
     showCaramelCore: finale.showCaramelCore,

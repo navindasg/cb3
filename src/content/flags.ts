@@ -407,6 +407,33 @@ export const HAT_TWO_KEY = 'hatTwo'
 export const HALLUCINATION_DEFEATED_FLAG = 'hallucinationDefeated'
 
 /**
+ * Set when the void whale's empty-space crossing is plotted clean and the galleon reaches the coordinate the
+ * acorn whispered (Phase 5 — hidden boss 4, DESIGN §17). engine/content/voidWhale sets the SAME literal in
+ * lock-step (the reef-voyage idiom) on the leg that completes the crossing; the engine never imports this
+ * content value (ADR §3). The whale swallows you there; the interior screen reads this to show the belly (the
+ * hermit's shop + the grimoire + the optional fight) forever after. A curiosity, never a gate — gated only on
+ * the acorn being owned (the squirrel's coordinate). Reaching it soft-locks nothing: leaving is always allowed.
+ */
+export const VOID_REACHED_FLAG = 'voidWhaleReached'
+
+/**
+ * Set when the void whale is beaten in the OPTIONAL telegraph-and-sever fight in its belly (Phase 5 — hidden
+ * boss 4). Commit-once (the kraken/boarding idiom): it blocks re-granting the whale's belly-hoard and retires
+ * the fight. The fight is NOT required to claim the hermit's shop or the grimoire (leaving is always allowed);
+ * this only marks the optional kill. engine/content/voidWhale re-declares this literal in lock-step (ADR §3).
+ */
+export const VOID_WHALE_DEFEATED_FLAG = 'voidWhaleDefeated'
+
+/**
+ * Set when the BLACK LICORICE GRIMOIRE is owned (its saveFlag — the hermit's shop grant). Read by the typed
+ * 'eclipse' secret's inertWhenFlag (content/typedSecrets — you know where eclipses come from once you hold the
+ * book) and by engine/content/spells to put the grimoire's spells in the loadout. Declared as the single
+ * source of truth here; content/typedSecrets re-declares the same literal for its inert gate. A reward flag,
+ * never a gate.
+ */
+export const BLACK_LICORICE_GRIMOIRE_OWNED_FLAG = 'blackLicoriceGrimoireOwned'
+
+/**
  * Set when the WOLF-WOOL CLOAK is worn (its saveFlag). Read by the storm front to know the storm's charge can
  * no longer find you — a LATE reward that retroactively trivializes an early climb (the curiosity payoff,
  * §17). The cloak IS the storm-immunity: its saveFlag doubles as this flag (one truth, no duplication). The

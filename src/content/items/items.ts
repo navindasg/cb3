@@ -340,6 +340,46 @@ export const FOURTH_WALL_FRAGMENT: ItemDef = {
   saveFlag: 'fourthWallFragmentOwned',
 }
 
+/** The hermit's gloves (Phase 5 — the void whale's hermit, hidden boss 4, DESIGN §17). Stitched from something
+ * the hermit will not name, over a great many quiet years, they are the finest gloves in the game — and the
+ * first thing to ever fill the gloves slot (it existed, unused, until now; buying them auto-equips there). Their
+ * effect (a steadier grip, a warmer hand out in the cold dark) is flavor for now, like the trophy hats; the slot
+ * is filled, and the hermit is glad they are being worn by someone going back out. Bought once at his shop. */
+export const HERMIT_GLOVES: ItemDef = {
+  id: 'hermitGloves',
+  displayKey: 'item.hermitGloves.name',
+  descKey: 'item.hermitGloves.desc',
+  ascii: 'ww',
+  saveFlag: 'hermitGlovesOwned',
+  slot: 'gloves',
+}
+
+/** The black licorice grimoire (Phase 5 — the void whale's hermit, hidden boss 4, DESIGN §17/§18). A slim book
+ * of dark, dry magic bound in licorice, kept in the whale's belly. Not equippable; owning it (the saveFlag)
+ * puts its spells — void step, melt, and ECLIPSE — into the quest loadout (engine/content/spells), and makes the
+ * typed 'eclipse' secret go inert (you know now where eclipses come from). Eclipse is the odd one: it PAUSES the
+ * star counter for a window (engine/content/starCounter's eclipse branch) — the one thing that holds the dark
+ * back, even a little. Bought once at the hermit's shop; the eclipse secret (P5-02) coheres with it. */
+export const BLACK_LICORICE_GRIMOIRE: ItemDef = {
+  id: 'blackLicoriceGrimoire',
+  displayKey: 'item.blackLicoriceGrimoire.name',
+  descKey: 'item.blackLicoriceGrimoire.desc',
+  ascii: '[#',
+  saveFlag: 'blackLicoriceGrimoireOwned',
+}
+
+/** The void pearl (Phase 5 — the void whale's OPTIONAL belly-hoard drop, hidden boss 4). A cold, dark bead the
+ * whale had swallowed and forgotten, worn smooth by nothing at all. Not equippable; a keepsake item-flag, held
+ * as a trophy of the one fight you did not have to take. Granted once on the whale's defeat (farm-proof via the
+ * cleared flag, the kraken/acorn idiom); leaving without fighting forgoes it, and that is fine. */
+export const VOID_PEARL: ItemDef = {
+  id: 'voidPearl',
+  displayKey: 'item.voidPearl.name',
+  descKey: 'item.voidPearl.desc',
+  ascii: '.o',
+  saveFlag: 'voidPearlOwned',
+}
+
 /** The heirloom sword on grandma's mantle — taken down at last once the attic's wrapper unlocks it
  * (§231/§288). Its saveFlag `mantleSwordTaken` is set by the attic grant (openAttic grants it alongside
  * the wrapper); owning it auto-equips the weapon slot, activating the lifetime-candy scaling (see
@@ -395,6 +435,9 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   MIRROR_POTION,
   PARADOX_PIN,
   FOURTH_WALL_FRAGMENT,
+  HERMIT_GLOVES,
+  BLACK_LICORICE_GRIMOIRE,
+  VOID_PEARL,
   MANTLE_SWORD,
   // The scholar's pamphlet lives with its typed secret (content/typedSecrets), but joins the registry
   // here so the secret runner's grantItem can resolve it via ITEM_MAP.

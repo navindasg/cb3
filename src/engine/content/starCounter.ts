@@ -1,5 +1,7 @@
 import type { GameState } from '@/engine/types/GameState'
 import { STAGE_ACCEL } from '@/content/sun/observationDeck'
+import { ECLIPSE_DURATION_MS } from '@/content/void/voidWhale'
+import { setNumber } from '@/engine/state/reducers'
 
 // The corner counter "stars in the sky: 8,128" — revealed only once the telescope is owned,
 // and already ticking DOWN on ACCUMULATED game time (resolved decision: scripted timers use
@@ -64,6 +66,49 @@ function frozen(state: GameState): boolean {
   return state.flags[STAR_COUNTER_FROZEN_FLAG] === true
 }
 
+// The eclipse (Phase 5 — the black licorice grimoire's world spell, the void whale's hermit, DESIGN §17/§18).
+// Casting eclipse draws a shadow across the sky and the descent STOPS for a window (ECLIPSE_DURATION_MS of
+// accumulated game time). It is a TEMPORARY, drift-free pause — unlike ending 2's permanent freeze: while the
+// eclipse holds, the count does not move; when it ends, the descent resumes exactly where it left off, having
+// lost no stars to the paused window (reconcileStars re-anchors telescopeBoughtAtMs forward across the shadow,
+// the same re-anchor machinery the ordinary descent uses). It is the ONE thing that can hold the dark back, and
+// only for a while. A window per cast, monotonic (never rewinds); a re-cast during an active eclipse EXTENDS it
+// from now (not stacking on the tail — a fresh shadow). Never an up-tick; it only pauses the down-tick.
+
+/** numbers-namespace key: the accumulated-game-time ms at which the current eclipse ends (0/absent = none). */
+export const ECLIPSE_UNTIL_KEY = 'eclipseUntilMs'
+
+/** The accumulated-game-time ms the current eclipse holds until (0 when none). */
+export function eclipseUntilMs(state: GameState): number {
+  return Math.max(0, state.numbers[ECLIPSE_UNTIL_KEY] ?? 0)
+}
+
+/** Whether the sky is currently eclipsed — the descent is paused (accumulated time has not yet reached the
+ * eclipse's end). Ending 2's permanent freeze takes precedence (frozen wins), but under an ordinary descent an
+ * active eclipse holds it. Pure. */
+export function eclipsed(state: GameState): boolean {
+  if (frozen(state)) return false
+  return state.accumulatedGameTimeMs < eclipseUntilMs(state)
+}
+
+/**
+ * Cast the eclipse: pause the descent for ECLIPSE_DURATION_MS of accumulated game time FROM NOW. Sets the
+ * eclipse-until stamp to accumulatedGameTimeMs + the duration (a fresh shadow — a re-cast extends from now, it
+ * does not stack on the tail). Also re-anchors telescopeBoughtAtMs to now, so the shadow starts clean and no
+ * partial star from before the cast is carried into the paused window (the sub-star fraction in flight at cast
+ * is DROPPED — always player-favorable, never adds a star; monotonic-safe). A no-op (SAME reference) once the
+ * sky is permanently frozen (ending 2 — there is nothing left to pause) or never revealed (no telescope). The
+ * descent stays MONOTONIC (eclipse only ever pauses the down-tick; it never relights). Immutable.
+ */
+export function castEclipse(state: GameState): GameState {
+  if (frozen(state)) return state
+  if (!starCounterVisible(state)) return state
+  const until = state.accumulatedGameTimeMs + ECLIPSE_DURATION_MS
+  // Re-anchor the descent to now first, then stamp the shadow's end. Both ride the numbers z.record.
+  const anchored = setNumber(state, 'telescopeBoughtAtMs', state.accumulatedGameTimeMs)
+  return setNumber(anchored, ECLIPSE_UNTIL_KEY, until)
+}
+
 /**
  * Whether the star counter is visible: after the telescope is bought (the Act-1 reveal — it holds for the rest
  * of the game), OR once an ending has flipped the descent into its relight/freeze branch (so the up-tick /
@@ -103,6 +148,8 @@ export function projectedStars(state: GameState): number {
   // Ending 2 (FEED THE SUN): the counter is frozen forever — the stored value, unmoved (up or down).
   if (frozen(state)) return state.starsRemaining
   if (!starCounterVisible(state)) return state.starsRemaining
+  // The eclipse (a temporary pause): the count holds at the stored value while the shadow is up.
+  if (eclipsed(state)) return state.starsRemaining
   const boughtAt = state.numbers['telescopeBoughtAtMs'] ?? state.accumulatedGameTimeMs
   const elapsed = Math.max(0, state.accumulatedGameTimeMs - boughtAt)
   const gained = Math.floor(elapsed / effectiveMsPerStar(state))
@@ -122,6 +169,12 @@ export function reconcileStars(state: GameState): GameState {
   // Ending 2 (FEED THE SUN): the counter stops forever — never re-anchor, never move. SAME reference.
   if (frozen(state)) return state
   if (!starCounterVisible(state)) return state
+  // The eclipse (a temporary pause): hold the count, but re-anchor telescopeBoughtAtMs forward across the
+  // shadow so the paused window is never charged as elapsed once it lifts (drift-free — the same re-anchor
+  // the ordinary descent does, just consuming zero stars). SAME reference once already anchored to now.
+  if (eclipsed(state)) {
+    return setNumber(state, 'telescopeBoughtAtMs', state.accumulatedGameTimeMs)
+  }
   const boughtAt = state.numbers['telescopeBoughtAtMs'] ?? state.accumulatedGameTimeMs
   const elapsed = Math.max(0, state.accumulatedGameTimeMs - boughtAt)
   const msPerStar = effectiveMsPerStar(state)

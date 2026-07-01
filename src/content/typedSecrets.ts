@@ -66,8 +66,10 @@ export const ANIWEY_SECRET: SecretDef = {
   sessionOnly: true,
 }
 
-/** The flag the black licorice grimoire will set when owned (the void-whale reward, a later slice). Declared
- * here so eclipse's inert-when gate reads it in lock-step now; nothing sets it yet, so eclipse always speaks. */
+/** The flag the black licorice grimoire sets when owned (the void-whale hermit's shop grant — content/flags
+ * owns the same literal as the single source of truth). Re-declared here in lock-step so eclipse's inert-when
+ * gate reads it directly; once you hold the book (having reached the whale) eclipse goes quiet — you know now
+ * where eclipses come from. Before that, eclipse always speaks. */
 export const BLACK_LICORICE_GRIMOIRE_OWNED_FLAG = 'blackLicoriceGrimoireOwned'
 
 /** 'eclipse' → the astronomer's dry disquiet. Inert once the black licorice grimoire is owned (you know then). */

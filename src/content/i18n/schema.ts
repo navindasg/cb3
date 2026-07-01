@@ -66,6 +66,12 @@ export interface GameText {
   'item.paradoxPin.desc': string
   'item.fourthWallFragment.name': string
   'item.fourthWallFragment.desc': string
+  'item.hermitGloves.name': string
+  'item.hermitGloves.desc': string
+  'item.blackLicoriceGrimoire.name': string
+  'item.blackLicoriceGrimoire.desc': string
+  'item.voidPearl.name': string
+  'item.voidPearl.desc': string
   'item.pogoStick.name': string
   'item.pogoStick.desc': string
   'item.oldMapFragment.name': string
@@ -86,6 +92,8 @@ export interface GameText {
   'obs.beginnerGrimoire.thanks': string
   'obs.telescope.thanks': string
   'obs.sugarGlassShard.thanks': string
+  'void.hermitGloves.thanks': string
+  'void.grimoire.thanks': string
 
   // --- speakers ---
   'speaker.grandma': string
@@ -138,6 +146,9 @@ export interface GameText {
   // --- spells ---
   'spell.sugarBolt.name': string
   'spell.sweetWard.name': string
+  'spell.voidStep.name': string
+  'spell.melt.name': string
+  'spell.eclipse.name': string
 
   // --- secrets (deadpan reveal lines) ---
   'secret.fossilTwitch.reveal': string
