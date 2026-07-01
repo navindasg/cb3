@@ -140,10 +140,7 @@ export interface GameText {
   'death.sourbeardBoarding': string
   'death.kraken': string
   'death.sourDissolve': string
-  'death.sourPlanetFall': string
-  'death.sourRain': string
   'death.mintLabyrinth': string
-  'death.frostWyrm': string
   'death.photosphereHeat': string
   'death.starEater': string
   'death.stormMerge': string

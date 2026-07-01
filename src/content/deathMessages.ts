@@ -109,28 +109,16 @@ export const SOUR_DISSOLVE_DEATH: DeathMessage = {
   message: 'death.sourDissolve',
 }
 
-/** Falling from a sour-shell platform into the haze below. */
-export const SOUR_PLANET_FALL_DEATH: DeathMessage = {
-  source: 'sourPlanetFall',
-  message: 'death.sourPlanetFall',
-}
-
-/** A wash of sour rain on the platforms — corrosive weather. */
-export const SOUR_RAIN_DEATH: DeathMessage = {
-  source: 'sourRain',
-  message: 'death.sourRain',
-}
+// NOTE: no sourRain / sourPlanetFall / frostWyrm death lines — those beats are canonically
+// NOT deaths (sour rain is a POSITIVE +resist achievement §335; the sour planet is a peaceful
+// first-contact zone with no loss path; the frost wyrm is a tragic "not a fight" vigil, not
+// combat). Author-ahead is fine for signposted future losses, but not for beats that contradict
+// canon — so these three are intentionally absent from the registry.
 
 /** The mint planet's ice labyrinth — folded back on itself (§19 sample). */
 export const MINT_LABYRINTH_DEATH: DeathMessage = {
   source: 'mintLabyrinth',
   message: 'death.mintLabyrinth',
-}
-
-/** The frost wyrm's last cold exhale — it did not mean to. */
-export const FROST_WYRM_DEATH: DeathMessage = {
-  source: 'frostWyrm',
-  message: 'death.frostWyrm',
 }
 
 // --- Act 3-4 sun descent + the star-eater ----------------------------------
@@ -197,10 +185,7 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   SOURBEARD_BOARDING_DEATH,
   KRAKEN_DEATH,
   SOUR_DISSOLVE_DEATH,
-  SOUR_PLANET_FALL_DEATH,
-  SOUR_RAIN_DEATH,
   MINT_LABYRINTH_DEATH,
-  FROST_WYRM_DEATH,
   PHOTOSPHERE_HEAT_DEATH,
   STAR_EATER_DEATH,
   STORM_MERGE_DEATH,

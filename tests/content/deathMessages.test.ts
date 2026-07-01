@@ -67,10 +67,11 @@ describe('death-message registry (§19)', () => {
       'sourbeardBoarding',
       'kraken',
       'sourDissolve',
-      'sourPlanetFall',
-      'sourRain',
       'mintLabyrinth',
-      'frostWyrm',
+      // NOTE: sourRain / sourPlanetFall / frostWyrm are intentionally NOT here — those beats are
+      // canonically not deaths (sour rain = +resist achievement §335; the sour planet is a peaceful
+      // first-contact zone with no loss path; the frost wyrm is a "not a fight" vigil). Author-ahead
+      // is for signposted future losses, not beats that contradict canon.
       // Act 3-4 (the sun descent + the star-eater)
       'photosphereHeat',
       'starEater',

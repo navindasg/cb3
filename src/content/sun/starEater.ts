@@ -171,9 +171,14 @@ export const PHASE_CORE_BLURB =
 export const STAR_EATER_WON_BLURB =
   'The last of it pulls back off the egg and hangs there, and for a moment neither of you moves. It is not dead. A thing that only eats does not die; it goes still, and looks at you, and waits. The egg is warm and whole behind you. The light holds. It is your move now.'
 
-/** Shown when a phase is forfeit (a loss anywhere) — back to the start of the fight (transient, the duel idiom). */
+/**
+ * Shown when a phase is forfeit (a loss anywhere) — back to the start of the fight (transient, the duel idiom).
+ * The redundant opening ("The cold long dark of it closes over the light and there is a silence with no bottom")
+ * is intentionally trimmed here: the death epitaph rendered directly above already carries it (mirrors the
+ * kraken-lost trim, which avoids reading the same phrase twice in a row).
+ */
 export const STAR_EATER_LOST_BLURB =
-  'It gets through. The cold long dark of it closes over the light and there is a silence with no bottom, and then you are back at the rail with the galleon coming about, because this is not a thing you are allowed to lose. Come at it again, with everything.'
+  'It gets through, and then you are back at the rail with the galleon coming about, because this is not a thing you are allowed to lose. Come at it again, with everything.'
 
 /** The retry label after a forfeit. */
 export const STAR_EATER_RETRY_LABEL = 'come about and face it again'
