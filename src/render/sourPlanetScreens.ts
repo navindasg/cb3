@@ -119,7 +119,17 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
         )
         return
       }
-      if (s.equipped.armour !== null) return // armoured: the rain finds no purchase; nothing to show.
+      if (s.equipped.armour !== null) {
+        // Armoured: the rain finds no purchase, so the marinate can never latch. Rather than render
+        // NOTHING (silently hiding a real §18 reward once the cloud-wolf cloak auto-equips with no
+        // obvious way back), leave a deadpan, recoverable signpost — take off your armour to let it work.
+        paragraph(
+          'You are armoured; the sour rain finds no purchase, and merely patters off. (Take off your armour — in your inventory — to let it work on you.)',
+          'blurb',
+          'sour-armoured',
+        )
+        return
+      }
       const p = doc.createElement('p')
       p.className = 'blurb'
       p.setAttribute('data-testid', 'sour-dwell')

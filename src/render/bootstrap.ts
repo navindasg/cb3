@@ -6,7 +6,7 @@ import { parseSpeedParam, MIN_SPEED } from '@/engine/loop/timeScale'
 import { createDevPanel, type DevPanel } from '@/render/devPanel'
 import { projectedStars, starCounterVisible } from '@/engine/content/starCounter'
 import { formatCount, candyCountSentence } from '@/engine/number/format'
-import { eatAllCandies, throwCandies, equip } from '@/engine/state/reducers'
+import { eatAllCandies, throwCandies, equip, unequip } from '@/engine/state/reducers'
 import { derivedMaxHp, MAX_HP_KEY } from '@/engine/state/recomputeCaches'
 import { isRevealed } from '@/engine/content/reveal'
 import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
@@ -570,6 +570,17 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
         )
         if (equipped) b.classList.add('equipped')
         row.appendChild(b)
+      }
+      // A 'take off' button per slot with something equipped, wiring the unequip reducer. Lets you
+      // stand bare again — the marinate secret on the sour planet needs no armour, and future armour
+      // drops inherit this swap path (the cloud-wolf cloak established the armour slot). No-op-safe.
+      if (slot.equippedId !== null) {
+        row.appendChild(
+          button(`take off`, `inv-unequip-${slot.slot}`, () => {
+            session.dispatch((s) => unequip(s, slot.slot))
+            showInventory()
+          }),
+        )
       }
       screen.appendChild(row)
     }
