@@ -32,6 +32,8 @@ export interface GameText {
   'item.bottledTempest.desc': string
   'item.stormSilk.name': string
   'item.stormSilk.desc': string
+  'item.wolfWoolCloak.name': string
+  'item.wolfWoolCloak.desc': string
   'item.cottonCandyBalloon.name': string
   'item.cottonCandyBalloon.desc': string
   'item.wormMold.name': string
@@ -183,6 +185,7 @@ export interface GameText {
   'death.starEater': string
   'death.stormMerge': string
   'death.grandmaDuck': string
+  'death.cloudWolf': string
   'death.voidWhale': string
   'death.generic': string
 

@@ -348,6 +348,30 @@ export const CANDY_BOX_FIGUREHEAD_FLAG = 'candyBoxFigureheadOwned'
 export const MOONPOPS_PLANTED_FLAG = 'moonpopsPlanted'
 
 /**
+ * Set the moment the cloud-wolf shear STREAK first reaches SHEAR_TO_REVEAL — the same cloud sheep sheared
+ * seven times running (Phase 5 — hidden boss 1, DESIGN §17: "it was never a sheep"). LATCHED (monotonic): the
+ * wolf stays revealed even after the streak resets (shearing a different sheep). engine/content/paddock
+ * re-declares this literal in lock-step (the moonStrata idiom, ADR §3 — the engine never imports the content
+ * value). The reveal is a curiosity, never a gate; the fight itself is optional.
+ */
+export const CLOUD_WOLF_REVEALED_FLAG = 'cloudWolfRevealed'
+
+/**
+ * Set when the cloud wolf is beaten (Phase 5 — hidden boss 1). Commit-once (the kraken/boarding idiom): it
+ * blocks re-granting the wolf-wool cloak and retires the fight. engine/content/cloudWolf re-declares this
+ * literal in lock-step (ADR §3). A one-off boss + a one-off drop.
+ */
+export const CLOUD_WOLF_DEFEATED_FLAG = 'cloudWolfDefeated'
+
+/**
+ * Set when the WOLF-WOOL CLOAK is worn (its saveFlag). Read by the storm front to know the storm's charge can
+ * no longer find you — a LATE reward that retroactively trivializes an early climb (the curiosity payoff,
+ * §17). The cloak IS the storm-immunity: its saveFlag doubles as this flag (one truth, no duplication). The
+ * storm-front runner reads it in lock-step (ADR §3). Never a gate — the storm was always beatable without it.
+ */
+export const STORM_IMMUNE_FLAG = 'wolfWoolCloakOwned'
+
+/**
  * Set by ending 3 (EAT IT) — you eat the sun, and the NG+ DARK SAVE begins (DESIGN §204/§286/§367). The
  * inverted opening: a black screen, the night sky, "You have 8,100 stars," and the counter ticking DOWN from
  * 8100 (a fresh start in the SAME world, a light remix — NOT a second full game). engine/state/newGamePlus's

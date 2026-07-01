@@ -22,6 +22,7 @@ import { TEMPLATE_MAP } from '@/content/quests/entityTemplates'
 import { GRIMOIRE_SPELLS } from '@/content/spells/grimoire'
 import { BEANSTALK_CLIMB, CLIMB_HEIGHT } from '@/content/quests/beanstalkClimb'
 import { STORM_FRONT, STORM_FRONT_GOAL } from '@/content/quests/stormFront'
+import { stormFrontMaxHp } from '@/engine/content/cloudWolf'
 import { FOREST_QUEST, FOREST_GOAL } from '@/content/quests/forest'
 import { playerQuestWeapons } from '@/content/items/playerLoadout'
 import { MINE_GATE, MINE_GATE_GOAL } from '@/content/quests/mineGate'
@@ -102,6 +103,9 @@ interface VerticalQuestOpts {
   readonly holdToFight?: boolean
   /** 'respawn' = farmable (log the death, climb on); 'eject' = one-life. */
   readonly death: 'respawn' | 'eject'
+  /** Optional pure transform of the derived max HP for this climb (e.g. the wolf-wool cloak's storm
+   * immunity boosts the storm-front pool). Absent ⇒ the plain derived max HP. */
+  maxHpOverride?(base: number): number
   /** Run on victory; owns the win side-effects + the post-win controls (gets the controls row). */
   onWon(controls: HTMLElement): void
   /** Run on a death when `death === 'eject'`. */
@@ -401,7 +405,8 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
   function runVertical(opts: VerticalQuestOpts): void {
     ctx.clearScreen()
     const startState = session.getState()
-    const def: QuestDef = { ...opts.def, playerMaxHp: ctx.maxHpOf(startState) }
+    const baseMaxHp = ctx.maxHpOf(startState)
+    const def: QuestDef = { ...opts.def, playerMaxHp: opts.maxHpOverride ? opts.maxHpOverride(baseMaxHp) : baseMaxHp }
     const driver = new VerticalDriver({ ...opts.driver, inversionVolumes: [] })
     const host = createQuestHost({
       def,
@@ -551,6 +556,9 @@ export function createQuestScreens(ctx: QuestContext): QuestScreens {
       driver: { gravityY: 0.6, climbSpeed: 9, gustPeriodMs: 1800, gustStrength: 1.5 },
       holdToFight: true,
       death: 'respawn',
+      // The wolf-wool cloak's storm immunity (Phase 5, hidden boss 1): worn, the front can't touch you, so the
+      // climb pool balloons. A LATE curiosity reward that trivializes an early climb — never a gate.
+      maxHpOverride: (base) => stormFrontMaxHp(session.getState(), base),
       onWon: (controls) => {
         // Bank the clear flag + candy drop, then press the djinn's loot into the player's hands.
         session.dispatch((s) => grantItem(grantItem(applyQuestWin(s, STORM_FRONT), BOTTLED_TEMPEST), STORM_SILK))

@@ -156,6 +156,21 @@ export const STORM_SILK: ItemDef = {
   saveFlag: 'stormSilkOwned',
 }
 
+/** The wolf-wool cloak (Phase 5 — the cloud wolf's drop, hidden boss 1, DESIGN §17). Shorn from the thing
+ * that was never a sheep: a cloak of thunderhead-grey wool that the storm's charge simply cannot find. The
+ * game's first ARMOUR-slot piece (the slot existed, unused, until now — it auto-equips there). Its saveFlag
+ * doubles as the storm-immunity flag the storm front reads (content/flags.STORM_IMMUNE_FLAG === this saveFlag):
+ * worn, the thunderhead can't touch you — a LATE reward that retroactively trivializes an early climb, the
+ * curiosity payoff. Never a gate; the storm was always beatable without it. */
+export const WOLF_WOOL_CLOAK: ItemDef = {
+  id: 'wolfWoolCloak',
+  displayKey: 'item.wolfWoolCloak.name',
+  descKey: 'item.wolfWoolCloak.desc',
+  ascii: '}{',
+  saveFlag: 'wolfWoolCloakOwned',
+  slot: 'armour',
+}
+
 /** The worm mold (Act 1, the moon-worm drop) — a worm-shaped cast prised from the colossal one.
  * Not equippable; while owned it grants the strata-mining yield boost (engine/content/moonStrata
  * reads its saveFlag). The gummy-army system that grows units from molds lands in a later increment
@@ -313,6 +328,7 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   TELESCOPE,
   BOTTLED_TEMPEST,
   STORM_SILK,
+  WOLF_WOOL_CLOAK,
   FISHBOWL_HELM,
   WORM_MOLD,
   SHED_SHELL,

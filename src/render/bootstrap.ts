@@ -989,6 +989,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showMailbox: town.showMailbox,
     showHouse,
     showCloudCommons: sky.showCloudCommons,
+    showCloudWolf: sky.showCloudWolf,
     showMoon: moon.showMoon,
     showSkyPort: skyport.showSkyPort,
     showReef: reef.showReef,

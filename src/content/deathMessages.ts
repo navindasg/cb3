@@ -153,6 +153,12 @@ export const GRANDMA_DUCK_DEATH: DeathMessage = {
 // These attach to the registry ahead of the boss increments (P5-06..P5-11) so a new
 // boss never ships an un-messaged death; each boss slice WIRES its already-authored line.
 
+/** The cloud wolf — the thing that was never a sheep (Phase 5, hidden boss 1, §17). */
+export const CLOUD_WOLF_DEATH: DeathMessage = {
+  source: 'cloudWolf',
+  message: 'death.cloudWolf',
+}
+
 /** The void whale did not even notice (§19 sample). */
 export const VOID_WHALE_DEATH: DeathMessage = {
   source: 'voidWhale',
@@ -190,6 +196,7 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   STAR_EATER_DEATH,
   STORM_MERGE_DEATH,
   GRANDMA_DUCK_DEATH,
+  CLOUD_WOLF_DEATH,
   VOID_WHALE_DEATH,
   GENERIC_DEATH,
 ]

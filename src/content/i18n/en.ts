@@ -32,6 +32,8 @@ export const en: GameText = {
   'item.bottledTempest.desc': 'A whole storm, corked. It rattles. One day you will learn to uncork it.',
   'item.stormSilk.name': 'storm-silk',
   'item.stormSilk.desc': 'Cloth woven from a tamed gale. Enough for a sail, if you had a ship.',
+  'item.wolfWoolCloak.name': 'the wolf-wool cloak',
+  'item.wolfWoolCloak.desc': 'A cloak shorn from the thing that was never a sheep — thunderhead-grey wool that hums faintly and smells of ozone. Worn, the storm forgets you are there. Its lightning goes looking elsewhere. You could walk up through the front now and never feel the charge, though the front is long behind you.',
   'item.cottonCandyBalloon.name': 'cotton-candy balloon',
   'item.cottonCandyBalloon.desc': 'A balloon of spun pink cloud, rigged with licorice. It strains upward, toward the moon.',
   'item.wormMold.name': 'gummy worm mold',
@@ -183,6 +185,7 @@ export const en: GameText = {
   'death.starEater': 'The cold long dark of it closes over the light. There is a silence with no bottom.',
   'death.stormMerge': 'You are now part of the storm. The storm says thanks.',
   'death.grandmaDuck': 'Grandma would have ducked.',
+  'death.cloudWolf': 'It was never a sheep. You knew that, at the end.',
   'death.voidWhale': 'The void whale did not even notice. Somehow that is worse.',
   'death.generic': 'You died. You feel fine about it. You respawn.',
 
