@@ -165,6 +165,12 @@ export const VOID_WHALE_DEATH: DeathMessage = {
   message: 'death.voidWhale',
 }
 
+/** Your reflection — it fights how you fight, and it does not blink (Phase 5, hidden boss 2, §17/§18). */
+export const REFLECTION_DEATH: DeathMessage = {
+  source: 'reflection',
+  message: 'death.reflection',
+}
+
 export const GENERIC_DEATH: DeathMessage = {
   source: 'generic',
   message: 'death.generic',
@@ -198,6 +204,7 @@ export const ALL_DEATH_MESSAGES: readonly DeathMessage[] = [
   GRANDMA_DUCK_DEATH,
   CLOUD_WOLF_DEATH,
   VOID_WHALE_DEATH,
+  REFLECTION_DEATH,
   GENERIC_DEATH,
 ]
 

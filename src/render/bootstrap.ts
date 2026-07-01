@@ -37,6 +37,12 @@ import { ACT0_SECRETS } from '@/content/secrets'
 import { inventoryView } from '@/content/items/inventoryView'
 import { WOODEN_SPOON, MANTLE_SWORD, ITEM_MAP } from '@/content/items/items'
 import {
+  paradoxPinOwned,
+  secondHat,
+  equipSecondHat,
+  unequipSecondHat,
+} from '@/engine/content/reflectionFight'
+import {
   GRANDMA_DIALOGUE,
   GRANDMA_INTRO_VARIANT_ID,
   GRANDMA_OLD_DAYS_LINES,
@@ -58,6 +64,7 @@ import { createStatusBar, type StatusBar } from '@/render/StatusBar'
 import { createHealthBar, type HealthBar } from '@/render/healthBar'
 import { createOverworldRenderer, type OverworldRenderer } from '@/render/Overworld'
 import { createTownScreens, type TownScreens } from '@/render/townScreens'
+import { createReflectionScreens, type ReflectionScreens } from '@/render/reflectionScreens'
 import { createSkyScreens, type SkyScreens } from '@/render/skyScreens'
 import { createMoonScreens, type MoonScreens } from '@/render/moonScreens'
 import { createSkyPortScreens, type SkyPortScreens } from '@/render/skyPortScreens'
@@ -585,6 +592,41 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       screen.appendChild(row)
     }
 
+    // The paradox pin's loophole (Phase 5, hidden boss 2): while it is owned you may wear a SECOND hat. Show a
+    // little picker of your other owned hats (never the one already in the primary slot). The rule lives in the
+    // tested engine (equipSecondHat / secondHat); this is thin wiring. Hats confer no combat stat yet, so this
+    // is purely the legible reward + the hook a future hat effect (§272/§235 morale) would read.
+    if (paradoxPinOwned(state)) {
+      const hatSlot = view.slots.find((sl) => sl.slot === 'hat')
+      const secondaries = (hatSlot?.owned ?? []).filter((i) => i.id !== state.equipped.hat)
+      const secondId = secondHat(state)
+      const row = doc.createElement('div')
+      row.className = 'inv-slot'
+      const label = doc.createElement('span')
+      label.className = 'inv-slot-label'
+      label.textContent = 'second hat (paradox pin):'
+      row.appendChild(label)
+      for (const item of secondaries) {
+        const on = item.id === secondId
+        const name = tk(item.displayKey as GameTextKey)
+        const b = button(`${item.ascii} ${name}${on ? ' ✓' : ''}`, `inv-hat2-${item.id}`, () => {
+          session.dispatch((s) => equipSecondHat(s, item.id).state)
+          showInventory()
+        })
+        if (on) b.classList.add('equipped')
+        row.appendChild(b)
+      }
+      if (secondId !== null) {
+        row.appendChild(
+          button('take off', 'inv-hat2-unequip', () => {
+            session.dispatch((s) => unequipSecondHat(s).state)
+            showInventory()
+          }),
+        )
+      }
+      screen.appendChild(row)
+    }
+
     if (view.otherItems.length > 0) {
       const others = doc.createElement('p')
       others.className = 'inv-others'
@@ -740,6 +782,23 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     logText,
     showMap,
     startCellar: quests.startCellar,
+    // Your reflection lives on its own screen, reached by drinking the mirror potion at the cauldron (a thunk:
+    // the reflection screen is created just below, and routes back to the cauldron — read only at click time).
+    showReflection: () => reflection.showReflection(),
+  })
+
+  // Your reflection's fight screen (Phase 5 — hidden boss 2, the X-potion homage). Same thin-wiring contract;
+  // the symmetric guard/lunge duel reading your build for both sides lives in the tested engine
+  // (engine/content/reflectionFight). Reached from the cauldron by drinking the mirror potion; routed back to it.
+  const reflection: ReflectionScreens = createReflectionScreens({
+    doc,
+    screen,
+    session,
+    clearScreen,
+    button,
+    notify,
+    logText,
+    showCauldron: town.showCauldron,
   })
 
   // The sky screens (Act 1 — the cumulus commons at the top of the beanstalk) live in a sub-module
@@ -1001,6 +1060,7 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showHouse,
     showCloudCommons: sky.showCloudCommons,
     showCloudWolf: sky.showCloudWolf,
+    showReflection: reflection.showReflection,
     showMoon: moon.showMoon,
     showSkyPort: skyport.showSkyPort,
     showReef: reef.showReef,

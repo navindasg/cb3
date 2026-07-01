@@ -364,6 +364,29 @@ export const CLOUD_WOLF_REVEALED_FLAG = 'cloudWolfRevealed'
 export const CLOUD_WOLF_DEFEATED_FLAG = 'cloudWolfDefeated'
 
 /**
+ * Set when your reflection is beaten (Phase 5 — hidden boss 2, the X-potion homage, DESIGN §17/§18). Commit-once
+ * (the kraken/boarding idiom): it blocks re-granting the paradox pin and retires the fight. The reflection sim
+ * (engine/content/reflectionFight) is TRANSIENT and never persists; the screen sets this flag on the win.
+ * engine/content/reflectionFight re-declares this literal in lock-step (the moonStrata idiom, ADR §3). A one-off
+ * boss + a one-off drop; the mirror potion consumes its ingredients on the brew, so a lost fight costs the draught.
+ */
+export const REFLECTION_DEFEATED_FLAG = 'reflectionDefeated'
+
+/**
+ * Set when the PARADOX PIN is owned (its own saveFlag — the reflection's drop). Read to permit a SECOND hat slot
+ * (engine/content/reflectionFight.maxHats / equipSecondHat) — "wear two hats", a loophole the game does not
+ * otherwise allow. The engine reads this literal in lock-step (ADR §3). Never a gate; a curiosity reward.
+ */
+export const PARADOX_PIN_OWNED_FLAG = 'paradoxPinOwned'
+
+/**
+ * The strings-namespace key holding the SECOND equipped hat's item id (the paradox pin's reward). Empty/absent
+ * ⇒ no second hat. engine/content/reflectionFight.equipSecondHat writes it in lock-step (the moonStrata idiom,
+ * ADR §3); it rides the strings z.record (no schema bump). Only meaningful once the paradox pin is owned.
+ */
+export const HAT_TWO_KEY = 'hatTwo'
+
+/**
  * Set when the WOLF-WOOL CLOAK is worn (its saveFlag). Read by the storm front to know the storm's charge can
  * no longer find you — a LATE reward that retroactively trivializes an early climb (the curiosity payoff,
  * §17). The cloak IS the storm-immunity: its saveFlag doubles as this flag (one truth, no duplication). The

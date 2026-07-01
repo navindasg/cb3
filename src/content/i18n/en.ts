@@ -64,6 +64,12 @@ export const en: GameText = {
   'item.oldMapFragment.desc': 'A torn corner of a map, soft as cloth from folding. It shows a climb — a garden, a beanstalk, a moon — in a hand that is not quite steady, drawn from memory by someone who had already been. None of it is on any map they sell in the village.',
   'item.wrapper.name': 'the wrapper',
   'item.wrapper.desc': 'The wax paper the sword was wrapped in, folded flat and kept at the bottom of the trunk. She wrapped it herself, a long time ago, meaning to throw it out and never quite doing it. It is only paper. You keep it anyway. The sword over the mantle is yours to take now.',
+  'item.sugarGlassShard.name': 'a sugar-glass shard',
+  'item.sugarGlassShard.desc': 'A chip of clear sugar-glass, ground off the edge of a lens and sold for next to nothing. Held up to the light it shows you back to yourself, a little too faithfully. The astronomer sweeps a drawer of these off his bench and does not miss one.',
+  'item.mirrorPotion.name': 'the mirror potion',
+  'item.mirrorPotion.desc': 'A cold, still draught the exact colour of your own eyes. It does not steam, and it does not settle. Drink it and you will not be alone in the room. You are fairly sure you know who the other one will be.',
+  'item.paradoxPin.name': 'the paradox pin',
+  'item.paradoxPin.desc': 'A small pin of two little mirrors set facing each other, so that each is full of the other, forever, going nowhere. Won off the thing that was you. While you wear it the ordinary rule that a person may wear only one hat quietly stops applying. Wear two. Who is going to stop you.',
 
   // merchant lines
   'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
@@ -77,6 +83,7 @@ export const en: GameText = {
   'forge.fishbowlHelm.thanks': 'There. Hammered onto a good gorget. You will look ridiculous, and you will breathe. I have wanted to make one of these my whole life. Go on — go and need it.',
   'obs.beginnerGrimoire.thanks': 'Magic is mostly reading. Here is the reading.',
   'obs.telescope.thanks': 'There. Now you can see them all. All eight thousand of them.',
+  'obs.sugarGlassShard.thanks': "An offcut. Grind a lens and you make a hundred of these. Careful holding it to the light — it is very honest. Take it, take it.",
 
   // speakers
   'speaker.grandma': 'Grandma',
@@ -187,6 +194,7 @@ export const en: GameText = {
   'death.grandmaDuck': 'Grandma would have ducked.',
   'death.cloudWolf': 'It was never a sheep. You knew that, at the end.',
   'death.voidWhale': 'The void whale did not even notice. Somehow that is worse.',
+  'death.reflection': 'It fought exactly the way you fight, only it did not blink. You should think about that. You wake at the cauldron.',
   'death.generic': 'You died. You feel fine about it. You respawn.',
 
   // zones

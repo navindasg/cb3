@@ -28,6 +28,7 @@ export default defineConfig({
         'src/render/sourbeardScreens.ts',
         'src/render/sourPlanetScreens.ts',
         'src/render/krakenScreens.ts',
+        'src/render/reflectionScreens.ts',
         'src/render/mintPlanetScreens.ts',
         'src/render/scaffoldScreens.ts',
         'src/render/finaleScreens.ts',

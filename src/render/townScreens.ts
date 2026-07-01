@@ -11,6 +11,13 @@ import { buyTelescope } from '@/engine/content/observatory'
 import { brew } from '@/engine/cauldron/brew'
 import { canBoilCaramel, boilCaramel } from '@/engine/content/caramelCauldron'
 import { BOIL_CANDY_COST, CARAMEL_PER_BOIL } from '@/content/recipes/caramelBoil'
+import {
+  canBrewMirrorPotion,
+  hasMirrorPotion,
+  brewMirrorPotion,
+  reflectionDefeated,
+} from '@/engine/content/reflectionFight'
+import { SUGAR_GLASS_SHARD } from '@/content/items/items'
 import { fireAny } from '@/engine/content/secrets'
 import { tellRumor, rumorAvailable } from '@/engine/content/tavern'
 import { act1GateCleared } from '@/engine/content/actGate'
@@ -78,6 +85,8 @@ export interface TownContext {
   showMap(): void
   /** Start the gummy-worm cellar mini-quest (a village house; owned by the quest screens). */
   startCellar(): void
+  /** Drink the mirror potion and face your reflection (Phase 5, hidden boss 2 — its own screen; a thunk). */
+  showReflection(): void
 }
 
 export interface TownScreens {
@@ -398,7 +407,75 @@ export function createTownScreens(ctx: TownContext): TownScreens {
       if (!canBoilCaramel(s)) boil.disabled = true
       screen.appendChild(boil)
 
+      renderMirrorPotion(s)
+
       screen.appendChild(ctx.button('back upstairs', 'cauldron-back', () => showObservatory(), 5))
+    }
+
+    // The mirror potion (Phase 5, hidden boss 2, §17/§18). Once you hold a sugar-glass shard (bought cheap at the
+    // observatory), a cold pot at the back offers the brew: one chocolate + one candy + the shard, consumed. The
+    // section only appears when there is something to do here (you hold the shard, or a brewed potion, or you've
+    // already met your reflection) — a curiosity, never signposted at you. Drinking summons the reflection (its
+    // own screen). All the rules (exact-cost brew, one-shot reagent, the fight) live in the tested engine.
+    function renderMirrorPotion(s: GameState): void {
+      const holdsShard = s.ownedItems[SUGAR_GLASS_SHARD.id] === true
+      const brewed = hasMirrorPotion(s)
+      const done = reflectionDefeated(s)
+      if (!holdsShard && !brewed && !done) return
+
+      heading('the cold pot', 'cauldron-mirror-section')
+
+      if (brewed) {
+        paragraph(
+          'The mirror potion sits finished and cold, the exact colour of your own eyes. It does not steam. Drink it, and you will not be alone in here.',
+          'blurb',
+          'cauldron-mirror-brewed',
+        )
+        screen.appendChild(ctx.button('drink it, and face your reflection', 'cauldron-drink-mirror', () => ctx.showReflection()))
+        return
+      }
+
+      if (done) {
+        paragraph(
+          'The cold pot is quiet now. You have already met the one who lives in it, and won the small pin off them. You could brew another, if you missed the company.',
+          'blurb',
+          'cauldron-mirror-done',
+        )
+      }
+
+      // Holds the shard (and either not-done, or done-and-wants-a-rematch): offer the brew.
+      paragraph(
+        'A second, colder pot broods at the back. Hold the sugar-glass shard over it with a chocolate and a single candy, and the water goes very still and very honest.',
+        'blurb',
+        'cauldron-mirror-blurb',
+      )
+      const brewBtn = ctx.button(
+        'brew the mirror potion (1 chocolate + 1 candy + the shard)',
+        'cauldron-brew-mirror',
+        () => doBrewMirror(),
+      )
+      if (!canBrewMirrorPotion(s)) {
+        brewBtn.disabled = true
+        brewBtn.classList.add('shop-unaffordable')
+      }
+      screen.appendChild(brewBtn)
+    }
+
+    function doBrewMirror(): void {
+      const result = brewMirrorPotion(session.getState())
+      if (!result.ok) {
+        ctx.notify(
+          result.reason === 'noShard'
+            ? 'you need a sugar-glass shard first (the astronomer sells offcuts).'
+            : result.reason === 'alreadyBrewed'
+              ? 'a mirror potion is already brewed.'
+              : 'you need a chocolate and a candy to spare.',
+        )
+        return
+      }
+      session.dispatch(() => result.state)
+      ctx.logText('The water goes still and cold and the colour of your eyes. The mirror potion is brewed.')
+      render()
     }
 
     function doBoil(): void {

@@ -16,4 +16,15 @@ export const OBSERVATORY_ENTRIES: readonly ShopEntry[] = [
     price: [{ resource: 'candies', amount: 800 }],
     speechKey: 'obs.telescope.thanks',
   },
+  // The sugar-glass shard (Phase 5 — the mirror-potion reagent, hidden boss 2, §17/§18). A cheap offcut from the
+  // astronomer's lens-grinding: always available, so the reflection is never gated behind an unobtainable item
+  // (soft-lock-free). The entry re-appears after the shard is consumed into a brew (its owned flag is cleared),
+  // so you can re-buy and face your reflection again. Gated only on owning the telescope (you have met the
+  // astronomer + his workshop by then) so it surfaces in context, never as a mystery on day one.
+  {
+    itemId: 'sugarGlassShard',
+    price: [{ resource: 'candies', amount: 120 }],
+    unlock: (s) => s.flags['telescopeOwned'] === true && s.ownedItems['sugarGlassShard'] !== true,
+    speechKey: 'obs.sugarGlassShard.thanks',
+  },
 ]

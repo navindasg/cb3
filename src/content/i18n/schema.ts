@@ -58,6 +58,12 @@ export interface GameText {
   'item.scholarsPamphlet.desc': string
   'item.candyBoxFigurehead.name': string
   'item.candyBoxFigurehead.desc': string
+  'item.sugarGlassShard.name': string
+  'item.sugarGlassShard.desc': string
+  'item.mirrorPotion.name': string
+  'item.mirrorPotion.desc': string
+  'item.paradoxPin.name': string
+  'item.paradoxPin.desc': string
   'item.pogoStick.name': string
   'item.pogoStick.desc': string
   'item.oldMapFragment.name': string
@@ -77,6 +83,7 @@ export interface GameText {
   'forge.fishbowlHelm.thanks': string
   'obs.beginnerGrimoire.thanks': string
   'obs.telescope.thanks': string
+  'obs.sugarGlassShard.thanks': string
 
   // --- speakers ---
   'speaker.grandma': string
@@ -187,6 +194,7 @@ export interface GameText {
   'death.grandmaDuck': string
   'death.cloudWolf': string
   'death.voidWhale': string
+  'death.reflection': string
   'death.generic': string
 
   // --- zones (map labels' display names) ---

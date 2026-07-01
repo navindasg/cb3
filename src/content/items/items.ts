@@ -289,6 +289,42 @@ export const CANDY_BOX_FIGUREHEAD: ItemDef = {
   saveFlag: 'candyBoxFigureheadOwned',
 }
 
+/** The sugar-glass shard (Phase 5 — the mirror-potion ingredient, hidden boss 2, DESIGN §17/§18). A cheap chip
+ * of clear sugar-glass — an offcut from the astronomer's lens-grinding, sold at the observatory for a song. Not
+ * equippable; a keepsake item-flag, not a resource. CONSUMED when the mirror potion is brewed (its owned flag is
+ * cleared), so it is a one-shot reagent you re-buy if you want to face your reflection again. */
+export const SUGAR_GLASS_SHARD: ItemDef = {
+  id: 'sugarGlassShard',
+  displayKey: 'item.sugarGlassShard.name',
+  descKey: 'item.sugarGlassShard.desc',
+  ascii: '<>',
+  saveFlag: 'sugarGlassShardOwned',
+}
+
+/** The mirror potion (Phase 5 — hidden boss 2, the X-potion homage, DESIGN §17/§18). Brewed cold at the cauldron
+ * from a sugar-glass shard, a chocolate, and exactly one candy (engine/content/reflectionFight.brewMirrorPotion).
+ * Not equippable; an in-hand draught (an item-flag). DRINKING it (drinkMirrorPotion clears the flag) summons your
+ * reflection — a turn-based fight against your exact current build. A lost fight costs the draught, not the pin. */
+export const MIRROR_POTION: ItemDef = {
+  id: 'mirrorPotion',
+  displayKey: 'item.mirrorPotion.name',
+  descKey: 'item.mirrorPotion.desc',
+  ascii: '~O',
+  saveFlag: 'mirrorPotionOwned',
+}
+
+/** The paradox pin (Phase 5 — your reflection's drop, hidden boss 2, DESIGN §17/§18). A small pin of two mirrors
+ * facing each other, won off the thing that was you. Not equippable itself; a keepsake whose owned flag CHANGES
+ * AN EQUIP RULE — with it pinned you may wear TWO hats at once (engine/content/reflectionFight.maxHats /
+ * equipSecondHat), which the game does not otherwise permit. Deadpan: the reward is not a stat, it is a loophole. */
+export const PARADOX_PIN: ItemDef = {
+  id: 'paradoxPin',
+  displayKey: 'item.paradoxPin.name',
+  descKey: 'item.paradoxPin.desc',
+  ascii: '8o',
+  saveFlag: 'paradoxPinOwned',
+}
+
 /** The heirloom sword on grandma's mantle — taken down at last once the attic's wrapper unlocks it
  * (§231/§288). Its saveFlag `mantleSwordTaken` is set by the attic grant (openAttic grants it alongside
  * the wrapper); owning it auto-equips the weapon slot, activating the lifetime-candy scaling (see
@@ -340,6 +376,9 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   PEPPERMINT_BATHYSPHERE,
   COTTON_CANDY_BALLOON,
   CANDY_BOX_FIGUREHEAD,
+  SUGAR_GLASS_SHARD,
+  MIRROR_POTION,
+  PARADOX_PIN,
   MANTLE_SWORD,
   // The scholar's pamphlet lives with its typed secret (content/typedSecrets), but joins the registry
   // here so the secret runner's grantItem can resolve it via ITEM_MAP.
