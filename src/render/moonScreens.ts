@@ -50,7 +50,7 @@ import { plantMoonpop, moonpopsPlanted } from '@/engine/content/interactionBonus
 import { hatchOpened, openHatch } from '@/engine/content/contextWindow'
 import {
   HATCH_HEADING,
-  HATCH_LABEL,
+  HATCH_STENCIL,
   HATCH_CLOSED_BLURB,
   HATCH_OPENED_BLURB,
   OPEN_HATCH_LABEL,
@@ -578,7 +578,7 @@ export function createMoonScreens(ctx: MoonContext): MoonScreens {
       const stencil = doc.createElement('pre')
       stencil.className = 'arena'
       stencil.setAttribute('data-testid', 'moon-hatch-stencil')
-      stencil.textContent = ['+------------------------+', `|  ${HATCH_LABEL}  |`, '+------------------------+'].join('\n')
+      stencil.textContent = HATCH_STENCIL.join('\n')
       screen.appendChild(stencil)
       paragraph(HATCH_CLOSED_BLURB, 'blurb', 'moon-hatch-closed')
       screen.appendChild(ctx.button(OPEN_HATCH_LABEL, 'moon-hatch-open', () => doOpenHatch()))

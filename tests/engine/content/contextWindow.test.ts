@@ -14,6 +14,7 @@ import {
   SECOND_PANEL_STUB,
   VIEWPORT_LINES,
   HATCH_LABEL,
+  HATCH_STENCIL,
   HATCH_HEADING,
   TERMINAL_HEADING,
 } from '@/content/moon/contextWindow'
@@ -190,6 +191,24 @@ describe('the context window — content config integrity (stable ASCII data)', 
 
   it('the hatch label carries the joke (it insists it is fine)', () => {
     expect(HATCH_LABEL.toUpperCase()).toContain('FINE')
+  })
+
+  it('the hatch stencil box is a self-consistent grid (all three lines equal width — the grid is sacred)', () => {
+    // The box lands in a monospace <pre>; if the border and label rows differ the right edge juts out.
+    // Derived from HATCH_LABEL.length in content, so this pins the alignment against future drift.
+    expect(HATCH_STENCIL.length).toBe(3)
+    const width = HATCH_STENCIL[0]!.length
+    for (const line of HATCH_STENCIL) expect(line.length).toBe(width)
+  })
+
+  it('the hatch stencil is a closed box that frames the label (corners + label row), pure ASCII', () => {
+    const [top, mid, bottom] = HATCH_STENCIL as [string, string, string]
+    expect(top).toBe(bottom) // top and bottom borders match
+    expect(top.startsWith('+') && top.endsWith('+')).toBe(true) // corner glyphs
+    expect(top.slice(1, -1)).toBe('-'.repeat(top.length - 2)) // border is all dashes
+    expect(mid.startsWith('|') && mid.endsWith('|')).toBe(true) // side walls
+    expect(mid).toContain(HATCH_LABEL) // the label sits inside
+    for (const line of HATCH_STENCIL) expect(/[^\x00-\x7F]/.test(line), `ascii: ${line}`).toBe(false)
   })
 
   it('the notes are stable data — a module const, so identity is constant across reads', () => {

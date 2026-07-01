@@ -27,6 +27,18 @@ export const HATCH_HEADING = 'the maintenance hatch'
  */
 export const HATCH_LABEL = 'DO NOT OPEN (IT\'S FINE)'
 
+/**
+ * The hatch's ASCII stencil box — the first thing you see at the hatch, drawn in the monospace <pre>
+ * grid. Derived from HATCH_LABEL so the border and the label row can NEVER drift out of alignment (the
+ * grid is sacred — see the terminal's own housekeeping notes). One space of padding either side of the
+ * label; the border matches the inner width exactly. Pure ASCII data; the render layer just prints it.
+ */
+export const HATCH_STENCIL: readonly string[] = (() => {
+  const inner = ` ${HATCH_LABEL} `
+  const bar = `+${'-'.repeat(inner.length)}+`
+  return [bar, `|${inner}|`, bar]
+})()
+
 /** The closed-hatch blurb (before you open it). */
 export const HATCH_CLOSED_BLURB =
   'Bolted to the moon\'s far side, half-buried in grey dust, is a service panel that does not belong to anything. A stencil across it reads: DO NOT OPEN (IT\'S FINE). There is no lock. There is nothing behind it that could possibly be your business.'
