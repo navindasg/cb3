@@ -36,8 +36,21 @@ import { BEANSTALK_ELEVATOR_FLAG, CLOUD_COMMONS_REACHED_FLAG } from '@/content/f
 import { ACT0_SECRETS } from '@/content/secrets'
 import { inventoryView } from '@/content/items/inventoryView'
 import { WOODEN_SPOON, ITEM_MAP } from '@/content/items/items'
-import { GRANDMA_DIALOGUE, GRANDMA_INTRO_VARIANT_ID } from '@/content/dialogue/grandma'
+import {
+  GRANDMA_DIALOGUE,
+  GRANDMA_INTRO_VARIANT_ID,
+  GRANDMA_OLD_DAYS_LINES,
+  GRANDMA_OLD_DAYS_DONE_LINE,
+} from '@/content/dialogue/grandma'
 import { selectVariant, markVariantShown } from '@/engine/content/dialogue'
+import {
+  askAboutOldDays,
+  oldDaysAsked,
+  atticUnlocked,
+  atticOpened,
+  openAttic,
+} from '@/engine/content/mailbox'
+import { ATTIC_ITEMS } from '@/content/letters'
 import { grantItem } from '@/engine/shop/purchase'
 import { t } from '@/content/i18n/en'
 import type { GameTextKey } from '@/content/i18n/schema'
@@ -440,8 +453,74 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
       }
     }
 
+    // Ask Grandma about the old days (§288). Available once you have met her. Three asks and she nods at
+    // the attic ladder; the render only shows the escalating line — the counter + unlock live in the
+    // tested mailbox engine. She never says she was the hero; the letters' signature does that.
+    if (session.getState().flags['metGrandma'] === true) {
+      const asked = oldDaysAsked(session.getState())
+      const oldDaysLabel = 'ask about the old days'
+      screen.appendChild(
+        button(oldDaysLabel, 'grandma-old-days', () => askOldDays(), oldDaysLabel.indexOf('o')),
+      )
+      // Show the line for the most recent ask (or her post-threshold line once the attic is open).
+      if (asked > 0) {
+        const line = doc.createElement('p')
+        line.className = 'dialogue-line'
+        line.setAttribute('data-testid', 'grandma-old-days-line')
+        const idx = Math.min(asked, GRANDMA_OLD_DAYS_LINES.length) - 1
+        const key = atticUnlocked(session.getState()) && asked > GRANDMA_OLD_DAYS_LINES.length
+          ? GRANDMA_OLD_DAYS_DONE_LINE
+          : GRANDMA_OLD_DAYS_LINES[idx]!
+        line.textContent = tk(key as GameTextKey)
+        screen.appendChild(line)
+      }
+      // The attic ladder appears once she has relented (asked >= 3).
+      if (atticUnlocked(session.getState())) {
+        const atticLabel = atticOpened(session.getState()) ? 'the attic' : 'up to the attic'
+        screen.appendChild(button(atticLabel, 'house-attic', () => showAttic(), atticLabel.indexOf('a')))
+      }
+    }
+
     const back = tk('action.backToHouse')
     screen.appendChild(button(back, 'house-to-field', () => showField(), back.indexOf('b')))
+  }
+
+  /** Ask Grandma about the old days: bump the tested counter, then re-render the house with her line. */
+  function askOldDays(): void {
+    session.dispatch((s) => askAboutOldDays(s).state)
+    showHouse()
+  }
+
+  // --- the attic: the old-days ×3 keepsakes (the pogo stick, the map fragment, the wrapper) --------
+
+  function showAttic(): void {
+    clearScreen()
+    const title = doc.createElement('h2')
+    title.textContent = 'the attic'
+    title.setAttribute('data-testid', 'attic-screen')
+    screen.appendChild(title)
+
+    const opened = atticOpened(session.getState())
+    const blurb = doc.createElement('p')
+    blurb.className = 'blurb'
+    blurb.textContent = opened
+      ? 'Dust, a low roof, and the smell of old paper. The trunk stands open now; you have taken what was in it.'
+      : 'Dust, a low roof, and the smell of old paper. A pogo stick leans in one corner. A trunk sits under the window, its lid not quite shut. Inside, on top, a torn scrap of map. Beneath it, wrapped in wax paper, something the shape of a sword.'
+    screen.appendChild(blurb)
+
+    if (!opened) {
+      screen.appendChild(
+        button('take what is in the trunk', 'attic-take', () => {
+          const result = openAttic(session.getState(), ATTIC_ITEMS)
+          if (result.ok) {
+            session.dispatch(() => result.state)
+            logText('You take the pogo stick, the old map fragment, and — after a moment — the wrapper. The sword over the mantle is yours to take now.')
+          }
+          showAttic()
+        }),
+      )
+    }
+    screen.appendChild(button('back down', 'attic-back', () => showHouse(), 0))
   }
 
   // --- the inventory: equipment slots + combat stats + owned items (CB2's Inventory) --------
@@ -904,6 +983,8 @@ export function bootstrap(statusRoot: HTMLElement, mainRoot: HTMLElement): Boots
     showObservatory: town.showObservatory,
     showCauldron: town.showCauldron,
     showTavern: town.showTavern,
+    showMailbox: town.showMailbox,
+    showHouse,
     showCloudCommons: sky.showCloudCommons,
     showMoon: moon.showMoon,
     showSkyPort: skyport.showSkyPort,

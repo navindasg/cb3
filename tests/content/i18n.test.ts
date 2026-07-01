@@ -14,6 +14,8 @@ import { ALL_DEATH_MESSAGES, BESPOKE_DEATH_SOURCES } from '@/content/deathMessag
 import { deathBlurb } from '@/engine/quest/deathBlurb'
 import { FIELD_REVEAL_THRESHOLDS } from '@/content/fieldReveal'
 import { DRAGON_WORDS, DRAGON_SPEAKER_KEY } from '@/content/sun/caramelCore'
+import { CLIMBER_LETTERS } from '@/content/letters'
+import { GRANDMA_OLD_DAYS_LINES, GRANDMA_OLD_DAYS_DONE_LINE } from '@/content/dialogue/grandma'
 
 const KEYS = new Set(Object.keys(en))
 const has = (key: string): boolean => KEYS.has(key)
@@ -82,6 +84,17 @@ describe('en.ts locale completeness', () => {
     for (const key of DRAGON_WORDS) {
       expect(has(key), key).toBe(true)
       expect(t(key), key).toBeTruthy()
+    }
+  })
+
+  it('every first-climber letter body + grandma old-days line resolves (§30/§288)', () => {
+    for (const letter of CLIMBER_LETTERS) {
+      expect(has(letter.bodyKey), letter.bodyKey).toBe(true)
+      expect(t(letter.bodyKey as GameTextKey), letter.bodyKey).toBeTruthy()
+    }
+    for (const key of [...GRANDMA_OLD_DAYS_LINES, GRANDMA_OLD_DAYS_DONE_LINE]) {
+      expect(has(key), key).toBe(true)
+      expect(t(key as GameTextKey), key).toBeTruthy()
     }
   })
 

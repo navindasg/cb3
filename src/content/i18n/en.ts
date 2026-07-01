@@ -56,6 +56,12 @@ export const en: GameText = {
   'item.scholarsPamphlet.desc': 'A thin, water-stained pamphlet on the nature of starlight. The margins are full of a careful hand crossing out its own conclusions. Whoever wrote it stopped, mid-sentence, a long time ago.',
   'item.candyBoxFigurehead.name': 'a smiling figurehead',
   'item.candyBoxFigurehead.desc': 'A small carved smiley, bolted to the bow. It came with the name. Nobody at the yard admits to carving it, and it was already smiling when they looked. It seems to like being out here.',
+  'item.pogoStick.name': 'a pogo stick',
+  'item.pogoStick.desc': 'A pogo stick from the attic, its paint worn to bare wood where two small hands used to grip it. You give it an experimental bounce. It still works.',
+  'item.oldMapFragment.name': 'an old map fragment',
+  'item.oldMapFragment.desc': 'A torn corner of a map, soft as cloth from folding. It shows a climb — a garden, a beanstalk, a moon — in a hand that is not quite steady, drawn from memory by someone who had already been. None of it is on any map they sell in the village.',
+  'item.wrapper.name': 'the wrapper',
+  'item.wrapper.desc': 'The wax paper the sword was wrapped in, folded flat and kept at the bottom of the trunk. She wrapped it herself, a long time ago, meaning to throw it out and never quite doing it. It is only paper. You keep it anyway. The sword over the mantle is yours to take now.',
 
   // merchant lines
   'shop.leatherHat.thanks': 'A fine choice. Mind the sun.',
@@ -81,6 +87,19 @@ export const en: GameText = {
   'dialogue.grandma.spoonGift': 'She presses a wooden spoon into your hands.',
   'dialogue.grandma.mantle1': 'Do not touch the sword over the mantle.',
   'dialogue.grandma.mantle2': 'Not yet. You are not ready, and neither is it.',
+  'dialogue.grandma.oldDays1': 'The old days? Oh, they were much the same as these. More walking. Eat your candy.',
+  'dialogue.grandma.oldDays2': 'You do keep asking. There was a garden, and a beanstalk, and a very long way up. That is all.',
+  'dialogue.grandma.oldDays3': 'She is quiet for a while. Then she looks at you properly, the way you look at a map you already know. "Go up to the attic, dear," she says. "It is time you had a look."',
+  'dialogue.grandma.oldDaysDone': 'It is all up in the attic now. Take what you like. It was only ever waiting for you.',
+
+  // the village mailbox — six letters from the first climber (§30/§288). They never say "I was the
+  // hero"; they warm, letter by letter, and the last is signed. The signature does the work.
+  'letter.mines.body': 'To whoever is climbing now — I do not know your name and you will not know mine. I only wanted to say: the mines are worse than they look and better than they feel. Keep the ceiling in sight. You get through. I did. — the first one down',
+  'letter.moon.body': 'You reached the moon. Good. I stood where you are standing and I cried, a little, and then I got on with it, and I hope you did too. It is very quiet up there. That is the part nobody warns you about.',
+  'letter.galleon.body': 'A ship of your own. I am glad. I never had one — I went the hard way, hand over hand, and I have wondered ever since what it would have been to sail. Name her something kind. She will hear it more than you think.',
+  'letter.fusion.body': 'You met the gummy folk. Tell me — is the elder still there? Do not answer; I know you cannot. They were kind to me once when nobody else was, and I have carried it a long way. Be kind back. It costs nothing and it lasts.',
+  'letter.sun.body': 'You are going to the sun. I want to tell you not to. I will not, because someone told me not to and I went anyway, and here you are, so it runs in the family. Only — be careful of what you find in the light. It is not what they say it is. It never was.',
+  'letter.last.body': 'This is the last one; there is nothing after this I could tell you that you will not soon know better than I do. You did what I could not. You went all the way. I am so proud of you I can hardly hold the pen. Come home when it is done. I have kept your supper warm for longer than you would believe. — with all my love,',
 
   // astronomer dialogue
   'dialogue.astronomer.pitch1': 'Magic? Bah. The stars, child — buy the telescope.',

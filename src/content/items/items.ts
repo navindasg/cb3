@@ -1,5 +1,6 @@
 import type { ItemDef } from '@/engine/types/defs'
 import { SCHOLARS_PAMPHLET } from '@/content/typedSecrets'
+import { POGO_STICK, OLD_MAP_FRAGMENT, WRAPPER } from '@/content/letters'
 
 // Act 0 items as data (ADR §10 ItemDef). Content imports ONLY engine types. The wooden
 // spoon is grandma's heirloom gift (a weapon). The forge sells weapon upgrades. The
@@ -317,6 +318,12 @@ export const ALL_ITEMS: readonly ItemDef[] = [
   // The scholar's pamphlet lives with its typed secret (content/typedSecrets), but joins the registry
   // here so the secret runner's grantItem can resolve it via ITEM_MAP.
   SCHOLARS_PAMPHLET,
+  // The attic keepsakes (Phase 5 — grandma's old-days ×3 secret; content/letters) join the registry so
+  // the mailbox engine's openAttic can grant them via grantItem/ITEM_MAP. The wrapper's saveFlag IS the
+  // mantle-sword unlock flag (grandma's blessing to take the sword down).
+  POGO_STICK,
+  OLD_MAP_FRAGMENT,
+  WRAPPER,
 ]
 
 /** The item registry the generic purchase handler consumes. */

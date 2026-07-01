@@ -56,6 +56,12 @@ export interface GameText {
   'item.scholarsPamphlet.desc': string
   'item.candyBoxFigurehead.name': string
   'item.candyBoxFigurehead.desc': string
+  'item.pogoStick.name': string
+  'item.pogoStick.desc': string
+  'item.oldMapFragment.name': string
+  'item.oldMapFragment.desc': string
+  'item.wrapper.name': string
+  'item.wrapper.desc': string
 
   // --- shop / forge / observatory merchant lines ---
   'shop.leatherHat.thanks': string
@@ -81,6 +87,18 @@ export interface GameText {
   'dialogue.grandma.spoonGift': string
   'dialogue.grandma.mantle1': string
   'dialogue.grandma.mantle2': string
+  'dialogue.grandma.oldDays1': string
+  'dialogue.grandma.oldDays2': string
+  'dialogue.grandma.oldDays3': string
+  'dialogue.grandma.oldDaysDone': string
+
+  // --- the village mailbox: milestone letters from the first climber (§30/§288) ---
+  'letter.mines.body': string
+  'letter.moon.body': string
+  'letter.galleon.body': string
+  'letter.fusion.body': string
+  'letter.sun.body': string
+  'letter.last.body': string
 
   // --- astronomer dialogue ---
   'dialogue.astronomer.pitch1': string

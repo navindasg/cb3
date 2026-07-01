@@ -344,6 +344,23 @@ export interface SecretDef {
   readonly sessionOnly?: boolean
 }
 
+// --- Mailbox / letters (Phase 5, §30/§288) ---------------------------------
+// The village mailbox delivers milestone letters from "the first climber". Each is pure data: an
+// unlock gate (an existing milestone flag) + a body i18n key, the sixth signed with grandma's real
+// name (the §288 reveal). The engine's mailbox module reads these; it never imports the content
+// value, only this type. Letters grant nothing to farm — the reward is lore.
+
+/** One milestone letter from the first climber: the flag that delivers it + its body i18n key. */
+export interface LetterDef {
+  readonly id: string
+  /** The milestone flag that must be set for this letter to be delivered. */
+  readonly gateFlag: string
+  /** i18n key for the letter's body. */
+  readonly bodyKey: string
+  /** True for the final, signed letter (the §288 reveal) — the reader draws the signature. */
+  readonly signed?: boolean
+}
+
 // --- Progressive reveal (Block F) ------------------------------------------
 // CB2's opener reveals actions one at a time as candy accumulates. A reveal threshold maps
 // an action id to the candies.historicalMax at which it appears; the engine returns the set

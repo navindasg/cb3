@@ -24,6 +24,9 @@ import { ASTRONOMER_DIALOGUE } from '@/content/dialogue/astronomer'
 import { TAVERN_RUMORS } from '@/content/tavern/rumors'
 import { ITEM_MAP } from '@/content/items/items'
 import { VILLAGE_REACHED_FLAG } from '@/content/flags'
+import type { LetterDef } from '@/engine/types/defs'
+import { availableLetters, letterRead, unreadCount, markLetterRead } from '@/engine/content/mailbox'
+import { CLIMBER_LETTERS, GRANDMA_REAL_NAME } from '@/content/letters'
 
 // The town screens (the village hub + the forge, the general shop, the observatory + its cauldron)
 // — a wiring sub-module of the DOM bootstrap, extracted to keep bootstrap.ts thin. Like bootstrap
@@ -33,6 +36,16 @@ import { VILLAGE_REACHED_FLAG } from '@/content/flags'
 // The generic shop renderer is reused by the forge, the shop and the observatory alike.
 
 const tk = (key: string): string => t(key as GameTextKey)
+
+/** Deadpan one-word topics for the mailbox's letter buttons (by letter id) — kept out of i18n. */
+const LETTER_TOPICS: Record<string, string> = {
+  letterMines: 'the mines',
+  letterMoon: 'the moon',
+  letterGalleon: 'the ship',
+  letterFusion: 'the gummy folk',
+  letterSun: 'the sun',
+  letterLast: 'coming home',
+}
 
 /** Human labels for the resources that appear in Act 0 prices. */
 const RESOURCE_LABEL: Partial<Record<ResourceKey, string>> = {
@@ -74,6 +87,7 @@ export interface TownScreens {
   showObservatory(): void
   showCauldron(): void
   showTavern(): void
+  showMailbox(): void
 }
 
 type PurchaseFn = (state: GameState, entry: ShopEntry, items: ReadonlyMap<string, ItemDef>) => PurchaseResult
@@ -115,8 +129,56 @@ export function createTownScreens(ctx: TownContext): TownScreens {
     screen.appendChild(ctx.button('the shop', 'village-shop', () => showShop(), 4))
     screen.appendChild(ctx.button('the tavern', 'village-tavern', () => showTavern(), 4))
     screen.appendChild(ctx.button('the well', 'village-well', () => throwAtWell(), 4))
+    // The mailbox: a lopsided little house with a slot in the door. "you have mail." only appears once
+    // a milestone has delivered a letter and at least one is unread (§30).
+    const unread = unreadCount(session.getState(), CLIMBER_LETTERS)
+    const mailboxLabel = unread > 0 ? 'the mailbox (you have mail)' : 'the mailbox'
+    screen.appendChild(ctx.button(mailboxLabel, 'village-mailbox', () => showMailbox(), 4))
     screen.appendChild(ctx.button('the old cellar', 'village-cellar', () => ctx.startCellar(), 8))
     screen.appendChild(ctx.button('back to the map', 'village-to-map', () => ctx.showMap(), 0))
+  }
+
+  // --- the mailbox: milestone letters from the first climber (§30/§288) ------------------------
+
+  function showMailbox(): void {
+    ctx.clearScreen()
+    heading('the mailbox', 'mailbox-screen')
+
+    const delivered = availableLetters(session.getState(), CLIMBER_LETTERS)
+    if (delivered.length === 0) {
+      paragraph('A lopsided mailbox with a slot in the door. It is empty. Come back when you have gone further.', 'blurb', 'mailbox-empty')
+    } else {
+      paragraph('A lopsided mailbox with a slot in the door. Inside, letters — addressed to no one in particular, in a hand that has been up this way before.', 'blurb')
+      for (const letter of delivered) {
+        const read = letterRead(session.getState(), letter)
+        const label = read ? readLetterLabel(letter) : `read the letter about ${letterTopic(letter)}`
+        screen.appendChild(
+          ctx.button(label, `mailbox-letter-${letter.id}`, () => openLetter(letter)),
+        )
+      }
+    }
+    screen.appendChild(ctx.button('back to the village', 'mailbox-to-village', () => showVillage(), 0))
+  }
+
+  function openLetter(letter: LetterDef): void {
+    session.dispatch((s) => markLetterRead(s, letter))
+    const body = doc.createElement('p')
+    body.className = 'dialogue-line'
+    body.setAttribute('data-testid', `letter-body-${letter.id}`)
+    // The final letter is SIGNED with grandma's real name — the understated §288 reveal. The letters
+    // never say "I was the hero"; the signature does the work.
+    body.textContent = letter.signed ? `${tk(letter.bodyKey)} ${GRANDMA_REAL_NAME}` : tk(letter.bodyKey)
+    screen.appendChild(body)
+    showMailbox()
+  }
+
+  /** A short topic label for an unread letter (drawn from its id — kept out of i18n, deadpan). */
+  function letterTopic(letter: LetterDef): string {
+    return LETTER_TOPICS[letter.id] ?? 'something'
+  }
+
+  function readLetterLabel(letter: LetterDef): string {
+    return `the letter about ${letterTopic(letter)} — read`
   }
 
   // --- the tavern: one free rumor (a hint) per accumulated game hour --------------------------
@@ -372,7 +434,7 @@ export function createTownScreens(ctx: TownContext): TownScreens {
     render()
   }
 
-  return { showVillage, showForge, showShop, showObservatory, showCauldron, showTavern }
+  return { showVillage, showForge, showShop, showObservatory, showCauldron, showTavern, showMailbox }
 }
 
 /** Render one cauldron-log step for the trail display. */

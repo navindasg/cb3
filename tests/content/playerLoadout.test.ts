@@ -1,10 +1,20 @@
 import { createDefaultSave } from '@/engine/state/defaultSave'
-import { playerQuestWeapons, BARE_HANDS } from '@/content/items/playerLoadout'
+import {
+  playerQuestWeapons,
+  BARE_HANDS,
+  mantleSwordDamage,
+  MANTLE_SWORD_SCALE_DIVISOR,
+} from '@/content/items/playerLoadout'
+import { MANTLE_SWORD } from '@/content/items/items'
 import type { GameState } from '@/engine/types/GameState'
 
 function withWeapon(weapon: string | null): GameState {
   const s = createDefaultSave()
   return { ...s, equipped: { ...s.equipped, weapon } }
+}
+
+function withMantleAndEaten(lifetimeCandiesEaten: number): GameState {
+  return { ...withWeapon(MANTLE_SWORD.id), lifetimeCandiesEaten }
 }
 
 describe('playerQuestWeapons', () => {
@@ -24,5 +34,54 @@ describe('playerQuestWeapons', () => {
 
   it('falls back to bare hands when nothing is equipped', () => {
     expect(playerQuestWeapons(withWeapon(null))).toEqual([BARE_HANDS])
+  })
+})
+
+describe('the wrapper — the mantle sword scales off lifetimeCandiesEaten (§288)', () => {
+  const base = MANTLE_SWORD.weapon!.damage
+
+  it('at zero lifetime candies eaten it swings at exactly the base heirloom damage', () => {
+    expect(mantleSwordDamage(0)).toBe(base)
+  })
+
+  it('adds one damage per full sqrt-scale step (10k, 40k, 90k eaten → +1, +2, +3)', () => {
+    expect(mantleSwordDamage(MANTLE_SWORD_SCALE_DIVISOR)).toBe(base + 1) // sqrt(1) = 1
+    expect(mantleSwordDamage(4 * MANTLE_SWORD_SCALE_DIVISOR)).toBe(base + 2) // sqrt(4) = 2
+    expect(mantleSwordDamage(9 * MANTLE_SWORD_SCALE_DIVISOR)).toBe(base + 3) // sqrt(9) = 3
+  })
+
+  it('is monotonic non-decreasing across a wide range of lifetimes', () => {
+    let prev = -Infinity
+    for (const eaten of [0, 1, 5_000, 9_999, 10_000, 40_000, 100_000, 1_000_000, 1e9]) {
+      const dmg = mantleSwordDamage(eaten)
+      expect(dmg).toBeGreaterThanOrEqual(prev)
+      prev = dmg
+    }
+  })
+
+  it('never drops below base for negative/garbage lifetimes (clamped at 0)', () => {
+    expect(mantleSwordDamage(-1)).toBe(base)
+    expect(mantleSwordDamage(-1e9)).toBe(base)
+  })
+
+  it('always returns a clean integer (floored)', () => {
+    for (const eaten of [1, 12_345, 55_555, 999_999]) {
+      expect(Number.isInteger(mantleSwordDamage(eaten))).toBe(true)
+    }
+  })
+
+  it('the equipped mantle sword reports the SCALED damage through playerQuestWeapons', () => {
+    const [w] = playerQuestWeapons(withMantleAndEaten(9 * MANTLE_SWORD_SCALE_DIVISOR))
+    expect(w?.id).toBe(MANTLE_SWORD.id)
+    expect(w?.damage).toBe(base + 3)
+    // reach + speed are the item's fixed stats — only the weight behind it grows.
+    expect(w?.range).toBe(MANTLE_SWORD.weapon!.range)
+    expect(w?.cooldownMs).toBe(MANTLE_SWORD.weapon!.cooldownMs)
+  })
+
+  it('only the mantle sword scales — every other weapon is fixed regardless of lifetime', () => {
+    const glutton = { ...withWeapon('ironSword'), lifetimeCandiesEaten: 1e9 }
+    const [w] = playerQuestWeapons(glutton)
+    expect(w?.damage).toBe(5) // iron sword's fixed damage, untouched by lifetime
   })
 })
