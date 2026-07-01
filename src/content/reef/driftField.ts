@@ -81,13 +81,6 @@ export const DRIFT_SEEDS: readonly AsteroidSeed[] = [
 ]
 
 /**
- * numbers-namespace key for the extra rock candy freed from the HIDDEN asteroid — the one that only
- * appears when you drift on anti-gravity cola (the §18 secret). Banked separately from the normal haul
- * so the screen can note it, but it feeds the same rock candy hold.
- */
-export const ANTIGRAV_ASTEROID_KEY = 'antigravAsteroid'
-
-/**
  * The extra, hidden asteroid the anti-gravity cola reveals — a fourth large rock lurking off in a corner
  * the normal field never spawns into. Only added to the field when a drift run is started under the cola,
  * so an ordinary run can never see (or farm) it. Pure config; the sim appends it to the seeds.

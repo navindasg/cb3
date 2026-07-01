@@ -6,6 +6,7 @@ import {
   currentTollCost,
   hasTollMercy,
   TOLL_MERCY_FLAG,
+  TOLL_SIZED_UP_FLAG,
   TOLL_MERCY_DISCOUNT,
 } from '@/engine/content/tollGiant'
 import type { GameState } from '@/engine/types/GameState'
@@ -58,42 +59,60 @@ describe('the toll giant — the mercy secret (§18)', () => {
     expect(currentTollCost(s)).toBe(TOLL_GIANT_COST)
   })
 
-  it('losing on purpose earns the mercy flag once', () => {
+  /** The two-strike helper: the second deliberate loss is the one that earns mercy. */
+  const beMerciful = (): GameState => takeTollLoss(takeTollLoss(createDefaultSave()).state).state
+
+  it('the FIRST loss just sizes him up — no mercy yet, the death line plays (firstLoss)', () => {
     const s = createDefaultSave()
     const result = takeTollLoss(s)
-    expect(result.ok).toBe(true)
-    expect(result.state.flags[TOLL_MERCY_FLAG]).toBe(true)
-    expect(hasTollMercy(result.state)).toBe(true)
+    expect(result.ok).toBe(false)
+    expect(result.firstLoss).toBe(true)
+    expect(result.state.flags[TOLL_SIZED_UP_FLAG]).toBe(true)
+    expect(result.state.flags[TOLL_MERCY_FLAG]).toBeUndefined()
+    expect(hasTollMercy(result.state)).toBe(false)
+  })
+
+  it('the SECOND, deliberate loss earns the mercy flag', () => {
+    const first = takeTollLoss(createDefaultSave())
+    const second = takeTollLoss(first.state)
+    expect(second.ok).toBe(true)
+    expect(second.firstLoss).toBe(false)
+    expect(second.state.flags[TOLL_MERCY_FLAG]).toBe(true)
+    expect(hasTollMercy(second.state)).toBe(true)
   })
 
   it('applies exactly a 10% discount, floored to a whole candy', () => {
-    const merciful = takeTollLoss(createDefaultSave()).state
+    const merciful = beMerciful()
     expect(TOLL_MERCY_DISCOUNT).toBe(0.1)
     expect(currentTollCost(merciful)).toBe(Math.floor(TOLL_GIANT_COST * 0.9))
     expect(currentTollCost(merciful)).toBe(90_000)
   })
 
   it('respects a custom base toll when discounting', () => {
-    const merciful = takeTollLoss(createDefaultSave()).state
+    const merciful = beMerciful()
     expect(currentTollCost(merciful, 999)).toBe(Math.floor(999 * 0.9)) // 899, floored
   })
 
   it('is a no-op (same reference) once mercy is already granted — nothing to farm', () => {
-    const first = takeTollLoss(createDefaultSave())
-    const second = takeTollLoss(first.state)
-    expect(second.ok).toBe(false)
-    expect(second.state).toBe(first.state)
+    const merciful = beMerciful()
+    const again = takeTollLoss(merciful)
+    expect(again.ok).toBe(false)
+    expect(again.firstLoss).toBe(false)
+    expect(again.state).toBe(merciful)
   })
 
-  it('does not mutate the input state when granting mercy', () => {
+  it('does not mutate the input state on either loss', () => {
     const before = createDefaultSave()
     takeTollLoss(before)
-    expect(before.flags[TOLL_MERCY_FLAG]).toBeUndefined()
+    expect(before.flags[TOLL_SIZED_UP_FLAG]).toBeUndefined()
+    const sizedUp = takeTollLoss(before).state
+    takeTollLoss(sizedUp)
+    expect(sizedUp.flags[TOLL_MERCY_FLAG]).toBeUndefined()
   })
 
   it('a merciful player pays the discounted toll through payToll', () => {
     const merciful: GameState = {
-      ...takeTollLoss(createDefaultSave()).state,
+      ...beMerciful(),
       candies: { current: 90_000, lifetimeAccumulated: 90_000, historicalMax: 90_000 },
     }
     const cost = currentTollCost(merciful)

@@ -212,20 +212,26 @@ export function createSkyScreens(ctx: SkyContext): SkyScreens {
         pay.classList.add('shop-unaffordable')
       }
       screen.appendChild(pay)
+      // The 'size up a fight' button stays until mercy is earned: the first click loses (the death line),
+      // the second — a deliberate rematch — earns the discount. Only mercy removes the button.
       if (!mercy) {
         screen.appendChild(ctx.button('size up a fight', 'toll-giant-fight', () => sizeUpFight()))
       }
     }
 
-    // Try your luck against the toll giant. You lose — he is a mountain that knits — but the FIRST loss
-    // earns his pity and a permanent 10% toll discount (the §18 mercy secret). A curiosity, never a gate:
-    // paying the full toll was always available. Losing again after the discount does nothing (SAME ref).
+    // Try your luck against the toll giant. You lose — he is a mountain that knits. The FIRST loss just
+    // flattens you and plays the deadpan §19 death line; sizing him up a SECOND time, having already
+    // tried and lost, earns his pity and a permanent 10% toll discount (the §18 mercy secret). A
+    // curiosity, never a gate: paying the full toll was always available. Both losses persist their state
+    // (the sized-up marker, then the mercy flag), so the death beat + the discount stay farm-proof.
     function sizeUpFight(): void {
       const result = takeTollLoss(session.getState())
-      if (!result.ok) {
+      if (result.firstLoss) {
+        session.dispatch(() => result.state) // remember you tried (so the next loss is the deliberate one)
         ctx.notify(`${deathEpitaph('tollGiantLoss')} (Fighting him comes later; for now, pay.)`)
         return
       }
+      if (!result.ok) return // already merciful — nothing to farm
       session.dispatch(() => result.state)
       ctx.logText(t('secret.tollMercy.reveal'))
       render()

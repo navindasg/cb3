@@ -119,6 +119,9 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
     // controls and reveals a hidden fourth asteroid. Never persisted (like the sim itself); it only
     // matters until this field clears. Applied by threading it into the drift sim as a plain argument.
     let colaActive = false
+    // Whether the player has resolved the cola offer (drunk it or cast off sober). Held until the choice
+    // is made so the field is NOT laid in underneath a pending offer (the sim would lock colaActive false).
+    let colaChoiceMade = false
 
     function render(): void {
       ctx.clearScreen()
@@ -188,15 +191,22 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
       }
 
       // The anti-gravity cola (§18): offered ONLY before the field is laid in (no sim yet), and only if
-      // the recipe is known. Drinking it arms the per-run invert + hidden asteroid; the field is then
-      // created under it. Once the run is underway (sim exists) the choice is locked for this run.
-      if (!sim && s.flags[ANTIGRAV_COLA_FLAG] === true && !colaActive) {
+      // the recipe is known. The field is NOT created while the choice is pending — we show the offer plus
+      // an explicit 'cast off' and RETURN, so createDrift never runs under a false colaActive. Drinking it
+      // arms the per-run invert + hidden asteroid; casting off sober lays the ordinary field. Once the run
+      // is underway (sim exists) the choice is locked for this run.
+      if (!sim && !colaChoiceMade && s.flags[ANTIGRAV_COLA_FLAG] === true) {
         paragraph(
           'A bottle of that upward-falling cola rolls in your kit. You could crack it before you cast off — the reef would turn inside out, and things you have never seen would drift into reach.',
           'blurb',
           'reef-cola-offer',
         )
         screen.appendChild(ctx.button('drink the anti-gravity cola', 'reef-drink-cola', () => doDrinkCola()))
+        screen.appendChild(ctx.button('cast off', 'reef-cast-off', () => {
+          colaChoiceMade = true
+          render()
+        }))
+        return
       }
 
       if (!sim) sim = createDrift(DRIFT_SEEDS, colaActive)
@@ -264,10 +274,12 @@ export function createReefScreens(ctx: ReefContext): ReefScreens {
 
     // Drink the anti-gravity cola before casting off (§18). A per-run, session-only toggle: it inverts
     // the controls and lets createDrift add the hidden fourth asteroid. Only offered while no run is
-    // underway, so it can never be drunk mid-field; it costs nothing but the surprise. Not persisted.
+    // underway (sim stays null until a choice is made), so it can never be drunk mid-field; it costs
+    // nothing but the surprise. Marking the choice made lets the re-render lay the field under cola.
     function doDrinkCola(): void {
       if (sim) return // a run is already underway — too late to change the physics
       colaActive = true
+      colaChoiceMade = true
       ctx.logText(t('secret.antiGravCola.reveal'))
       render()
     }

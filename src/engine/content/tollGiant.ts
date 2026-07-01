@@ -12,6 +12,11 @@ import { setFlag } from '@/engine/state/reducers'
 // warned you, who would have paid himself — feels a little bad about it and knocks the toll down
 // a permanent notch. A curiosity that rewards a counter-intuitive act (lose on purpose), never a
 // gate: you can always just pay the full toll. The discount is a one-time flag; there is no farm.
+//
+// It takes TWO deliberate losses. The FIRST just gets you flattened (the §19 death line plays: "Not
+// today. Pay the toll."); only sizing him up AGAIN, having already tried and lost, reads as on-purpose
+// enough to earn the giant's pity and the discount. This keeps the deadpan death beat wired AND makes
+// the curiosity a real, deliberate act rather than a trivial first-click optimization.
 
 /** The candy toll the giant charges to open the bridge upward (DESIGN §8 Act 1). */
 export const TOLL_GIANT_COST = 100_000
@@ -21,6 +26,13 @@ export const TOLL_GIANT_COST = 100_000
  * he lowers the toll out of politeness. engine re-declares the literal in lock-step (ADR §3).
  */
 export const TOLL_MERCY_FLAG = 'tollGiantMercy'
+
+/**
+ * content/flags: set on the FIRST loss (you tried, you lost, the death line played). Sizing him up
+ * a second time — with this already set — is what earns the mercy discount. engine re-declares the
+ * literal in lock-step (ADR §3).
+ */
+export const TOLL_SIZED_UP_FLAG = 'tollGiantSizedUp'
 
 /** The permanent fraction knocked off the toll once the giant has shown you mercy (10%). */
 export const TOLL_MERCY_DISCOUNT = 0.1
@@ -39,20 +51,28 @@ export function currentTollCost(state: GameState, base: number = TOLL_GIANT_COST
 }
 
 export interface MercyResult {
-  /** True when this call was the one that earned the giant's mercy. */
+  /** True when this call was the one that earned the giant's mercy (the second, deliberate loss). */
   readonly ok: boolean
-  /** The state after the mercy is granted (new on success, SAME reference once already granted). */
+  /** True when this call was the FIRST loss — no mercy yet; the caller shows the §19 death line. */
+  readonly firstLoss: boolean
+  /** The state after the loss (a fresh sized-up marker, the mercy award, or SAME ref when done). */
   readonly state: GameState
 }
 
 /**
- * Lose to the toll giant on purpose. The FIRST loss earns his pity and sets the mercy flag,
- * permanently discounting the toll. A no-op (SAME reference) once already granted (and once the
- * toll is paid it no longer matters) — there is nothing to farm. Immutable.
+ * Lose to the toll giant on purpose. It takes TWO deliberate losses:
+ *  - already merciful → SAME reference (nothing to farm; ok=false, firstLoss=false).
+ *  - not yet sized up → set the sized-up marker only (you tried and lost); ok=false, firstLoss=true,
+ *    so the caller plays the deadpan §19 death line ("Not today. Pay the toll.").
+ *  - already sized up → NOW earn the mercy flag + discount; ok=true, firstLoss=false.
+ * The discount is a one-time flag; there is no farm. Immutable throughout.
  */
 export function takeTollLoss(state: GameState): MercyResult {
-  if (hasTollMercy(state)) return { ok: false, state }
-  return { ok: true, state: setFlag(state, TOLL_MERCY_FLAG) }
+  if (hasTollMercy(state)) return { ok: false, firstLoss: false, state }
+  if (state.flags[TOLL_SIZED_UP_FLAG] !== true) {
+    return { ok: false, firstLoss: true, state: setFlag(state, TOLL_SIZED_UP_FLAG) }
+  }
+  return { ok: true, firstLoss: false, state: setFlag(state, TOLL_MERCY_FLAG) }
 }
 
 export interface TollResult {

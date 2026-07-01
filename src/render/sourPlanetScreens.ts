@@ -64,10 +64,15 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
   }
 
   function showSourPlanet(): void {
-    // The marinate dwell interval. render() calls clearScreen(), which fires ALL screen disposers, so an
-    // interval registered once would die on the first internal re-render. Instead render() re-arms it each
-    // pass (clearing any prior timer + registering a fresh teardown); the LAST teardown — from the final
-    // render before a genuine screen switch — is the one clearScreen fires, so exactly one interval is live.
+    // The marinate dwell paragraph, re-captured on each render so the tick can refresh it in place.
+    let dwellP: HTMLParagraphElement | null = null
+
+    // The marinate dwell interval. Internal render() calls clearScreen(), which fires ALL screen disposers,
+    // so a once-registered interval would die on the first trade/learn re-render. render() therefore re-arms
+    // it each pass (clearing any prior timer + registering a fresh teardown); the LAST teardown — from the
+    // final render before a genuine screen switch — is the one clearScreen fires, so exactly one is live.
+    // The tick itself updates the dwell paragraph IN PLACE and only re-renders on the marinate transition,
+    // so there is no full rebuild every second (the questScreens hud.textContent idiom).
     let dwellTimer: ReturnType<typeof setInterval> | null = null
     function armMarinateTick(): void {
       if (dwellTimer !== null) clearInterval(dwellTimer)
@@ -102,7 +107,10 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
     // The sour-rain marinate (§18): stand here unarmoured and the corrosion slowly, permanently toughens
     // you — 'well-marinated', +1 sour resist, once. The engine's observeSourDwell is offline-safe on
     // accumulatedGameTimeMs; we only surface it (a bare, deadpan status) and let the tick below advance it.
+    // The dwell paragraph reference is captured so the once-per-second tick can update its text IN PLACE
+    // (the questScreens idiom) — no full rebuild every second, so buttons keep focus and the UI is calm.
     function renderMarinate(s: GameState): void {
+      dwellP = null
       if (sourMarinated(s)) {
         paragraph(
           'You are well-marinated. The sour rain, which harrows everything else here, merely greets you.',
@@ -112,12 +120,18 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
         return
       }
       if (s.equipped.armour !== null) return // armoured: the rain finds no purchase; nothing to show.
+      const p = doc.createElement('p')
+      p.className = 'blurb'
+      p.setAttribute('data-testid', 'sour-dwell')
+      p.textContent = dwellText(s)
+      screen.appendChild(p)
+      dwellP = p
+    }
+
+    /** The deadpan dwell-progress line (recomputed each tick from the live dwell). */
+    function dwellText(s: GameState): string {
       const secs = Math.floor(sourDwellMs(s) / 1000)
-      paragraph(
-        `You are standing, unarmoured, in the sour rain. It stings. (${secs}s / ${SOUR_MARINATE_MS / 1000}s — the gummy folk seem to be counting.)`,
-        'blurb',
-        'sour-dwell',
-      )
+      return `You are standing, unarmoured, in the sour rain. It stings. (${secs}s / ${SOUR_MARINATE_MS / 1000}s — the gummy folk seem to be counting.)`
     }
 
     function renderFirstContact(): void {
@@ -187,15 +201,20 @@ export function createSourPlanetScreens(ctx: SourPlanetContext): SourPlanetScree
     }
 
     // Advance the marinate dwell once a second while the screen is open. observeSourDwell is pure and
-    // offline-safe (it reads accumulatedGameTimeMs, so time spent backgrounded still counts); this only
-    // dispatches it and re-renders on the tick that finally earns the marinate. The dwell-progress
-    // paragraph is refreshed each tick too (render re-arms the timer), so the counter visibly climbs.
+    // offline-safe (it reads accumulatedGameTimeMs, so time spent backgrounded still counts). On an
+    // ordinary tick we only refresh the dwell paragraph's text IN PLACE (no rebuild); a full render()
+    // runs ONLY on the transition that changes structure — the moment the marinate is earned (swap in
+    // the 'well-marinated' line, drop the counter). Mirrors the questScreens hud.textContent idiom.
     function marinateTick(): void {
       const before = session.getState()
       const result = observeSourDwell(before)
       if (result.state !== before) session.dispatch(() => result.state)
-      if (result.marinated) ctx.logText(t('secret.sourMarinate.reveal'))
-      render()
+      if (result.marinated) {
+        ctx.logText(t('secret.sourMarinate.reveal'))
+        render() // structure changed — swap in the well-marinated paragraph
+        return
+      }
+      if (dwellP) dwellP.textContent = dwellText(session.getState())
     }
 
     render()
